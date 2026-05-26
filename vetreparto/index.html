@@ -21,7 +21,9 @@ db.ref('.info/connected').on('value',function(s){
   if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
 });
 function guardarEnFirebase(){
-  db.ref('rutas/'+CHOFER_ID).set({
+  var hoy=new Date();
+  var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  db.ref('rutas/'+CHOFER_ID+'/'+fecha).set({
     choferNombre:document.getElementById('chofer-nombre').value||CHOFER_ID,
     paradas:par||[],
     ultimaActualizacion:Date.now(),
@@ -202,7 +204,7 @@ var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
 // Load saved route on start
 window.addEventListener('load',function(){
-  db.ref('rutas/'+CHOFER_ID).once('value').then(function(s){
+  var hoy=new Date(); var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0'); db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
     var d=s.val();
     if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
       par=d.paradas;
