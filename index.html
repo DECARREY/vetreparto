@@ -141,20 +141,20 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       </div>
       <div class="tc" id="content-ruta">
         <div class="chofer-box"><input type="text" id="chofer-nombre" placeholder="Nombre del repartidor..." oninput="guardarEnFirebase()"></div>
-        <div class="ph"><span style="font-size:13px;font-weight:700">Paradas del dia</span><span class="pcnt" id="pc">0</span></div>
-        <div class="plist" id="pl"><div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div></div>
         <div class="pfooter">
-          <div class="rsum" id="rs" style="display:none">
-            <div class="rstat"><div class="rsval" id="sv-p">0</div><div class="rslbl">Paradas</div></div>
-            <div class="rstat"><div class="rsval" id="sv-d">-</div><div class="rslbl">Km</div></div>
-            <div class="rstat"><div class="rsval" id="sv-t">-</div><div class="rslbl">Tiempo</div></div>
-          </div>
           <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
           <div class="row2">
             <button class="clrbtn" onclick="limpiar()">Limpiar</button>
             <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
           </div>
+          <div class="rsum" id="rs" style="display:none;margin-top:8px">
+            <div class="rstat"><div class="rsval" id="sv-p">0</div><div class="rslbl">Paradas</div></div>
+            <div class="rstat"><div class="rsval" id="sv-d">-</div><div class="rslbl">Km</div></div>
+            <div class="rstat"><div class="rsval" id="sv-t">-</div><div class="rslbl">Tiempo</div></div>
+          </div>
         </div>
+        <div class="ph"><span style="font-size:13px;font-weight:700">Paradas del dia</span><span class="pcnt" id="pc">0</span></div>
+        <div class="plist" id="pl"><div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div></div>
       </div>
       <div class="tc" id="content-resumen">
         <div class="res-btns">
