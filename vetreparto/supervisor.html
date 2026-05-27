@@ -114,8 +114,9 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <h1>VetReparto &mdash; Panel Supervisor</h1>
     <div class="dot" id="sync-dot"></div>
     <span id="sync-label" style="font-size:10px;opacity:0.8">Conectando...</span>
-    <button onclick="descargarDia()" style="margin-left:12px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">&#11015; Descargar dia</button>
-    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:8px" id="hora-actual"></span>
+    <button onclick="descargarDia()" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">&#11015; Descargar dia</button>
+    <button onclick="limpiarDia()" style="background:rgba(239,68,68,0.3);color:#fff;border:1px solid rgba(239,68,68,0.5);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">&#x1F5D1; Limpiar dia</button>
+    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700" id="hora-actual"></span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSection('rutas')">Rutas en vivo</button>
@@ -430,6 +431,22 @@ function showSection(s){
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+function limpiarDia(){
+  if(!confirm('Limpiar las rutas de Angel y Arturo?\nEsta accion borra todos los datos del dia actual.')){return;}
+  db.ref('rutas/angel').remove().then(function(){
+    return db.ref('rutas/arturo').remove();
+  }).then(function(){
+    datos.angel = null;
+    datos.arturo = null;
+    actualizarUI('angel');
+    actualizarUI('arturo');
+    if(map) actualizarMapa();
+    toast('Dia limpiado correctamente');
+  }).catch(function(e){
+    toast('Error: '+e.message);
+  });
+}
 
 function descargarDia(){
   var hoy = new Date();
