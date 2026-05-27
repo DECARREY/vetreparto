@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,7 +22,9 @@ db.ref('.info/connected').on('value',function(s){
   if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
 });
 function guardarEnFirebase(){
-  db.ref('rutas/'+CHOFER_ID).set({
+  var hoy=new Date();
+  var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  db.ref('rutas/'+CHOFER_ID+'/'+fecha).set({
     choferNombre:document.getElementById('chofer-nombre').value||CHOFER_ID,
     paradas:par||[],
     ultimaActualizacion:Date.now(),
@@ -73,15 +76,15 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .ebtn.done{background:#e8f5ef;color:#1a6b4a;cursor:default;border:1px solid #b2ddc9}
 .hora-entrega{font-size:10px;color:#1a6b4a;font-weight:700}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a7870;font-size:13px;gap:8px;padding:20px;text-align:center}
-.pfooter{padding:8px 12px;border-top:1px solid #e4e2da;flex-shrink:0;background:#fff}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pfooter{padding:10px 12px;border-top:1px solid #e4e2da;flex-shrink:0}
 .rsum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
 .rstat{background:#f7f6f2;border-radius:8px;padding:8px;text-align:center}
 .rsval{font-size:15px;font-weight:800;color:#1a6b4a}
 .rslbl{font-size:10px;color:#7a7870;margin-top:1px}
 .cbtn{width:100%;padding:11px;background:#1a6b4a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;font-family:Arial;box-sizing:border-box}
 .cbtn:disabled{background:#ccc;cursor:not-allowed}
-.clrbtn{flex:1;padding:9px;background:#f0efe9;color:#7a7870;border:1px solid #e4e2da;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:Arial;text-align:center}
+.row2{display:flex;gap:6px}
+.clrbtn{flex:1;padding:7px;background:#f0efe9;color:#7a7870;border:1px solid #e4e2da;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:Arial}
 .clrbtn.wa{color:#25D366;border-color:#25D366}
 .resumen-body{flex:1;overflow-y:auto;padding:10px}
 .res-btns{display:flex;gap:6px;padding:10px}
@@ -138,20 +141,20 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       </div>
       <div class="tc" id="content-ruta">
         <div class="chofer-box"><input type="text" id="chofer-nombre" placeholder="Nombre del repartidor..." oninput="guardarEnFirebase()"></div>
-        <div style="padding:8px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0">
-          <button class="cbtn" id="cb" onclick="calcular()" disabled style="margin-bottom:6px">Calcular ruta optima</button>
-          <div class="row2">
-            <button class="clrbtn" onclick="limpiar()">Limpiar</button>
-            <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
-          </div>
-          <div class="rsum" id="rs" style="display:none;margin-top:6px">
+        <div class="ph"><span style="font-size:13px;font-weight:700">Paradas del dia</span><span class="pcnt" id="pc">0</span></div>
+        <div class="plist" id="pl"><div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div></div>
+        <div class="pfooter">
+          <div class="rsum" id="rs" style="display:none">
             <div class="rstat"><div class="rsval" id="sv-p">0</div><div class="rslbl">Paradas</div></div>
             <div class="rstat"><div class="rsval" id="sv-d">-</div><div class="rslbl">Km</div></div>
             <div class="rstat"><div class="rsval" id="sv-t">-</div><div class="rslbl">Tiempo</div></div>
           </div>
+          <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
+          <div class="row2">
+            <button class="clrbtn" onclick="limpiar()">Limpiar</button>
+            <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
+          </div>
         </div>
-        <div class="ph"><span style="font-size:13px;font-weight:700">Paradas del dia</span><span class="pcnt" id="pc">0</span></div>
-        <div class="plist" id="pl"><div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div></div>
       </div>
       <div class="tc" id="content-resumen">
         <div class="res-btns">
@@ -172,37 +175,36 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 <script>
 var C=[];
 
-// Load clients from Firebase
 db.ref('clientes').once('value').then(function(snap){
-  var data = snap.val();
+  var data=snap.val();
   if(data){
-    C = Object.values(data);
+    C=Object.values(data);
     C.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
-    var el = document.getElementById('total-c');
-    if(el) el.textContent = C.length;
-    document.getElementById('sr').innerHTML = '<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
-    if(map) dibujar();
+    var el=document.getElementById('total-c');
+    if(el)el.textContent=C.length;
+    document.getElementById('sr').innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
+    if(map)dibujar();
   }
-}).catch(function(e){ console.error('Error cargando clientes:', e); });
+}).catch(function(e){console.error('Error cargando clientes:',e);});
 
-// Also listen for changes in real time
-db.ref('clientes').on('value', function(snap){
-  var data = snap.val();
+db.ref('clientes').on('value',function(snap){
+  var data=snap.val();
   if(data){
-    C = Object.values(data);
+    C=Object.values(data);
     C.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
-    var el = document.getElementById('total-c');
-    if(el) el.textContent = C.length;
-    if(map && !rutaActiva) dibujar();
+    var el=document.getElementById('total-c');
+    if(el)el.textContent=C.length;
+    if(map&&!rutaActiva)dibujar();
   }
 });
 
 var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
-// Load saved route on start
 window.addEventListener('load',function(){
-  db.ref('rutas/'+CHOFER_ID).once('value').then(function(s){
+  var hoy=new Date();
+  var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
     var d=s.val();
     if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
       par=d.paradas;
@@ -308,20 +310,34 @@ function calcular(){
   if(par.length<2||!map)return;
   document.getElementById('ld').style.display='flex';document.getElementById('cb').disabled=true;clearRmk();
   var ds=new google.maps.DirectionsService();
-  var req={origin:{lat:ALMACEN.lat,lng:ALMACEN.lng},destination:{lat:par[par.length-1].lat,lng:par[par.length-1].lng},waypoints:par.slice(0,-1).map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:true};
+  var req={
+    origin:{lat:ALMACEN.lat,lng:ALMACEN.lng},
+    destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},
+    waypoints:par.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),
+    travelMode:google.maps.TravelMode.DRIVING,
+    optimizeWaypoints:true
+  };
   ds.route(req,function(res,st){
     if(st==='OK'){procesarRuta(res);}
-    else{req.optimizeWaypoints=false;req.waypoints=par.slice(1,-1).map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};});ds.route(req,function(r2,s2){document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;if(s2==='OK')procesarRuta(r2);else toast('Error ruta: '+s2);});}
+    else{req.optimizeWaypoints=false;ds.route(req,function(r2,s2){document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;if(s2==='OK')procesarRuta(r2);else toast('Error ruta: '+s2);});}
   });
 }
 function procesarRuta(res){
   document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;
   dr.setDirections(res);
   var ord=res.routes[0].waypoint_order,all=par.slice(0),ro=[];
-  ord.forEach(function(i){ro.push(all[i]);});ro.push(all[par.length-1]);
-  if(ro.length>par.length)ro=ro.slice(0,par.length);par=ro;
+  ord.forEach(function(i){ro.push(all[i]);});
+  par=ro;
   var td=0,tt=0;
-  res.routes[0].legs.forEach(function(leg,i){td+=leg.distance.value;tt+=(leg.duration_in_traffic||leg.duration).value;if(i<par.length){par[i].kmDesde=leg.distance.text;par[i].minDesde=(leg.duration_in_traffic||leg.duration).text;par[i].origenDesde=i===0?'Almacen':par[i-1].nombre;}});
+  res.routes[0].legs.forEach(function(leg,i){
+    td+=leg.distance.value;
+    tt+=(leg.duration_in_traffic||leg.duration).value;
+    if(i<par.length){
+      par[i].kmDesde=leg.distance.text;
+      par[i].minDesde=(leg.duration_in_traffic||leg.duration).text;
+      par[i].origenDesde=i===0?'Almacen':par[i-1].nombre;
+    }
+  });
   var km=(td/1000).toFixed(1),mins=Math.round(tt/60),hrs=Math.floor(mins/60),rem=mins%60;
   document.getElementById('sv-d').textContent=km;document.getElementById('sv-t').textContent=hrs>0?hrs+'h '+rem+'m':mins+'min';
   rutaActiva=true;ui();pines();switchTab('ruta');
