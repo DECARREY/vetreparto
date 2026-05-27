@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,10 +20,10 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .nav-tabs{display:flex;background:#0d3d73;flex-shrink:0}
 .nav-tab{padding:10px 20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;border-bottom:3px solid transparent;border:none;background:none;font-family:Arial;color:rgba(255,255,255,0.6)}
 .nav-tab.active{color:#fff;border-bottom:3px solid #fff}
-.body{display:flex;flex:1;min-height:0}
+.body{display:flex;flex:1;min-height:0;position:relative}
 
 /* RUTAS PANEL */
-.rutas-panel{width:320px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow:hidden}
+.rutas-panel{width:320px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow:hidden;z-index:10;transition:transform 0.3s ease}
 .panel-header{padding:12px 16px;border-bottom:1px solid #e4e2da;background:#f7f6f2;flex-shrink:0}
 .panel-title{font-size:14px;font-weight:700}
 .panel-sub{font-size:11px;color:#7a7870;margin-top:2px}
@@ -79,7 +80,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .cp-empty{padding:40px;text-align:center;color:#7a7870;font-size:13px}
 
 /* MODAL */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;display:none}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
 .modal-header{padding:16px 20px;border-bottom:1px solid #e4e2da;display:flex;align-items:center;justify-content:space-between}
@@ -105,13 +106,24 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 /* TABS CONTENT */
 .tab-content{display:none;flex:1;min-height:0}
 .tab-content.active{display:flex}
+
+/* MOBILE MAP TOGGLE */
+.map-toggle{display:none;position:fixed;bottom:14px;right:14px;z-index:200;background:#0f4a8a;color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:12px;font-weight:700;font-family:Arial;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+@media(max-width:768px){
+  .rutas-panel{width:100%;position:absolute;top:0;left:0;bottom:0;right:0}
+  .rutas-panel.map-view{transform:translateX(-100%)}
+  .mapwrap{width:100%}
+  .map-toggle{display:block}
+  .topbar h1{font-size:12px}
+  .topbar button{font-size:10px;padding:4px 8px}
+}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
     <span style="font-size:18px">&#128062;</span>
-    <h1>VetReparto &mdash; Panel Supervisor</h1>
+    <h1>VetReparto &mdash; Supervisor</h1>
     <div class="dot" id="sync-dot"></div>
     <span id="sync-label" style="font-size:10px;opacity:0.8">Conectando...</span>
     <button onclick="descargarDia()" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">&#11015; Descargar dia</button>
@@ -119,14 +131,14 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700" id="hora-actual"></span>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showSection('rutas')">Rutas en vivo</button>
-    <button class="nav-tab" onclick="showSection('clientes')">Clientes (<span id="total-clientes">...</span>)</button>
+    <button class="nav-tab active" onclick="showSection('rutas',event)">Rutas en vivo</button>
+    <button class="nav-tab" onclick="showSection('clientes',event)">Clientes (<span id="total-clientes">...</span>)</button>
   </div>
   <div class="body">
 
     <!-- SECCION RUTAS -->
     <div class="tab-content active" id="section-rutas">
-      <div class="rutas-panel">
+      <div class="rutas-panel" id="rutas-panel">
         <div class="panel-header">
           <div class="panel-title">Rutas del dia en tiempo real</div>
           <div class="panel-sub" id="fecha-hoy"></div>
@@ -186,6 +198,8 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
   </div>
 </div>
 
+<button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">Ver mapa</button>
+
 <!-- MODAL AGREGAR/EDITAR -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -237,8 +251,8 @@ var markers = {angel:[], arturo:[]};
 var map;
 var todosClientes = [];
 var clientesFiltrados = [];
+var showingMap = false;
 
-// Connection status
 db.ref('.info/connected').on('value', function(snap){
   var ok = snap.val();
   ['sync-dot','sync-dot2'].forEach(function(id){
@@ -251,16 +265,23 @@ db.ref('.info/connected').on('value', function(snap){
   });
 });
 
-// Listen rutas
 ['angel','arturo'].forEach(function(cid){
   db.ref('rutas/'+cid).on('value', function(snap){
-    datos[cid] = snap.val();
+    var val = snap.val();
+    // Support both old format (direct) and new format (by date)
+    if(val && !val.paradas){
+      // New format: find today's date key
+      var hoy = new Date();
+      var fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+      datos[cid] = val[fechaHoy] || null;
+    } else {
+      datos[cid] = val;
+    }
     actualizarUI(cid);
     if(map) actualizarMapa();
   });
 });
 
-// Listen clientes from Firebase
 db.ref('clientes').on('value', function(snap){
   var data = snap.val();
   todosClientes = [];
@@ -268,7 +289,6 @@ db.ref('clientes').on('value', function(snap){
     Object.keys(data).forEach(function(key){
       todosClientes.push(Object.assign({_key: key}, data[key]));
     });
-    // Sort by nombre
     todosClientes.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
   }
   document.getElementById('total-clientes').textContent = todosClientes.length;
@@ -323,7 +343,7 @@ function abrirModal(key, cliente){
   document.getElementById('f-dir').value = (cliente && cliente.dir) || '';
   document.getElementById('f-lat').value = (cliente && cliente.lat) || '';
   document.getElementById('f-lng').value = (cliente && cliente.lng) || '';
-  document.getElementById('f-id').disabled = !!key; // Don't edit ID on update
+  document.getElementById('f-id').disabled = !!key;
   document.getElementById('modal').classList.add('open');
   setTimeout(function(){ document.getElementById('f-id').disabled ? document.getElementById('f-nombre').focus() : document.getElementById('f-id').focus(); }, 100);
 }
@@ -344,36 +364,22 @@ function guardarCliente(){
   var dir = document.getElementById('f-dir').value.trim();
   var lat = parseFloat(document.getElementById('f-lat').value);
   var lng = parseFloat(document.getElementById('f-lng').value);
-
   if(!id || !nombre){ toast('ID y Nombre son obligatorios'); return; }
   if(isNaN(lat) || isNaN(lng)){ toast('Coordenadas invalidas'); return; }
-  if(lng > 0) lng = -lng; // Auto-fix positive longitude
-
+  if(lng > 0) lng = -lng;
   var data = {id:id, nombre:nombre, dir:dir, lat:lat, lng:lng};
-
   if(key){
-    // Update existing
-    db.ref('clientes/'+key).update(data).then(function(){
-      toast('Cliente actualizado');
-      cerrarModal();
-    }).catch(function(e){ toast('Error: '+e.message); });
+    db.ref('clientes/'+key).update(data).then(function(){ toast('Cliente actualizado'); cerrarModal(); }).catch(function(e){ toast('Error: '+e.message); });
   } else {
-    // Check for duplicate ID
     var exists = todosClientes.find(function(c){ return c.id === id; });
     if(exists){ toast('Ya existe un cliente con ese ID'); return; }
-    // Add new
-    db.ref('clientes').push(data).then(function(){
-      toast('Cliente agregado');
-      cerrarModal();
-    }).catch(function(e){ toast('Error: '+e.message); });
+    db.ref('clientes').push(data).then(function(){ toast('Cliente agregado'); cerrarModal(); }).catch(function(e){ toast('Error: '+e.message); });
   }
 }
 
 function eliminarCliente(key, nombre){
   if(!confirm('Eliminar "' + nombre + '"?\nEsta accion no se puede deshacer.')){ return; }
-  db.ref('clientes/'+key).remove().then(function(){
-    toast('Cliente eliminado');
-  }).catch(function(e){ toast('Error: '+e.message); });
+  db.ref('clientes/'+key).remove().then(function(){ toast('Cliente eliminado'); }).catch(function(e){ toast('Error: '+e.message); });
 }
 
 function actualizarUI(cid){
@@ -421,11 +427,27 @@ function initMap(){
   actualizarMapa();
 }
 
-function showSection(s){
+function toggleMap(){
+  showingMap=!showingMap;
+  var panel=document.getElementById('rutas-panel');
+  var btn=document.getElementById('map-toggle-btn');
+  if(showingMap){
+    panel.classList.add('map-view');
+    btn.textContent='Ver paradas';
+  } else {
+    panel.classList.remove('map-view');
+    btn.textContent='Ver mapa';
+  }
+  if(showingMap&&map) setTimeout(function(){google.maps.event.trigger(map,'resize');},350);
+}
+
+function showSection(s,e){
   document.querySelectorAll('.tab-content').forEach(function(x){x.classList.remove('active');});
   document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
   document.getElementById('section-'+s).classList.add('active');
-  event.target.classList.add('active');
+  if(e&&e.target) e.target.classList.add('active');
+  var btn=document.getElementById('map-toggle-btn');
+  if(btn) btn.style.display = s==='rutas' ? '' : 'none';
   if(s==='rutas'&&map) setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
 }
 
@@ -437,49 +459,37 @@ function limpiarDia(){
   db.ref('rutas/angel').remove().then(function(){
     return db.ref('rutas/arturo').remove();
   }).then(function(){
-    datos.angel = null;
-    datos.arturo = null;
-    actualizarUI('angel');
-    actualizarUI('arturo');
+    datos.angel=null; datos.arturo=null;
+    actualizarUI('angel'); actualizarUI('arturo');
     if(map) actualizarMapa();
     toast('Dia limpiado correctamente');
-  }).catch(function(e){
-    toast('Error: '+e.message);
-  });
+  }).catch(function(e){ toast('Error: '+e.message); });
 }
 
 function descargarDia(){
-  var hoy = new Date();
-  var fecha = hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
-  var csv = 'RESUMEN DEL DIA - VetReparto\r\nFecha: '+fecha+'\r\n\r\n';
-
+  var hoy=new Date();
+  var fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
+  var csv='RESUMEN DEL DIA - VetReparto\r\nFecha: '+fecha+'\r\n\r\n';
   ['angel','arturo'].forEach(function(cid){
-    var d = datos[cid];
-    var nombre = (d && d.choferNombre) || (cid==='angel'?'Angel':'Arturo');
-    var paradas = (d && d.paradas) || [];
-    var ent = paradas.filter(function(p){return p.entregado;}).length;
-    var km = (d && d.km) || '-';
-    var tiempo = (d && d.tiempo) || '-';
-
-    csv += '=== '+nombre.toUpperCase()+' ===\r\n';
-    csv += 'Total paradas: '+paradas.length+' | Entregados: '+ent+' | Pendientes: '+(paradas.length-ent)+'\r\n';
-    csv += 'Distancia: '+km+' km | Tiempo: '+tiempo+'\r\n\r\n';
-
+    var d=datos[cid];
+    var nombre=(d&&d.choferNombre)||(cid==='angel'?'Angel':'Arturo');
+    var paradas=(d&&d.paradas)||[];
+    var ent=paradas.filter(function(p){return p.entregado;}).length;
+    csv+='=== '+nombre.toUpperCase()+' ===\r\n';
+    csv+='Total paradas: '+paradas.length+' | Entregados: '+ent+' | Pendientes: '+(paradas.length-ent)+'\r\n';
+    csv+='Distancia: '+((d&&d.km)||'-')+' km | Tiempo: '+((d&&d.tiempo)||'-')+'\r\n\r\n';
     if(paradas.length){
-      csv += '"No.","ID SAP","Cliente","No. Pedido","No. Factura","Estado","Hora entrega","Desde","Km tramo","Tiempo tramo"\r\n';
+      csv+='"No.","ID SAP","Cliente","No. Pedido","No. Factura","Estado","Hora entrega","Desde","Km tramo","Tiempo tramo"\r\n';
       paradas.forEach(function(p,i){
-        csv += '"'+(i+1)+'","'+(p.id||'')+'","'+(p.nombre||'')+'","'+(p.pedido||'')+'","'+(p.factura||'')+'","'+(p.entregado?'Entregado':'Pendiente')+'","'+(p.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
+        csv+='"'+(i+1)+'","'+(p.id||'')+'","'+(p.nombre||'')+'","'+(p.pedido||'')+'","'+(p.factura||'')+'","'+(p.entregado?'Entregado':'Pendiente')+'","'+(p.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
       });
-    } else {
-      csv += 'Sin paradas registradas\r\n';
-    }
-    csv += '\r\n';
+    } else { csv+='Sin paradas registradas\r\n'; }
+    csv+='\r\n';
   });
-
-  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.csv';
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.csv';
   a.click();
   toast('Descargado');
 }
@@ -488,7 +498,6 @@ function updateClock(){var now=new Date(),h=now.getHours().toString().padStart(2
 updateClock(); setInterval(updateClock,30000);
 var hoy=new Date(),dias=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'],meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 document.getElementById('fecha-hoy').textContent=dias[hoy.getDay()]+' '+hoy.getDate()+' de '+meses[hoy.getMonth()]+' '+hoy.getFullYear();
-
 window.initMap=initMap;
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX"></script>
