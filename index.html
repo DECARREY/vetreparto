@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -56,7 +55,8 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .abtn{margin-left:auto;background:#1a6b4a;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:Arial}
 .abtn.added{background:#e8f5ef;color:#1a6b4a;cursor:default}
 .chofer-box{padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#f7f6f2}
-.chofer-box input{width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box}
+.chofer-box input{width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-top:6px}
+.chofer-box select{width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff}
 .ph{padding:10px 12px;border-bottom:1px solid #e4e2da;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .pcnt{background:#1a6b4a;color:#fff;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
 .plist{flex:1;overflow-y:auto;min-height:0}
@@ -140,7 +140,20 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
         <div class="sres" id="sr"><div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre <span id="total-c">...</span> clientes</div></div>
       </div>
       <div class="tc" id="content-ruta">
-        <div class="chofer-box"><input type="text" id="chofer-nombre" placeholder="Nombre del repartidor..." oninput="guardarEnFirebase()"></div>
+        <div class="chofer-box">
+          <select id="chofer-select" onchange="cambiarChofer(this.value)">
+            <option value="">-- Selecciona tu nombre --</option>
+            <option value="Angel">Angel</option>
+            <option value="Arturo">Arturo</option>
+            <option value="Silvia">Silvia</option>
+            <option value="Mercedes">Mercedes</option>
+            <option value="Luis">Luis</option>
+            <option value="Marco">Marco</option>
+            <option value="Eunice">Eunice</option>
+            <option value="otros">Otros...</option>
+          </select>
+          <input type="text" id="chofer-nombre" placeholder="Escribe tu nombre..." oninput="guardarEnFirebase()" style="display:none;margin-top:6px">
+        </div>
         <div class="pfooter">
           <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
           <div class="row2">
@@ -209,7 +222,13 @@ window.addEventListener('load',function(){
     if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
       par=d.paradas;
       var cn=document.getElementById('chofer-nombre');
-      if(d.choferNombre&&cn)cn.value=d.choferNombre;
+      var sel=document.getElementById('chofer-select');
+      if(d.choferNombre&&cn){
+        cn.value=d.choferNombre;
+        var opt=Array.from(sel.options).find(function(o){return o.value===d.choferNombre;});
+        if(opt){sel.value=d.choferNombre;}
+        else{sel.value='otros';cn.style.display='block';}
+      }
       ui();
       toast('Ruta restaurada: '+d.paradas.length+' paradas');
     }
@@ -384,6 +403,18 @@ function descargarResumen(){
 function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
 var showingMap=false;
 function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
+function cambiarChofer(val){
+  var inp=document.getElementById('chofer-nombre');
+  if(val==='otros'){
+    inp.style.display='block';
+    inp.value='';
+    inp.focus();
+  } else {
+    inp.style.display='none';
+    inp.value=val;
+    guardarEnFirebase();
+  }
+}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 window.initMap=initMap;
 </script>
