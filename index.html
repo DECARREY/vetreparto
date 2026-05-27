@@ -73,15 +73,15 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .ebtn.done{background:#e8f5ef;color:#1a6b4a;cursor:default;border:1px solid #b2ddc9}
 .hora-entrega{font-size:10px;color:#1a6b4a;font-weight:700}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a7870;font-size:13px;gap:8px;padding:20px;text-align:center}
-.pfooter{padding:10px 12px;border-top:1px solid #e4e2da;flex-shrink:0}
+.pfooter{padding:8px 12px;border-top:1px solid #e4e2da;flex-shrink:0;background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .rsum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
 .rstat{background:#f7f6f2;border-radius:8px;padding:8px;text-align:center}
 .rsval{font-size:15px;font-weight:800;color:#1a6b4a}
 .rslbl{font-size:10px;color:#7a7870;margin-top:1px}
 .cbtn{width:100%;padding:11px;background:#1a6b4a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px;font-family:Arial;box-sizing:border-box}
 .cbtn:disabled{background:#ccc;cursor:not-allowed}
-.row2{display:flex;gap:6px}
-.clrbtn{flex:1;padding:7px;background:#f0efe9;color:#7a7870;border:1px solid #e4e2da;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:Arial}
+.clrbtn{flex:1;padding:9px;background:#f0efe9;color:#7a7870;border:1px solid #e4e2da;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:Arial;text-align:center}
 .clrbtn.wa{color:#25D366;border-color:#25D366}
 .resumen-body{flex:1;overflow-y:auto;padding:10px}
 .res-btns{display:flex;gap:6px;padding:10px}
@@ -138,6 +138,10 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       </div>
       <div class="tc" id="content-ruta">
         <div class="chofer-box"><input type="text" id="chofer-nombre" placeholder="Nombre del repartidor..." oninput="guardarEnFirebase()"></div>
+        <div class="row2" style="padding:8px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0">
+          <button class="clrbtn" onclick="limpiar()">Limpiar</button>
+          <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
+        </div>
         <div class="ph"><span style="font-size:13px;font-weight:700">Paradas del dia</span><span class="pcnt" id="pc">0</span></div>
         <div class="plist" id="pl"><div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div></div>
         <div class="pfooter">
@@ -147,10 +151,6 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
             <div class="rstat"><div class="rsval" id="sv-t">-</div><div class="rslbl">Tiempo</div></div>
           </div>
           <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
-          <div class="row2">
-            <button class="clrbtn" onclick="limpiar()">Limpiar</button>
-            <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
-          </div>
         </div>
       </div>
       <div class="tc" id="content-resumen">
