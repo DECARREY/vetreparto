@@ -215,6 +215,15 @@ var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
 window.addEventListener('load',function(){
+  // Pre-select combo based on URL
+  var sel=document.getElementById('chofer-select');
+  var inp=document.getElementById('chofer-nombre');
+  var nombres=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+  if(nombres.indexOf(CHOFER_ID)>=0){
+    var nombre=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
+    sel.value=nombre;
+  }
+  // Load saved route
   var hoy=new Date();
   var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
@@ -409,10 +418,12 @@ function cambiarChofer(val){
     inp.style.display='block';
     inp.value='';
     inp.focus();
-  } else {
+  } else if(val===''){
     inp.style.display='none';
-    inp.value=val;
-    guardarEnFirebase();
+    inp.value='';
+  } else {
+    var id=val.toLowerCase();
+    window.location.href=window.location.pathname+'?chofer='+id;
   }
 }
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
