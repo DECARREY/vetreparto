@@ -6,6 +6,7 @@
 <title>VetReparto - Supervisor</title>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db = firebase.database();
@@ -468,28 +469,38 @@ function limpiarDia(){
 function descargarDia(){
   var hoy=new Date();
   var fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
-  var csv='RESUMEN DEL DIA - VetReparto\r\nFecha: '+fecha+'\r\n\r\n';
+  var wb=XLSX.utils.book_new();
+
   ['angel','arturo'].forEach(function(cid){
     var d=datos[cid];
     var nombre=(d&&d.choferNombre)||(cid==='angel'?'Angel':'Arturo');
     var paradas=(d&&d.paradas)||[];
     var ent=paradas.filter(function(p){return p.entregado;}).length;
-    csv+='=== '+nombre.toUpperCase()+' ===\r\n';
-    csv+='Total paradas: '+paradas.length+' | Entregados: '+ent+' | Pendientes: '+(paradas.length-ent)+'\r\n';
-    csv+='Distancia: '+((d&&d.km)||'-')+' km | Tiempo: '+((d&&d.tiempo)||'-')+'\r\n\r\n';
+    var km=(d&&d.km)||'-';
+    var tiempo=(d&&d.tiempo)||'-';
+
+    var rows=[];
+    rows.push(['RESUMEN DEL DIA - VetReparto']);
+    rows.push(['Fecha:', fecha]);
+    rows.push(['Chofer:', nombre]);
+    rows.push(['Total paradas:', paradas.length, 'Entregados:', ent, 'Pendientes:', paradas.length-ent]);
+    rows.push(['Distancia:', km+' km', 'Tiempo:', tiempo]);
+    rows.push([]);
     if(paradas.length){
-      csv+='"No.","ID SAP","Cliente","No. Pedido","No. Factura","Estado","Hora entrega","Desde","Km tramo","Tiempo tramo"\r\n';
+      rows.push(['No.','ID SAP','Cliente','No. Pedido','No. Factura','Estado','Hora entrega','Desde','Km tramo','Tiempo tramo']);
       paradas.forEach(function(p,i){
-        csv+='"'+(i+1)+'","'+(p.id||'')+'","'+(p.nombre||'')+'","'+(p.pedido||'')+'","'+(p.factura||'')+'","'+(p.entregado?'Entregado':'Pendiente')+'","'+(p.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
+        rows.push([i+1,p.id||'',p.nombre||'',p.pedido||'',p.factura||'',p.entregado?'Entregado':'Pendiente',p.horaEntrega||'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
       });
-    } else { csv+='Sin paradas registradas\r\n'; }
-    csv+='\r\n';
+    } else {
+      rows.push(['Sin paradas registradas']);
+    }
+
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:12},{wch:12},{wch:12},{wch:12},{wch:25},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, nombre);
   });
-  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.csv';
-  a.click();
+
+  XLSX.writeFile(wb, 'vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.xlsx');
   toast('Descargado');
 }
 
