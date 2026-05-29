@@ -236,11 +236,19 @@ db.ref('rutas').on('value', function(snap){
   if(val){
     Object.keys(val).forEach(function(cid){
       var rutaChofer = val[cid];
-      // Soporte formato nuevo (con fecha) y viejo (directo)
-      if(rutaChofer && !rutaChofer.paradas){
-        datos[cid] = rutaChofer[fechaHoy] || null;
-      } else {
+      if(!rutaChofer) return;
+      if(rutaChofer.paradas){
+        // Formato antiguo: datos directamente en rutas/cid
         datos[cid] = rutaChofer;
+      } else if(rutaChofer[fechaHoy]){
+        // Formato nuevo: datos en rutas/cid/fecha
+        datos[cid] = rutaChofer[fechaHoy];
+      } else {
+        // Buscar la fecha más reciente disponible
+        var fechas = Object.keys(rutaChofer).sort().reverse();
+        if(fechas.length && rutaChofer[fechas[0]] && rutaChofer[fechas[0]].paradas){
+          datos[cid] = rutaChofer[fechas[0]];
+        }
       }
     });
   }
