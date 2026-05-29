@@ -222,6 +222,11 @@ window.addEventListener('load',function(){
   if(nombres.indexOf(CHOFER_ID)>=0){
     var nombre=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
     sel.value=nombre;
+    inp.style.display='none';
+  } else if(CHOFER_ID){
+    sel.value='otros';
+    inp.style.display='block';
+    inp.value=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
   }
   // Load saved route
   var hoy=new Date();
@@ -346,8 +351,26 @@ function calcular(){
     optimizeWaypoints:true
   };
   ds.route(req,function(res,st){
-    if(st==='OK'){procesarRuta(res);}
-    else{req.optimizeWaypoints=false;ds.route(req,function(r2,s2){document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;if(s2==='OK')procesarRuta(r2);else toast('Error ruta: '+s2);});}
+    if(st==='OK'){
+      procesarRuta(res);
+    } else if(st==='ZERO_RESULTS'||st==='NOT_FOUND'){
+      // Try without optimization
+      req.optimizeWaypoints=false;
+      ds.route(req,function(r2,s2){
+        document.getElementById('ld').style.display='none';
+        document.getElementById('cb').disabled=false;
+        if(s2==='OK'){
+          procesarRuta(r2);
+        } else {
+          toast('Error al calcular ruta. Verifica las coordenadas de los clientes.');
+          console.error('Directions error:',s2);
+        }
+      });
+    } else {
+      document.getElementById('ld').style.display='none';
+      document.getElementById('cb').disabled=false;
+      toast('Error ruta: '+st);
+    }
   });
 }
 function procesarRuta(res){
