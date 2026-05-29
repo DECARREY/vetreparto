@@ -54,6 +54,11 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .sid2{font-size:11px;color:#7a7870}
 .abtn{margin-left:auto;background:#1a6b4a;color:#fff;border:none;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:Arial}
 .abtn.added{background:#e8f5ef;color:#1a6b4a;cursor:default}
+.libre-box{padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#f0faf5}
+.libre-box input{width:100%;padding:7px 10px;border:1px solid #b2ddc9;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-bottom:6px}
+.libre-box input:focus{border-color:#1a6b4a}
+.libre-btn{width:100%;padding:8px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
+.libre-toggle{width:100%;padding:8px 12px;background:#e8f5ef;color:#1a6b4a;border:1px solid #b2ddc9;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial;text-align:left;margin-bottom:0}
 .chofer-box{padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#f7f6f2}
 .chofer-box input{width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-top:6px}
 .chofer-box select{width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff}
@@ -64,17 +69,23 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .pitem-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .pnum{width:24px;height:24px;border-radius:50%;background:#1a6b4a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
 .pnum.done{background:#e8f5ef;color:#1a6b4a;border:1.5px solid #1a6b4a}
+.pnum.libre{background:#ff8800}
 .pnm{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rbtn{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;flex-shrink:0;padding:2px}
+.entregas-list{margin-bottom:6px}
+.entrega-item{border:1px solid #e4e2da;border-radius:6px;padding:7px 8px;margin-bottom:5px;background:#fafaf8}
+.entrega-item.done{background:#f0faf5;border-color:#b2ddc9}
 .pfields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
 .pfield label{font-size:10px;color:#7a7870;display:block;margin-bottom:2px;font-weight:600}
 .pfield input{width:100%;padding:5px 8px;border:1px solid #e4e2da;border-radius:6px;font-size:11px;font-family:Arial;outline:none;box-sizing:border-box}
 .pfield input.filled{background:#f0faf5;border-color:#b2ddc9}
-.entrega-row{display:flex;align-items:center;gap:6px}
+.entrega-row{display:flex;align-items:center;gap:6px;margin-top:5px}
 .ebtn{flex:1;padding:5px 8px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial}
 .ebtn.pending{background:#1a6b4a;color:#fff}
 .ebtn.done{background:#e8f5ef;color:#1a6b4a;cursor:default;border:1px solid #b2ddc9}
 .hora-entrega{font-size:10px;color:#1a6b4a;font-weight:700}
+.add-entrega-btn{width:100%;padding:5px;background:none;border:1px dashed #b2ddc9;border-radius:6px;font-size:11px;color:#1a6b4a;cursor:pointer;font-family:Arial;margin-top:2px}
+.del-entrega-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;padding:0 2px;flex-shrink:0}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a7870;font-size:13px;gap:8px;padding:20px;text-align:center}
 .pfooter{padding:10px 12px;border-top:1px solid #e4e2da;flex-shrink:0}
 .rsum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
@@ -102,6 +113,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .res-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .res-num{width:22px;height:22px;border-radius:50%;background:#1a6b4a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
 .res-num.done{background:#e8f5ef;color:#1a6b4a;border:1.5px solid #1a6b4a}
+.res-num.libre{background:#ff8800}
 .res-nombre{font-size:13px;font-weight:700;flex:1}
 .res-tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
 .tag-ok{background:#e8f5ef;color:#1a6b4a}
@@ -137,6 +149,16 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       </div>
       <div class="tc active" id="content-buscar">
         <div class="sbox"><input type="text" id="si" placeholder="Nombre o ID SAP..." oninput="buscar(this.value)" autocomplete="off"></div>
+        <div style="padding:8px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0">
+          <button class="libre-toggle" onclick="toggleLibre()">&#x1F4CC; + Parada libre (direccion o actividad)</button>
+        </div>
+        <div id="libre-form" style="display:none">
+          <div class="libre-box">
+            <input type="text" id="libre-dir" placeholder="Direccion o lugar..." autocomplete="off">
+            <input type="text" id="libre-motivo" placeholder="Motivo (ej: Deposito banco, Paqueteria...)">
+            <button class="libre-btn" onclick="agregarLibre()">Agregar parada</button>
+          </div>
+        </div>
         <div class="sres" id="sr"><div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre <span id="total-c">...</span> clientes</div></div>
       </div>
       <div class="tc" id="content-ruta">
@@ -187,6 +209,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 <button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">Ver mapa</button>
 <script>
 var C=[];
+var geocoder;
 
 db.ref('clientes').once('value').then(function(snap){
   var data=snap.val();
@@ -215,7 +238,6 @@ var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
 window.addEventListener('load',function(){
-  // Pre-select combo based on URL
   var sel=document.getElementById('chofer-select');
   var inp=document.getElementById('chofer-nombre');
   var nombres=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
@@ -228,7 +250,6 @@ window.addEventListener('load',function(){
     inp.style.display='block';
     inp.value=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
   }
-  // Load saved route
   var hoy=new Date();
   var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
@@ -255,10 +276,52 @@ function initMap(){
   dr=new google.maps.DirectionsRenderer({suppressMarkers:true,polylineOptions:{strokeColor:'#1a6b4a',strokeWeight:5,strokeOpacity:0.8}});
   dr.setMap(map);
   new google.maps.Marker({position:ALMACEN,map:map,title:'Almacen',icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#1a6b4a',fillOpacity:1,strokeColor:'#fff',strokeWeight:2.5},zIndex:2000});
+  geocoder=new google.maps.Geocoder();
   dibujar();
 }
+
+function toggleLibre(){
+  var f=document.getElementById('libre-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+
+function agregarLibre(){
+  var dir=document.getElementById('libre-dir').value.trim();
+  var motivo=document.getElementById('libre-motivo').value.trim();
+  if(!dir){toast('Escribe una direccion');return;}
+  if(!geocoder){toast('Mapa no listo');return;}
+  toast('Buscando direccion...');
+  geocoder.geocode({address:dir+', Monterrey, Mexico'},function(results,status){
+    if(status==='OK'&&results[0]){
+      var loc=results[0].geometry.location;
+      var id='LIBRE_'+Date.now();
+      par.push({
+        id:id,
+        nombre:motivo||dir,
+        dir:results[0].formatted_address,
+        lat:loc.lat(),
+        lng:loc.lng(),
+        esLibre:true,
+        motivo:motivo,
+        entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
+        kmDesde:null,minDesde:null,origenDesde:null
+      });
+      ui();
+      if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
+      document.getElementById('libre-dir').value='';
+      document.getElementById('libre-motivo').value='';
+      document.getElementById('libre-form').style.display='none';
+      toast('+ '+( motivo||dir));
+      guardarEnFirebase();
+    } else {
+      toast('No se encontro la direccion');
+    }
+  });
+}
+
 function enR(id){return par.some(function(p){return p.id===id;})}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
 function dibujar(){
   if(!map)return;
   bm.forEach(function(m){m.setMap(null);}); bm=[];
@@ -273,6 +336,7 @@ function dibujar(){
     bm.push(m);
   });
 }
+
 function buscar(v){
   var box=document.getElementById('sr');
   if(!v||v.length<2){box.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar</div>';return;}
@@ -283,22 +347,51 @@ function buscar(v){
   box.innerHTML=h;
   box.querySelectorAll('.abtn:not(.added)').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var c=C.find(function(x){return x.id===b.dataset.id;});if(c)agregar(c);});});
 }
+
 function agregar(c){
   if(!c||enR(c.id)){toast('Ya esta en la ruta');return;}
-  par.push({id:c.id,nombre:c.nombre,dir:c.dir,lat:c.lat,lng:c.lng,factura:'',pedido:'',entregado:false,horaEntrega:null,kmDesde:null,minDesde:null,origenDesde:null});
+  par.push({id:c.id,nombre:c.nombre,dir:c.dir,lat:c.lat,lng:c.lng,esLibre:false,
+    entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
+    kmDesde:null,minDesde:null,origenDesde:null});
   ui();if(map)map.panTo({lat:c.lat,lng:c.lng});
   toast('+ '+c.nombre);guardarEnFirebase();
   var inp=document.getElementById('si');if(inp.value.length>=2)buscar(inp.value);
 }
+
 function quitar(id){par=par.filter(function(p){return p.id!==id;});ui();clearRuta();guardarEnFirebase();}
-function setField(id,field,val){var p=par.find(function(x){return x.id===id;});if(p){p[field]=val;guardarEnFirebase();}}
-function marcarEntregado(id){
-  var p=par.find(function(x){return x.id===id;});if(!p||p.entregado)return;
-  p.entregado=true;var now=new Date();
-  p.horaEntrega=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
-  toast('Entregado a las '+p.horaEntrega);
+
+function setEntregaField(pid,idx,field,val){
+  var p=par.find(function(x){return x.id===pid;});
+  if(p&&p.entregas&&p.entregas[idx]){p.entregas[idx][field]=val;guardarEnFirebase();}
 }
+
+function agregarEntrega(pid){
+  var p=par.find(function(x){return x.id===pid;});
+  if(p){
+    if(!p.entregas)p.entregas=[];
+    p.entregas.push({pedido:'',factura:'',entregado:false,horaEntrega:null});
+    ui();guardarEnFirebase();
+  }
+}
+
+function eliminarEntrega(pid,idx){
+  var p=par.find(function(x){return x.id===pid;});
+  if(p&&p.entregas&&p.entregas.length>1){
+    p.entregas.splice(idx,1);
+    ui();guardarEnFirebase();
+  }
+}
+
+function marcarEntregaItem(pid,idx){
+  var p=par.find(function(x){return x.id===pid;});
+  if(!p||!p.entregas||p.entregas[idx].entregado)return;
+  p.entregas[idx].entregado=true;
+  var now=new Date();
+  p.entregas[idx].horaEntrega=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
+  toast('Entregado a las '+p.entregas[idx].horaEntrega);
+}
+
 function ui(){
   var n=par.length;
   document.getElementById('rc').textContent=n;document.getElementById('pc').textContent=n;
@@ -307,38 +400,65 @@ function ui(){
   if(!n){pl.innerHTML='<div class="empty"><div style="font-size:28px;opacity:0.4">&#128205;</div><div>Sin paradas</div><div style="font-size:11px">Agrega desde Buscar</div></div>';document.getElementById('rs').style.display='none';return;}
   var h='';
   par.forEach(function(p,i){
-    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(p.entregado?' done':'')+'">'+( p.entregado?'&#10003;':(i+1))+'</div><div class="pnm">'+esc(p.nombre)+'</div>';
-    if(!p.entregado)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
-    h+='</div><div class="pfields"><div class="pfield"><label>No. Pedido</label><input type="text" placeholder="ej:75069" value="'+esc(p.pedido)+'" data-id="'+p.id+'" data-field="pedido" class="pfin'+(p.pedido?' filled':'')+'"></div>';
-    h+='<div class="pfield"><label>No. Factura</label><input type="text" placeholder="ej:GI1520" value="'+esc(p.factura)+'" data-id="'+p.id+'" data-field="factura" class="pfin'+(p.factura?' filled':'')+'"></div></div>';
-    h+='<div class="entrega-row">';
-    if(p.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+p.horaEntrega+'</span>';}
-    else{h+='<button class="ebtn pending" data-id="'+p.id+'">Marcar entregado</button>';}
-    h+='</div></div>';
+    var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||null}];
+    var todasEntregadas=entregas.every(function(e){return e.entregado;});
+    var esLibre=p.esLibre||false;
+    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div class="pnm">'+esc(p.nombre)+'</div>';
+    if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
+    h+='</div>';
+    if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
+    h+='<div class="entregas-list" id="el_'+p.id+'">';
+    entregas.forEach(function(e,ei){
+      h+='<div class="entrega-item'+(e.entregado?' done':'')+'">';
+      h+='<div class="pfields"><div class="pfield"><label>No. Pedido</label><input type="text" placeholder="ej:75069" value="'+esc(e.pedido||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="pedido" class="pfin'+(e.pedido?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div>';
+      h+='<div class="pfield"><label>No. Factura</label><input type="text" placeholder="ej:GI1520" value="'+esc(e.factura||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="factura" class="pfin'+(e.factura?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';
+      h+='<div class="entrega-row">';
+      if(e.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+e.horaEntrega+'</span>';}
+      else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button>';}
+      if(entregas.length>1&&!e.entregado)h+='<button class="del-entrega-btn" data-pid="'+p.id+'" data-idx="'+ei+'">&#x2715;</button>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    if(!todasEntregadas)h+='<button class="add-entrega-btn" data-pid="'+p.id+'">+ Agregar pedido/factura</button>';
+    h+='</div>';
   });
   pl.innerHTML=h;
   pl.querySelectorAll('.rbtn').forEach(function(b){b.addEventListener('click',function(){quitar(b.dataset.id);});});
-  pl.querySelectorAll('.pfin').forEach(function(inp){inp.addEventListener('input',function(){setField(inp.dataset.id,inp.dataset.field,inp.value);inp.classList.toggle('filled',inp.value.length>0);actualizarResumen();});});
-  pl.querySelectorAll('.ebtn.pending').forEach(function(b){b.addEventListener('click',function(){marcarEntregado(b.dataset.id);});});
+  pl.querySelectorAll('.pfin').forEach(function(inp){inp.addEventListener('input',function(){setEntregaField(inp.dataset.pid,parseInt(inp.dataset.idx),inp.dataset.field,inp.value);inp.classList.toggle('filled',inp.value.length>0);actualizarResumen();});});
+  pl.querySelectorAll('.ebtn.pending').forEach(function(b){b.addEventListener('click',function(){marcarEntregaItem(b.dataset.pid,parseInt(b.dataset.idx));});});
+  pl.querySelectorAll('.add-entrega-btn').forEach(function(b){b.addEventListener('click',function(){agregarEntrega(b.dataset.pid);});});
+  pl.querySelectorAll('.del-entrega-btn').forEach(function(b){b.addEventListener('click',function(){eliminarEntrega(b.dataset.pid,parseInt(b.dataset.idx));});});
   document.getElementById('rs').style.display='grid';
   if(!rutaActiva)dibujar();actualizarResumen();
 }
+
 function actualizarResumen(){
   var body=document.getElementById('resumen-body');
   if(!par.length){body.innerHTML='<div style="padding:16px;text-align:center;color:#7a7870;font-size:13px">Sin paradas</div>';return;}
-  var ent=par.filter(function(p){return p.entregado;}).length;
   var chofer=document.getElementById('chofer-nombre').value||'Repartidor';
   var hoy=new Date(),fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
+  var totalEntregas=0,entEntregas=0;
+  par.forEach(function(p){var e=p.entregas||[];totalEntregas+=e.length;entEntregas+=e.filter(function(x){return x.entregado;}).length;});
   var h='<div class="res-header"><div class="res-title">'+esc(chofer)+'</div><div class="res-sub">'+fecha+'</div></div>';
-  h+='<div class="res-stats"><div class="res-stat"><div class="res-stat-val">'+par.length+'</div><div class="res-stat-lbl">Paradas</div></div><div class="res-stat"><div class="res-stat-val" style="color:#1a6b4a">'+ent+'</div><div class="res-stat-lbl">Entregados</div></div><div class="res-stat"><div class="res-stat-val" style="color:#e65100">'+(par.length-ent)+'</div><div class="res-stat-lbl">Pendientes</div></div></div>';
+  h+='<div class="res-stats"><div class="res-stat"><div class="res-stat-val">'+par.length+'</div><div class="res-stat-lbl">Paradas</div></div><div class="res-stat"><div class="res-stat-val" style="color:#1a6b4a">'+entEntregas+'</div><div class="res-stat-lbl">Entregados</div></div><div class="res-stat"><div class="res-stat-val" style="color:#e65100">'+(totalEntregas-entEntregas)+'</div><div class="res-stat-lbl">Pendientes</div></div></div>';
   par.forEach(function(p,i){
-    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+(p.entregado?' done':'')+'">'+( p.entregado?'&#10003;':(i+1))+'</div><div class="res-nombre">'+esc(p.nombre)+'</div>'+(p.entregado?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
-    h+='<div class="res-fields"><span class="rfl">Pedido:</span><span class="rfv">'+(p.pedido||'-')+'</span><span class="rfl">Factura:</span><span class="rfv">'+(p.factura||'-')+'</span><span class="rfl">Hora:</span><span class="rfv">'+(p.horaEntrega||'-')+'</span>';
-    if(p.kmDesde)h+='<span class="rfl">Desde:</span><span class="rfv">'+esc(p.origenDesde)+'</span><span class="rfl">Dist:</span><span class="rfv">'+p.kmDesde+' / '+p.minDesde+'</span>';
-    h+='</div></div>';
+    var entregas=p.entregas||[];
+    var todasOk=entregas.every(function(e){return e.entregado;});
+    var esLibre=p.esLibre||false;
+    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+(todasOk?' done':esLibre?' libre':'')+'">'+(todasOk?'&#10003;':(i+1))+'</div><div class="res-nombre">'+esc(p.nombre)+'</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
+    if(esLibre&&p.motivo)h+='<div style="font-size:10px;color:#ff8800;margin-bottom:4px">&#x1F4CC; '+esc(p.motivo)+'</div>';
+    entregas.forEach(function(e,ei){
+      h+='<div class="res-fields" style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #f0efe9">';
+      if(entregas.length>1)h+='<span class="rfl">Entrega '+(ei+1)+':</span><span class="rfv">'+(e.entregado?'&#10003;':'-')+'</span>';
+      h+='<span class="rfl">Pedido:</span><span class="rfv">'+(e.pedido||'-')+'</span><span class="rfl">Factura:</span><span class="rfv">'+(e.factura||'-')+'</span><span class="rfl">Hora:</span><span class="rfv">'+(e.horaEntrega||'-')+'</span>';
+      h+='</div>';
+    });
+    if(p.kmDesde)h+='<div class="res-fields"><span class="rfl">Desde:</span><span class="rfv">'+esc(p.origenDesde)+'</span><span class="rfl">Dist:</span><span class="rfv">'+p.kmDesde+' / '+p.minDesde+'</span></div>';
+    h+='</div>';
   });
   body.innerHTML=h;
 }
+
 function calcular(){
   if(par.length<2||!map)return;
   document.getElementById('ld').style.display='flex';document.getElementById('cb').disabled=true;clearRmk();
@@ -354,17 +474,12 @@ function calcular(){
     if(st==='OK'){
       procesarRuta(res);
     } else if(st==='ZERO_RESULTS'||st==='NOT_FOUND'){
-      // Try without optimization
       req.optimizeWaypoints=false;
       ds.route(req,function(r2,s2){
         document.getElementById('ld').style.display='none';
         document.getElementById('cb').disabled=false;
-        if(s2==='OK'){
-          procesarRuta(r2);
-        } else {
-          toast('Error al calcular ruta. Verifica las coordenadas de los clientes.');
-          console.error('Directions error:',s2);
-        }
+        if(s2==='OK'){procesarRuta(r2);}
+        else{toast('Error al calcular ruta. Verifica las coordenadas de los clientes.');console.error('Directions error:',s2);}
       });
     } else {
       document.getElementById('ld').style.display='none';
@@ -373,6 +488,7 @@ function calcular(){
     }
   });
 }
+
 function procesarRuta(res){
   document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;
   dr.setDirections(res);
@@ -395,59 +511,73 @@ function procesarRuta(res){
   var b=new google.maps.LatLngBounds();b.extend(ALMACEN);par.forEach(function(p){b.extend({lat:p.lat,lng:p.lng});});map.fitBounds(b);
   guardarEnFirebase();toast('Ruta: '+par.length+' paradas, '+km+' km');
 }
+
 function pines(){
   if(!map)return;clearRmk();bm.forEach(function(m){m.setMap(null);});
   par.forEach(function(p,i){
-    var done=p.entregado;
-    var svg='<svg width="38" height="48" viewBox="0 0 38 48" xmlns="http://www.w3.org/2000/svg"><path d="M19 2C12 2 6 8 6 15c0 10 13 31 13 31S32 25 32 15C32 8 26 2 19 2z" fill="'+(done?'#e8f5ef':'#1a6b4a')+'" stroke="'+(done?'#1a6b4a':'#fff')+'" stroke-width="2"/><text x="19" y="18" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="12" font-weight="800" fill="'+(done?'#1a6b4a':'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
+    var entregas=p.entregas||[];
+    var done=entregas.every(function(e){return e.entregado;});
+    var esLibre=p.esLibre||false;
+    var color=done?'#e8f5ef':esLibre?'#ff8800':'#1a6b4a';
+    var stroke=done?'#1a6b4a':esLibre?'#fff':'#fff';
+    var svg='<svg width="38" height="48" viewBox="0 0 38 48" xmlns="http://www.w3.org/2000/svg"><path d="M19 2C12 2 6 8 6 15c0 10 13 31 13 31S32 25 32 15C32 8 26 2 19 2z" fill="'+color+'" stroke="'+stroke+'" stroke-width="2"/><text x="19" y="18" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="12" font-weight="800" fill="'+(done?'#1a6b4a':'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
     var m=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:map,icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(38,48),anchor:new google.maps.Point(19,48)},zIndex:1000+i});
-    (function(pp,nn){m.addListener('click',function(){iw.setContent('<div style="font-family:Arial;padding:4px"><b>Parada '+nn+'</b><br>'+esc(pp.nombre)+'<br><small>'+pp.id+'</small>'+(pp.entregado?'<br><b style="color:#1a6b4a">Entregado '+pp.horaEntrega+'</b>':'')+'</div>');iw.open(map,m);});})(p,i+1);
+    (function(pp,nn){m.addListener('click',function(){iw.setContent('<div style="font-family:Arial;padding:4px"><b>Parada '+nn+'</b><br>'+esc(pp.nombre)+'<br><small>'+(pp.esLibre?'&#x1F4CC; Parada libre':pp.id)+'</small>'+(done?'<br><b style="color:#1a6b4a">Completado</b>':'')+'</div>');iw.open(map,m);});})(p,i+1);
     rm.push(m);
   });
 }
+
 function clearRmk(){rm.forEach(function(m){m.setMap(null);});rm=[];}
 function clearRuta(){rutaActiva=false;if(dr)dr.setDirections({routes:[]});clearRmk();dibujar();}
 function limpiar(){par=[];clearRuta();ui();document.getElementById('si').value='';document.getElementById('sr').innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar</div>';document.getElementById('sv-d').textContent='-';document.getElementById('sv-t').textContent='-';dibujar();guardarEnFirebase();toast('Ruta limpiada');}
+
 function compartirWhatsApp(){
   var chofer=document.getElementById('chofer-nombre').value||'Repartidor';
   var hoy=new Date(),dias=['Dom','Lun','Mar','Mie','Jue','Vie','Sab'],meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var fecha=dias[hoy.getDay()]+' '+hoy.getDate()+'-'+meses[hoy.getMonth()]+'-'+hoy.getFullYear();
   var km=document.getElementById('sv-d').textContent,tiempo=document.getElementById('sv-t').textContent;
-  var ent=par.filter(function(p){return p.entregado;}).length;
   var nl='\n';
   var msg='*VetReparto*'+nl+'Fecha: '+fecha+nl+'Chofer: *'+chofer+'*'+nl;
   if(km&&km!=='-')msg+='Distancia: '+km+' km / '+tiempo+nl;
   msg+='-------------------'+nl;
-  par.forEach(function(p,i){msg+=(p.entregado?'[OK]':'[  ]')+' '+(i+1)+'. '+p.nombre+(p.pedido?' Ped:'+p.pedido:'')+(p.factura?' FAC:'+p.factura:'')+(p.entregado&&p.horaEntrega?' '+p.horaEntrega:'')+nl;});
-  msg+='-------------------'+nl+par.length+' paradas | '+ent+' entregados';
+  par.forEach(function(p,i){
+    var entregas=p.entregas||[];
+    var todasOk=entregas.every(function(e){return e.entregado;});
+    msg+=(todasOk?'[OK]':'[  ]')+' '+(i+1)+'. '+p.nombre+(p.esLibre?' [LIBRE]':'')+nl;
+    entregas.forEach(function(e){
+      if(e.pedido||e.factura)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;
+    });
+  });
+  var totalE=0,entE=0;
+  par.forEach(function(p){var e=p.entregas||[];totalE+=e.length;entE+=e.filter(function(x){return x.entregado;}).length;});
+  msg+='-------------------'+nl+par.length+' paradas | '+entE+'/'+totalE+' entregas';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
+
 function descargarResumen(){
   var chofer=document.getElementById('chofer-nombre').value||'Repartidor';
   var hoy=new Date(),fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
   var csv='RESUMEN - '+chofer+'\r\nFecha: '+fecha+'\r\n\r\n';
-  csv+='"No.","ID SAP","Cliente","Pedido","Factura","Estado","Hora","Desde","Km","Tiempo"\r\n';
-  par.forEach(function(p,i){csv+='"'+(i+1)+'","'+p.id+'","'+p.nombre+'","'+(p.pedido||'')+'","'+(p.factura||'')+'","'+(p.entregado?'Entregado':'Pendiente')+'","'+(p.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';});
+  csv+='"No.","ID SAP","Cliente","Tipo","Entrega","Pedido","Factura","Estado","Hora","Desde","Km","Tiempo"\r\n';
+  par.forEach(function(p,i){
+    var entregas=p.entregas||[];
+    entregas.forEach(function(e,ei){
+      csv+='"'+(i+1)+'","'+(p.esLibre?'LIBRE':p.id)+'","'+p.nombre+'","'+(p.esLibre?'Libre':'Cliente')+'","'+(entregas.length>1?(ei+1):'1')+'","'+(e.pedido||'')+'","'+(e.factura||'')+'","'+(e.entregado?'Entregado':'Pendiente')+'","'+(e.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
+    });
+  });
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ruta_'+chofer.replace(/\s+/g,'_')+'_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'.csv';a.click();
   toast('Descargado');
 }
+
 function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
 var showingMap=false;
 function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
 function cambiarChofer(val){
   var inp=document.getElementById('chofer-nombre');
-  if(val==='otros'){
-    inp.style.display='block';
-    inp.value='';
-    inp.focus();
-  } else if(val===''){
-    inp.style.display='none';
-    inp.value='';
-  } else {
-    var id=val.toLowerCase();
-    window.location.href=window.location.pathname+'?chofer='+id;
-  }
+  if(val==='otros'){inp.style.display='block';inp.value='';inp.focus();}
+  else if(val===''){inp.style.display='none';inp.value='';}
+  else{window.location.href=window.location.pathname+'?chofer='+val.toLowerCase();}
 }
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 window.initMap=initMap;
