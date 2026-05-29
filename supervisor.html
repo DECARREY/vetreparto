@@ -632,19 +632,23 @@ function nr_buscar(v){
     return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;
   }).slice(0,20);
   if(!r.length){box.innerHTML='<div style="padding:10px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>';return;}
-  var h='';
+  box.innerHTML='';
   r.forEach(function(c){
     var yaAgregado = nrParadas.some(function(p){return p.id===c.id;});
-    var evts = yaAgregado ? '' : ' onmouseover="this.style.background=\'#f7f6f2\'" onmouseout="this.style.background=\'\'" onclick="nr_agregar(\''+c._key+'\')"';
-    var estilo = yaAgregado ? 'opacity:0.4;' : 'cursor:pointer;';
-    h+='<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0efe9;'+estilo+'"'+evts+'>';
-    h+='<div style="width:26px;height:26px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>';
-    h+='<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>';
-    if(!yaAgregado) h+='<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>';
-    else h+='<div style="font-size:11px;color:#7a7870">Ya agregado</div>';
-    h+='</div>';
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0efe9;'+(yaAgregado?'opacity:0.4':'cursor:pointer');
+    if(!yaAgregado){
+      (function(key){
+        div.onmouseover=function(){this.style.background='#f7f6f2';};
+        div.onmouseout=function(){this.style.background='';};
+        div.onclick=function(){nr_agregar(key);};
+      })(c._key);
+    }
+    div.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>'+
+      (yaAgregado?'<div style="font-size:11px;color:#7a7870">Ya agregado</div>':'<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>');
+    box.appendChild(div);
   });
-  box.innerHTML=h;
 }
 
 function nr_agregar(key){
