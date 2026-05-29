@@ -281,7 +281,14 @@ function getColor(cid){
 function renderChoferes(){
   var container = document.getElementById('choferes-container');
   var legend = document.getElementById('legend');
-  var choferes = Object.keys(datos).filter(function(cid){ return datos[cid] && datos[cid].paradas && datos[cid].paradas.length > 0; });
+  var choferes = Object.keys(datos).filter(function(cid){
+    var d = datos[cid];
+    if(!d) return false;
+    // Support both array paradas and object paradas (Firebase arrays)
+    if(Array.isArray(d.paradas)) return d.paradas.length > 0;
+    if(d.paradas && typeof d.paradas === 'object') return Object.keys(d.paradas).length > 0;
+    return false;
+  });
 
   if(!choferes.length){
     container.innerHTML = '<div class="empty-c" style="padding:24px">Sin rutas activas hoy</div>';
@@ -296,7 +303,9 @@ function renderChoferes(){
     var d = datos[cid];
     var color = getColor(cid);
     var nombre = (d && d.choferNombre) || cid.charAt(0).toUpperCase()+cid.slice(1);
-    var paradas = (d && d.paradas) || [];
+    // Support Firebase object arrays and JS arrays
+    var paradasRaw = (d && d.paradas) || [];
+    var paradas = Array.isArray(paradasRaw) ? paradasRaw : Object.values(paradasRaw);
     var ent = paradas.filter(function(p){
       var entregas = p.entregas || [];
       return entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
@@ -351,7 +360,8 @@ function actualizarMapa(){
     if(!d||!d.paradas)return;
     var color = getColor(cid);
     markers[cid] = markers[cid] || [];
-    d.paradas.forEach(function(p,i){
+    var paradasArr = Array.isArray(d.paradas) ? d.paradas : Object.values(d.paradas);
+    paradasArr.forEach(function(p,i){
       var entregas = p.entregas || [];
       var done = entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
       var svg='<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 2C10.4 2 5 7.4 5 14c0 9.5 12 26 12 26S29 23.5 29 14C29 7.4 23.6 2 17 2z" fill="'+(done?'#e8f5ef':color)+'" stroke="'+(done?color:'#fff')+'" stroke-width="2"/><text x="17" y="16" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="'+(done?color:'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
