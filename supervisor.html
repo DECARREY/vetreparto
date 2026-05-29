@@ -154,6 +154,9 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
             </div>
           </div>
           <div class="chofer-paradas" id="paradas-angel"><div class="empty-c">Sin datos aun</div></div>
+          <div style="padding:6px 8px;border-top:1px solid #e4e2da">
+            <button onclick="abrirAgregarParada('angel')" style="width:100%;padding:6px;background:#e8f5ef;color:#1a6b4a;border:1px dashed #b2ddc9;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">+ Agregar parada a Angel</button>
+          </div>
         </div>
         <div class="chofer-card arturo">
           <div class="chofer-header arturo">
@@ -166,6 +169,9 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
             </div>
           </div>
           <div class="chofer-paradas" id="paradas-arturo"><div class="empty-c">Sin datos aun</div></div>
+          <div style="padding:6px 8px;border-top:1px solid #e4e2da">
+            <button onclick="abrirAgregarParada('arturo')" style="width:100%;padding:6px;background:#e6f1fb;color:#0f4a8a;border:1px dashed #c7d8f0;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">+ Agregar parada a Arturo</button>
+          </div>
         </div>
         <div class="sync-row">
           <div class="dot" id="sync-dot2"></div>
@@ -238,6 +244,25 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
       <button class="btn-save" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-parada">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-parada-title">Agregar parada</div>
+      <button class="modal-close" onclick="cerrarAgregarParada()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Buscar cliente</label>
+        <input type="text" id="mp-search" placeholder="Nombre o ID SAP..." oninput="buscarParada(this.value)" autocomplete="off">
+      </div>
+      <div id="mp-results" style="max-height:250px;overflow-y:auto;border:1px solid #e4e2da;border-radius:8px;margin-top:6px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarAgregarParada()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -449,6 +474,64 @@ function showSection(s,e){
   var btn=document.getElementById('map-toggle-btn');
   if(btn) btn.style.display = s==='rutas' ? '' : 'none';
   if(s==='rutas'&&map) setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
+}
+
+var paradaTargetChofer = null;
+
+function abrirAgregarParada(cid){
+  paradaTargetChofer = cid;
+  var nombre = cid==='angel'?'Angel':'Arturo';
+  document.getElementById('modal-parada-title').textContent = 'Agregar parada a '+nombre;
+  document.getElementById('mp-search').value = '';
+  document.getElementById('mp-results').innerHTML = '<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Escribe para buscar</div>';
+  document.getElementById('modal-parada').classList.add('open');
+  setTimeout(function(){document.getElementById('mp-search').focus();},100);
+}
+
+function cerrarAgregarParada(){
+  document.getElementById('modal-parada').classList.remove('open');
+  paradaTargetChofer = null;
+}
+
+function buscarParada(v){
+  var box = document.getElementById('mp-results');
+  if(!v||v.length<2){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Escribe para buscar</div>';return;}
+  var q=v.toLowerCase();
+  var r=todosClientes.filter(function(c){
+    return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;
+  }).slice(0,20);
+  if(!r.length){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>';return;}
+  var h='';
+  r.forEach(function(c){
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0efe9;cursor:pointer" onclick="agregarParadaAChofer(\''+c._key+'\')">';
+    h+='<div style="width:28px;height:28px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>';
+    h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>';
+    h+='<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>';
+    h+='</div>';
+  });
+  box.innerHTML=h;
+}
+
+function agregarParadaAChofer(key){
+  if(!paradaTargetChofer)return;
+  var c=todosClientes.find(function(x){return x._key===key;});
+  if(!c){toast('Cliente no encontrado');return;}
+  var cid=paradaTargetChofer;
+  var d=datos[cid];
+  var paradas=(d&&d.paradas)?d.paradas.slice():[];
+  // Check if already in route
+  if(paradas.some(function(p){return p.id===c.id;})){toast('Ya está en la ruta de '+(cid==='angel'?'Angel':'Arturo'));return;}
+  paradas.push({id:c.id,nombre:c.nombre,dir:c.dir||'',lat:c.lat,lng:c.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+  var hoy=new Date();
+  var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  var update={paradas:paradas,ultimaActualizacion:Date.now()};
+  if(d&&d.choferNombre)update.choferNombre=d.choferNombre;
+  if(d&&d.km)update.km=d.km;
+  if(d&&d.tiempo)update.tiempo=d.tiempo;
+  db.ref('rutas/'+cid+'/'+fecha).set(update).then(function(){
+    toast('Parada agregada a '+(cid==='angel'?'Angel':'Arturo'));
+    cerrarAgregarParada();
+  }).catch(function(e){toast('Error: '+e.message);});
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
