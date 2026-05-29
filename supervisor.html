@@ -18,27 +18,21 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .topbar{height:52px;background:#0f4a8a;display:flex;align-items:center;padding:0 16px;gap:12px;color:#fff;flex-shrink:0}
 .topbar h1{font-size:15px;font-weight:700;flex:1}
 .nav-tabs{display:flex;background:#0d3d73;flex-shrink:0}
-.nav-tab{padding:10px 20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;border-bottom:3px solid transparent;border:none;background:none;font-family:Arial;color:rgba(255,255,255,0.6)}
+.nav-tab{padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;border:none;background:none;font-family:Arial;color:rgba(255,255,255,0.6)}
 .nav-tab.active{color:#fff;border-bottom:3px solid #fff}
 .body{display:flex;flex:1;min-height:0;position:relative}
-
-/* RUTAS PANEL */
-.rutas-panel{width:320px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow:hidden;z-index:10;transition:transform 0.3s ease}
+.rutas-panel{width:320px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow-y:auto;z-index:10;transition:transform 0.3s ease}
 .panel-header{padding:12px 16px;border-bottom:1px solid #e4e2da;background:#f7f6f2;flex-shrink:0}
 .panel-title{font-size:14px;font-weight:700}
 .panel-sub{font-size:11px;color:#7a7870;margin-top:2px}
-.chofer-card{margin:8px;border-radius:10px;border:2px solid;overflow:hidden;flex-shrink:0}
-.chofer-card.angel{border-color:#1a6b4a}
-.chofer-card.arturo{border-color:#0f4a8a}
-.chofer-header{padding:10px 12px;display:flex;align-items:center;gap:10px}
-.chofer-header.angel{background:#e8f5ef}
-.chofer-header.arturo{background:#e6f1fb}
+.chofer-card{margin:8px;border-radius:10px;border:2px solid #e4e2da;overflow:hidden}
+.chofer-header{padding:10px 12px;display:flex;align-items:center;gap:10px;background:#f7f6f2}
 .chofer-nombre{font-size:13px;font-weight:700;flex:1}
 .chofer-stats{display:flex;gap:10px}
 .cstat{text-align:center}
 .cstat-val{font-size:16px;font-weight:800}
 .cstat-lbl{font-size:9px;color:#7a7870}
-.chofer-paradas{max-height:160px;overflow-y:auto}
+.chofer-paradas{max-height:180px;overflow-y:auto}
 .parada-row{display:flex;align-items:center;gap:8px;padding:7px 12px;border-top:1px solid #f0efe9;font-size:12px}
 .pnum-s{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
 .pnum-s.ok{background:#e8f5ef;color:#1a6b4a}
@@ -49,22 +43,17 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .sync-row{display:flex;align-items:center;gap:6px;padding:8px 16px;border-top:1px solid #e4e2da;flex-shrink:0;background:#f7f6f2;font-size:11px;color:#7a7870;margin-top:auto}
 .dot{width:7px;height:7px;border-radius:50%;background:#f87171;transition:background 0.5s;flex-shrink:0}
 .dot.on{background:#4ade80}
-
-/* MAP */
 .mapwrap{flex:1;position:relative}
 #map{position:absolute;top:0;left:0;right:0;bottom:0}
-.legend{position:absolute;bottom:20px;right:20px;background:#fff;border:1px solid #e4e2da;border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.legend{position:absolute;bottom:20px;right:20px;background:#fff;border:1px solid #e4e2da;border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto}
 .leg-item{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .leg-item:last-child{margin-bottom:0}
 .leg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-
-/* CLIENTES PANEL */
 .clientes-panel{display:flex;flex:1;min-height:0;flex-direction:column}
 .cp-toolbar{padding:12px 16px;border-bottom:1px solid #e4e2da;display:flex;align-items:center;gap:10px;flex-shrink:0;background:#f7f6f2}
 .cp-toolbar input{flex:1;padding:8px 12px;border:1px solid #e4e2da;border-radius:8px;font-size:13px;outline:none}
 .cp-toolbar input:focus{border-color:#0f4a8a}
 .btn-add{background:#0f4a8a;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap}
-.btn-add:hover{background:#0c3d73}
 .cp-count{font-size:12px;color:#7a7870;white-space:nowrap}
 .cp-list{flex:1;overflow-y:auto;min-height:0}
 .cp-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0efe9}
@@ -78,8 +67,6 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .btn-edit{background:#f0f4ff;color:#0f4a8a;border:1px solid #c7d8f0;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:Arial}
 .btn-del{background:#fff0f0;color:#dc2626;border:1px solid #fcc;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:Arial}
 .cp-empty{padding:40px;text-align:center;color:#7a7870;font-size:13px}
-
-/* MODAL */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
@@ -97,17 +84,10 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .modal-footer{padding:14px 20px;border-top:1px solid #e4e2da;display:flex;gap:8px;justify-content:flex-end}
 .btn-cancel{background:#f0efe9;color:#7a7870;border:1px solid #e4e2da;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:Arial}
 .btn-save{background:#0f4a8a;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial}
-.btn-save:hover{background:#0c3d73}
-
-/* TOAST */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#1c1c1a;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:2000;transition:transform 0.3s;pointer-events:none;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
-
-/* TABS CONTENT */
 .tab-content{display:none;flex:1;min-height:0}
 .tab-content.active{display:flex}
-
-/* MOBILE MAP TOGGLE */
 .map-toggle{display:none;position:fixed;bottom:14px;right:14px;z-index:200;background:#0f4a8a;color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:12px;font-weight:700;font-family:Arial;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
 @media(max-width:768px){
   .rutas-panel{width:100%;position:absolute;top:0;left:0;bottom:0;right:0}
@@ -135,61 +115,23 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <button class="nav-tab" onclick="showSection('clientes',event)">Clientes (<span id="total-clientes">...</span>)</button>
   </div>
   <div class="body">
-
-    <!-- SECCION RUTAS -->
     <div class="tab-content active" id="section-rutas">
       <div class="rutas-panel" id="rutas-panel">
         <div class="panel-header">
           <div class="panel-title">Rutas del dia en tiempo real</div>
           <div class="panel-sub" id="fecha-hoy"></div>
         </div>
-        <div class="chofer-card angel">
-          <div class="chofer-header angel">
-            <div style="width:10px;height:10px;border-radius:50%;background:#1a6b4a;flex-shrink:0"></div>
-            <div class="chofer-nombre" id="nombre-angel">Angel</div>
-            <div class="chofer-stats">
-              <div class="cstat"><div class="cstat-val" id="tot-angel" style="color:#1a6b4a">0</div><div class="cstat-lbl">Paradas</div></div>
-              <div class="cstat"><div class="cstat-val" id="ent-angel" style="color:#1a6b4a">0</div><div class="cstat-lbl">Entregados</div></div>
-              <div class="cstat"><div class="cstat-val" id="km-angel" style="color:#1a6b4a">-</div><div class="cstat-lbl">Km</div></div>
-            </div>
-          </div>
-          <div class="chofer-paradas" id="paradas-angel"><div class="empty-c">Sin datos aun</div></div>
-          <div style="padding:6px 8px;border-top:1px solid #e4e2da">
-            <button onclick="abrirAgregarParada('angel')" style="width:100%;padding:6px;background:#e8f5ef;color:#1a6b4a;border:1px dashed #b2ddc9;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">+ Agregar parada a Angel</button>
-          </div>
-        </div>
-        <div class="chofer-card arturo">
-          <div class="chofer-header arturo">
-            <div style="width:10px;height:10px;border-radius:50%;background:#0f4a8a;flex-shrink:0"></div>
-            <div class="chofer-nombre" id="nombre-arturo">Arturo</div>
-            <div class="chofer-stats">
-              <div class="cstat"><div class="cstat-val" id="tot-arturo" style="color:#0f4a8a">0</div><div class="cstat-lbl">Paradas</div></div>
-              <div class="cstat"><div class="cstat-val" id="ent-arturo" style="color:#0f4a8a">0</div><div class="cstat-lbl">Entregados</div></div>
-              <div class="cstat"><div class="cstat-val" id="km-arturo" style="color:#0f4a8a">-</div><div class="cstat-lbl">Km</div></div>
-            </div>
-          </div>
-          <div class="chofer-paradas" id="paradas-arturo"><div class="empty-c">Sin datos aun</div></div>
-          <div style="padding:6px 8px;border-top:1px solid #e4e2da">
-            <button onclick="abrirAgregarParada('arturo')" style="width:100%;padding:6px;background:#e6f1fb;color:#0f4a8a;border:1px dashed #c7d8f0;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">+ Agregar parada a Arturo</button>
-          </div>
-        </div>
-        <div class="sync-row">
+        <div id="choferes-container"></div>
+        <div class="sync-row" style="margin-top:0">
           <div class="dot" id="sync-dot2"></div>
           <span id="sync-label2">Conectando...</span>
         </div>
       </div>
       <div class="mapwrap">
         <div id="map"></div>
-        <div class="legend">
-          <div class="leg-item"><div class="leg-dot" style="background:#1a6b4a"></div><span>Angel</span></div>
-          <div class="leg-item"><div class="leg-dot" style="background:#0f4a8a"></div><span>Arturo</span></div>
-          <div class="leg-item"><div class="leg-dot" style="border:2px solid #ccc;background:#fff"></div><span>Pendiente</span></div>
-          <div class="leg-item"><div class="leg-dot" style="background:#e8f5ef;border:2px solid #1a6b4a"></div><span>Entregado</span></div>
-        </div>
+        <div class="legend" id="legend"></div>
       </div>
     </div>
-
-    <!-- SECCION CLIENTES -->
     <div class="tab-content" id="section-clientes">
       <div class="clientes-panel">
         <div class="cp-toolbar">
@@ -200,13 +142,12 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
         <div class="cp-list" id="cp-list"><div class="cp-empty">Cargando clientes...</div></div>
       </div>
     </div>
-
   </div>
 </div>
 
 <button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">Ver mapa</button>
 
-<!-- MODAL AGREGAR/EDITAR -->
+<!-- Modal clientes -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
@@ -215,31 +156,14 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-key">
-      <div class="form-group">
-        <label>ID SAP *</label>
-        <input type="text" id="f-id" placeholder="ej: MTY1900">
-      </div>
-      <div class="form-group">
-        <label>Nombre comercial *</label>
-        <input type="text" id="f-nombre" placeholder="ej: Veterinaria San Pedro">
-      </div>
-      <div class="form-group">
-        <label>Direccion de entrega</label>
-        <input type="text" id="f-dir" placeholder="ej: Av. Garza Sada 2501, Monterrey">
-      </div>
+      <div class="form-group"><label>ID SAP *</label><input type="text" id="f-id" placeholder="ej: MTY1900"></div>
+      <div class="form-group"><label>Nombre comercial *</label><input type="text" id="f-nombre" placeholder="ej: Veterinaria San Pedro"></div>
+      <div class="form-group"><label>Direccion de entrega</label><input type="text" id="f-dir" placeholder="ej: Av. Garza Sada 2501, Monterrey"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Latitud *</label>
-          <input type="number" id="f-lat" placeholder="ej: 25.6500" step="0.0000001">
-        </div>
-        <div class="form-group">
-          <label>Longitud *</label>
-          <input type="number" id="f-lng" placeholder="ej: -100.3200" step="0.0000001">
-        </div>
+        <div class="form-group"><label>Latitud *</label><input type="number" id="f-lat" placeholder="ej: 25.6500" step="0.0000001"></div>
+        <div class="form-group"><label>Longitud *</label><input type="number" id="f-lng" placeholder="ej: -100.3200" step="0.0000001"></div>
       </div>
-      <div class="form-hint">
-        Para obtener coordenadas: abre <a href="https://maps.google.com" target="_blank">Google Maps</a>, busca la direccion, haz clic derecho sobre el punto exacto y copia las coordenadas.
-      </div>
+      <div class="form-hint">Para obtener coordenadas: abre <a href="https://maps.google.com" target="_blank">Google Maps</a>, busca la direccion, haz clic derecho y copia las coordenadas.</div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
@@ -248,6 +172,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
   </div>
 </div>
 
+<!-- Modal agregar parada -->
 <div class="modal-overlay" id="modal-parada">
   <div class="modal">
     <div class="modal-header">
@@ -259,7 +184,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
         <label>Buscar cliente</label>
         <input type="text" id="mp-search" placeholder="Nombre o ID SAP..." oninput="buscarParada(this.value)" autocomplete="off">
       </div>
-      <div id="mp-results" style="max-height:250px;overflow-y:auto;border:1px solid #e4e2da;border-radius:8px;margin-top:6px"></div>
+      <div id="mp-results" style="max-height:280px;overflow-y:auto;border:1px solid #e4e2da;border-radius:8px;margin-top:6px"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarAgregarParada()">Cancelar</button>
@@ -270,49 +195,66 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 <div class="toast" id="toast"></div>
 
 <script>
-var COLORES = {angel:'#1a6b4a', arturo:'#0f4a8a'};
-var datos = {angel:null, arturo:null};
-var markers = {angel:[], arturo:[]};
+// Paleta de colores para choferes dinámicos
+var PALETA = ['#1a6b4a','#0f4a8a','#9333ea','#ea580c','#0891b2','#be123c','#65a30d','#b45309'];
+var datos = {};
+var markers = {};
+var colores = {};
 var map;
 var todosClientes = [];
 var clientesFiltrados = [];
 var showingMap = false;
+var paradaTargetChofer = null;
+var fechaHoy = '';
 
+// Fecha de hoy
+(function(){
+  var hoy = new Date();
+  fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  var dias=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+  var meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('fecha-hoy').textContent=dias[hoy.getDay()]+' '+hoy.getDate()+' de '+meses[hoy.getMonth()]+' '+hoy.getFullYear();
+})();
+
+// Conexión
 db.ref('.info/connected').on('value', function(snap){
   var ok = snap.val();
   ['sync-dot','sync-dot2'].forEach(function(id){
-    var d = document.getElementById(id);
-    if(d) d.classList.toggle('on', ok);
+    var d=document.getElementById(id);
+    if(d)d.classList.toggle('on',ok);
   });
   ['sync-label','sync-label2'].forEach(function(id){
-    var l = document.getElementById(id);
-    if(l) l.textContent = ok ? 'Conectado - tiempo real' : 'Sin conexion';
+    var l=document.getElementById(id);
+    if(l)l.textContent=ok?'Conectado - tiempo real':'Sin conexion';
   });
 });
 
-['angel','arturo'].forEach(function(cid){
-  db.ref('rutas/'+cid).on('value', function(snap){
-    var val = snap.val();
-    // Support both old format (direct) and new format (by date)
-    if(val && !val.paradas){
-      // New format: find today's date key
-      var hoy = new Date();
-      var fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-      datos[cid] = val[fechaHoy] || null;
-    } else {
-      datos[cid] = val;
-    }
-    actualizarUI(cid);
-    if(map) actualizarMapa();
-  });
+// Escuchar TODAS las rutas del día dinámicamente
+db.ref('rutas').on('value', function(snap){
+  var val = snap.val();
+  datos = {};
+  if(val){
+    Object.keys(val).forEach(function(cid){
+      var rutaChofer = val[cid];
+      // Soporte formato nuevo (con fecha) y viejo (directo)
+      if(rutaChofer && !rutaChofer.paradas){
+        datos[cid] = rutaChofer[fechaHoy] || null;
+      } else {
+        datos[cid] = rutaChofer;
+      }
+    });
+  }
+  renderChoferes();
+  if(map) actualizarMapa();
 });
 
+// Clientes
 db.ref('clientes').on('value', function(snap){
   var data = snap.val();
   todosClientes = [];
   if(data){
     Object.keys(data).forEach(function(key){
-      todosClientes.push(Object.assign({_key: key}, data[key]));
+      todosClientes.push(Object.assign({_key:key}, data[key]));
     });
     todosClientes.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
   }
@@ -320,125 +262,90 @@ db.ref('clientes').on('value', function(snap){
   filtrarClientes(document.getElementById('cp-search').value);
 });
 
-function filtrarClientes(q){
-  var query = (q||'').toLowerCase().trim();
-  if(!query){
-    clientesFiltrados = todosClientes.slice();
-  } else {
-    clientesFiltrados = todosClientes.filter(function(c){
-      return c.nombre.toLowerCase().indexOf(query)>=0 ||
-             c.id.toLowerCase().indexOf(query)>=0 ||
-             (c.dir||'').toLowerCase().indexOf(query)>=0;
-    });
+function getColor(cid){
+  if(!colores[cid]){
+    var idx = Object.keys(colores).length % PALETA.length;
+    colores[cid] = PALETA[idx];
   }
-  document.getElementById('cp-count').textContent = clientesFiltrados.length + ' de ' + todosClientes.length;
-  renderClientes();
+  return colores[cid];
 }
 
-function renderClientes(){
-  var list = document.getElementById('cp-list');
-  if(!clientesFiltrados.length){
-    list.innerHTML = '<div class="cp-empty">' + (todosClientes.length ? 'Sin resultados' : 'No hay clientes aun. Agrega el primero.') + '</div>';
+function renderChoferes(){
+  var container = document.getElementById('choferes-container');
+  var legend = document.getElementById('legend');
+  var choferes = Object.keys(datos).filter(function(cid){ return datos[cid] && datos[cid].paradas && datos[cid].paradas.length > 0; });
+
+  if(!choferes.length){
+    container.innerHTML = '<div class="empty-c" style="padding:24px">Sin rutas activas hoy</div>';
+    legend.innerHTML = '';
     return;
   }
-  var h = '';
-  clientesFiltrados.forEach(function(c){
-    var letra = (c.nombre||'?').charAt(0).toUpperCase();
-    h += '<div class="cp-item">' +
-      '<div class="cp-letra">'+letra+'</div>' +
-      '<div class="cp-info">' +
-        '<div class="cp-nombre">'+esc(c.nombre)+'</div>' +
-        '<div class="cp-id">'+c.id+'</div>' +
-        '<div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div>' +
-      '</div>' +
-      '<div class="cp-actions">' +
-        '<button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button>' +
-        '<button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button>' +
-      '</div>' +
-    '</div>';
+
+  var html = '';
+  var legendHtml = '';
+
+  choferes.forEach(function(cid){
+    var d = datos[cid];
+    var color = getColor(cid);
+    var nombre = (d && d.choferNombre) || cid.charAt(0).toUpperCase()+cid.slice(1);
+    var paradas = (d && d.paradas) || [];
+    var ent = paradas.filter(function(p){
+      var entregas = p.entregas || [];
+      return entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
+    }).length;
+
+    html += '<div class="chofer-card" style="border-color:'+color+'">';
+    html += '<div class="chofer-header" style="background:'+color+'22">';
+    html += '<div style="width:10px;height:10px;border-radius:50%;background:'+color+';flex-shrink:0"></div>';
+    html += '<div class="chofer-nombre">'+esc(nombre)+'</div>';
+    html += '<div class="chofer-stats">';
+    html += '<div class="cstat"><div class="cstat-val" style="color:'+color+'">'+paradas.length+'</div><div class="cstat-lbl">Paradas</div></div>';
+    html += '<div class="cstat"><div class="cstat-val" style="color:'+color+'">'+ent+'</div><div class="cstat-lbl">Entregados</div></div>';
+    html += '<div class="cstat"><div class="cstat-val" style="color:'+color+'">'+(d.km||'-')+'</div><div class="cstat-lbl">Km</div></div>';
+    html += '</div></div>';
+    html += '<div class="chofer-paradas">';
+    if(!paradas.length){
+      html += '<div class="empty-c">Sin paradas</div>';
+    } else {
+      paradas.forEach(function(p,i){
+        var entregas = p.entregas || [];
+        var ok = entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
+        var hora = entregas.length && entregas[entregas.length-1].horaEntrega ? entregas[entregas.length-1].horaEntrega : (p.horaEntrega||'');
+        html += '<div class="parada-row">';
+        html += '<div class="pnum-s '+(ok?'ok':'pend')+'">'+(ok?'&#10003;':(i+1))+'</div>';
+        html += '<div class="pnm-s">'+esc(p.nombre)+'</div>';
+        if(hora) html += '<div class="phora">'+hora+'</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+    html += '<div style="padding:6px 8px;border-top:1px solid #e4e2da">';
+    html += '<button onclick="abrirAgregarParada(\''+cid+'\')" style="width:100%;padding:6px;background:'+color+'22;color:'+color+';border:1px dashed '+color+'88;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">+ Agregar parada a '+esc(nombre)+'</button>';
+    html += '</div></div>';
+
+    legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:'+color+'"></div><span>'+esc(nombre)+'</span></div>';
   });
-  list.innerHTML = h;
-}
 
-function abrirModal(key, cliente){
-  document.getElementById('modal-title').textContent = key ? 'Editar cliente' : 'Nuevo cliente';
-  document.getElementById('edit-key').value = key || '';
-  document.getElementById('f-id').value = (cliente && cliente.id) || '';
-  document.getElementById('f-nombre').value = (cliente && cliente.nombre) || '';
-  document.getElementById('f-dir').value = (cliente && cliente.dir) || '';
-  document.getElementById('f-lat').value = (cliente && cliente.lat) || '';
-  document.getElementById('f-lng').value = (cliente && cliente.lng) || '';
-  document.getElementById('f-id').disabled = !!key;
-  document.getElementById('modal').classList.add('open');
-  setTimeout(function(){ document.getElementById('f-id').disabled ? document.getElementById('f-nombre').focus() : document.getElementById('f-id').focus(); }, 100);
-}
+  legendHtml += '<div class="leg-item"><div class="leg-dot" style="border:2px solid #ccc;background:#fff"></div><span>Pendiente</span></div>';
+  legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:#e8f5ef;border:2px solid #1a6b4a"></div><span>Entregado</span></div>';
 
-function cerrarModal(){
-  document.getElementById('modal').classList.remove('open');
-}
-
-function editarCliente(key){
-  var c = todosClientes.find(function(x){ return x._key === key; });
-  if(c) abrirModal(key, c);
-}
-
-function guardarCliente(){
-  var key = document.getElementById('edit-key').value;
-  var id = document.getElementById('f-id').value.trim().toUpperCase();
-  var nombre = document.getElementById('f-nombre').value.trim();
-  var dir = document.getElementById('f-dir').value.trim();
-  var lat = parseFloat(document.getElementById('f-lat').value);
-  var lng = parseFloat(document.getElementById('f-lng').value);
-  if(!id || !nombre){ toast('ID y Nombre son obligatorios'); return; }
-  if(isNaN(lat) || isNaN(lng)){ toast('Coordenadas invalidas'); return; }
-  if(lng > 0) lng = -lng;
-  var data = {id:id, nombre:nombre, dir:dir, lat:lat, lng:lng};
-  if(key){
-    db.ref('clientes/'+key).update(data).then(function(){ toast('Cliente actualizado'); cerrarModal(); }).catch(function(e){ toast('Error: '+e.message); });
-  } else {
-    var exists = todosClientes.find(function(c){ return c.id === id; });
-    if(exists){ toast('Ya existe un cliente con ese ID'); return; }
-    db.ref('clientes').push(data).then(function(){ toast('Cliente agregado'); cerrarModal(); }).catch(function(e){ toast('Error: '+e.message); });
-  }
-}
-
-function eliminarCliente(key, nombre){
-  if(!confirm('Eliminar "' + nombre + '"?\nEsta accion no se puede deshacer.')){ return; }
-  db.ref('clientes/'+key).remove().then(function(){ toast('Cliente eliminado'); }).catch(function(e){ toast('Error: '+e.message); });
-}
-
-function actualizarUI(cid){
-  var d = datos[cid];
-  if(!d||!d.paradas||!d.paradas.length){
-    document.getElementById('tot-'+cid).textContent='0';
-    document.getElementById('ent-'+cid).textContent='0';
-    document.getElementById('km-'+cid).textContent='-';
-    document.getElementById('paradas-'+cid).innerHTML='<div class="empty-c">Sin datos aun</div>';
-    return;
-  }
-  var nombre = d.choferNombre || (cid==='angel'?'Angel':'Arturo');
-  document.getElementById('nombre-'+cid).textContent = nombre;
-  var ent = d.paradas.filter(function(p){return p.entregado;}).length;
-  document.getElementById('tot-'+cid).textContent = d.paradas.length;
-  document.getElementById('ent-'+cid).textContent = ent;
-  document.getElementById('km-'+cid).textContent = d.km||'-';
-  var h='';
-  d.paradas.forEach(function(p,i){
-    h+='<div class="parada-row"><div class="pnum-s '+(p.entregado?'ok':'pend')+'">'+(p.entregado?'&#10003;':(i+1))+'</div>';
-    h+='<div class="pnm-s">'+p.nombre+'</div>';
-    if(p.horaEntrega)h+='<div class="phora">'+p.horaEntrega+'</div>';
-    h+='</div>';
-  });
-  document.getElementById('paradas-'+cid).innerHTML=h;
+  container.innerHTML = html;
+  legend.innerHTML = legendHtml;
 }
 
 function actualizarMapa(){
-  ['angel','arturo'].forEach(function(cid){
-    markers[cid].forEach(function(m){m.setMap(null);}); markers[cid]=[];
-    var d=datos[cid]; if(!d||!d.paradas)return;
-    var color=COLORES[cid];
+  Object.keys(markers).forEach(function(cid){
+    markers[cid].forEach(function(m){m.setMap(null);});
+    markers[cid] = [];
+  });
+  Object.keys(datos).forEach(function(cid){
+    var d = datos[cid];
+    if(!d||!d.paradas)return;
+    var color = getColor(cid);
+    markers[cid] = markers[cid] || [];
     d.paradas.forEach(function(p,i){
-      var done=p.entregado;
+      var entregas = p.entregas || [];
+      var done = entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
       var svg='<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 2C10.4 2 5 7.4 5 14c0 9.5 12 26 12 26S29 23.5 29 14C29 7.4 23.6 2 17 2z" fill="'+(done?'#e8f5ef':color)+'" stroke="'+(done?color:'#fff')+'" stroke-width="2"/><text x="17" y="16" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="'+(done?color:'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
       var m=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:map,icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(34,42),anchor:new google.maps.Point(17,42)},title:(i+1)+'. '+p.nombre,zIndex:done?10:100+i});
       markers[cid].push(m);
@@ -452,35 +359,11 @@ function initMap(){
   actualizarMapa();
 }
 
-function toggleMap(){
-  showingMap=!showingMap;
-  var panel=document.getElementById('rutas-panel');
-  var btn=document.getElementById('map-toggle-btn');
-  if(showingMap){
-    panel.classList.add('map-view');
-    btn.textContent='Ver paradas';
-  } else {
-    panel.classList.remove('map-view');
-    btn.textContent='Ver mapa';
-  }
-  if(showingMap&&map) setTimeout(function(){google.maps.event.trigger(map,'resize');},350);
-}
-
-function showSection(s,e){
-  document.querySelectorAll('.tab-content').forEach(function(x){x.classList.remove('active');});
-  document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
-  document.getElementById('section-'+s).classList.add('active');
-  if(e&&e.target) e.target.classList.add('active');
-  var btn=document.getElementById('map-toggle-btn');
-  if(btn) btn.style.display = s==='rutas' ? '' : 'none';
-  if(s==='rutas'&&map) setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
-}
-
-var paradaTargetChofer = null;
-
+// Agregar parada desde supervisor
 function abrirAgregarParada(cid){
   paradaTargetChofer = cid;
-  var nombre = cid==='angel'?'Angel':'Arturo';
+  var d = datos[cid];
+  var nombre = (d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
   document.getElementById('modal-parada-title').textContent = 'Agregar parada a '+nombre;
   document.getElementById('mp-search').value = '';
   document.getElementById('mp-results').innerHTML = '<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Escribe para buscar</div>';
@@ -494,20 +377,17 @@ function cerrarAgregarParada(){
 }
 
 function buscarParada(v){
-  var box = document.getElementById('mp-results');
+  var box=document.getElementById('mp-results');
   if(!v||v.length<2){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Escribe para buscar</div>';return;}
   var q=v.toLowerCase();
-  var r=todosClientes.filter(function(c){
-    return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;
-  }).slice(0,20);
+  var r=todosClientes.filter(function(c){return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;}).slice(0,20);
   if(!r.length){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>';return;}
   var h='';
   r.forEach(function(c){
-    h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0efe9;cursor:pointer" onclick="agregarParadaAChofer(\''+c._key+'\')">';
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0efe9;cursor:pointer;transition:background 0.1s" onmouseover="this.style.background=\'#f7f6f2\'" onmouseout="this.style.background=\'\'" onclick="agregarParadaAChofer(\''+c._key+'\')">';
     h+='<div style="width:28px;height:28px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>';
     h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>';
-    h+='<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>';
-    h+='</div>';
+    h+='<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div></div>';
   });
   box.innerHTML=h;
 }
@@ -519,78 +399,142 @@ function agregarParadaAChofer(key){
   var cid=paradaTargetChofer;
   var d=datos[cid];
   var paradas=(d&&d.paradas)?d.paradas.slice():[];
-  // Check if already in route
-  if(paradas.some(function(p){return p.id===c.id;})){toast('Ya está en la ruta de '+(cid==='angel'?'Angel':'Arturo'));return;}
+  if(paradas.some(function(p){return p.id===c.id;})){
+    var nombre=(d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
+    toast('Ya está en la ruta de '+nombre);return;
+  }
   paradas.push({id:c.id,nombre:c.nombre,dir:c.dir||'',lat:c.lat,lng:c.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
-  var hoy=new Date();
-  var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   var update={paradas:paradas,ultimaActualizacion:Date.now()};
   if(d&&d.choferNombre)update.choferNombre=d.choferNombre;
   if(d&&d.km)update.km=d.km;
   if(d&&d.tiempo)update.tiempo=d.tiempo;
-  db.ref('rutas/'+cid+'/'+fecha).set(update).then(function(){
-    toast('Parada agregada a '+(cid==='angel'?'Angel':'Arturo'));
+  db.ref('rutas/'+cid+'/'+fechaHoy).set(update).then(function(){
+    var nombre=(d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
+    toast('Parada agregada a '+nombre);
     cerrarAgregarParada();
   }).catch(function(e){toast('Error: '+e.message);});
 }
 
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+// Clientes CRUD
+function filtrarClientes(q){
+  var query=(q||'').toLowerCase().trim();
+  clientesFiltrados=query?todosClientes.filter(function(c){return c.nombre.toLowerCase().indexOf(query)>=0||c.id.toLowerCase().indexOf(query)>=0||(c.dir||'').toLowerCase().indexOf(query)>=0;}):todosClientes.slice();
+  document.getElementById('cp-count').textContent=clientesFiltrados.length+' de '+todosClientes.length;
+  renderClientes();
+}
+
+function renderClientes(){
+  var list=document.getElementById('cp-list');
+  if(!clientesFiltrados.length){list.innerHTML='<div class="cp-empty">'+(todosClientes.length?'Sin resultados':'No hay clientes. Agrega el primero.')+'</div>';return;}
+  var h='';
+  clientesFiltrados.forEach(function(c){
+    h+='<div class="cp-item"><div class="cp-letra">'+esc(c.nombre.charAt(0).toUpperCase())+'</div><div class="cp-info"><div class="cp-nombre">'+esc(c.nombre)+'</div><div class="cp-id">'+c.id+'</div><div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div></div><div class="cp-actions"><button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button><button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button></div></div>';
+  });
+  list.innerHTML=h;
+}
+
+function abrirModal(key,cliente){
+  document.getElementById('modal-title').textContent=key?'Editar cliente':'Nuevo cliente';
+  document.getElementById('edit-key').value=key||'';
+  document.getElementById('f-id').value=(cliente&&cliente.id)||'';
+  document.getElementById('f-nombre').value=(cliente&&cliente.nombre)||'';
+  document.getElementById('f-dir').value=(cliente&&cliente.dir)||'';
+  document.getElementById('f-lat').value=(cliente&&cliente.lat)||'';
+  document.getElementById('f-lng').value=(cliente&&cliente.lng)||'';
+  document.getElementById('f-id').disabled=!!key;
+  document.getElementById('modal').classList.add('open');
+  setTimeout(function(){document.getElementById('f-id').disabled?document.getElementById('f-nombre').focus():document.getElementById('f-id').focus();},100);
+}
+function cerrarModal(){document.getElementById('modal').classList.remove('open');}
+function editarCliente(key){var c=todosClientes.find(function(x){return x._key===key;});if(c)abrirModal(key,c);}
+function guardarCliente(){
+  var key=document.getElementById('edit-key').value;
+  var id=document.getElementById('f-id').value.trim().toUpperCase();
+  var nombre=document.getElementById('f-nombre').value.trim();
+  var dir=document.getElementById('f-dir').value.trim();
+  var lat=parseFloat(document.getElementById('f-lat').value);
+  var lng=parseFloat(document.getElementById('f-lng').value);
+  if(!id||!nombre){toast('ID y Nombre son obligatorios');return;}
+  if(isNaN(lat)||isNaN(lng)){toast('Coordenadas invalidas');return;}
+  if(lng>0)lng=-lng;
+  var data={id:id,nombre:nombre,dir:dir,lat:lat,lng:lng};
+  if(key){
+    db.ref('clientes/'+key).update(data).then(function(){toast('Cliente actualizado');cerrarModal();}).catch(function(e){toast('Error: '+e.message);});
+  } else {
+    if(todosClientes.find(function(c){return c.id===id;})){toast('Ya existe un cliente con ese ID');return;}
+    db.ref('clientes').push(data).then(function(){toast('Cliente agregado');cerrarModal();}).catch(function(e){toast('Error: '+e.message);});
+  }
+}
+function eliminarCliente(key,nombre){
+  if(!confirm('Eliminar "'+nombre+'"?\nEsta accion no se puede deshacer.')){return;}
+  db.ref('clientes/'+key).remove().then(function(){toast('Cliente eliminado');}).catch(function(e){toast('Error: '+e.message);});
+}
 
 function limpiarDia(){
-  if(!confirm('Limpiar las rutas de Angel y Arturo?\nEsta accion borra todos los datos del dia actual.')){return;}
-  db.ref('rutas/angel').remove().then(function(){
-    return db.ref('rutas/arturo').remove();
-  }).then(function(){
-    datos.angel=null; datos.arturo=null;
-    actualizarUI('angel'); actualizarUI('arturo');
-    if(map) actualizarMapa();
-    toast('Dia limpiado correctamente');
-  }).catch(function(e){ toast('Error: '+e.message); });
+  var choferes=Object.keys(datos);
+  if(!choferes.length){toast('No hay rutas activas');return;}
+  if(!confirm('Limpiar todas las rutas del dia?\nEsta accion no se puede deshacer.')){return;}
+  var promises=choferes.map(function(cid){return db.ref('rutas/'+cid+'/'+fechaHoy).remove();});
+  Promise.all(promises).then(function(){
+    datos={};colores={};
+    renderChoferes();
+    if(map)actualizarMapa();
+    toast('Dia limpiado');
+  }).catch(function(e){toast('Error: '+e.message);});
 }
 
 function descargarDia(){
   var hoy=new Date();
   var fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
   var wb=XLSX.utils.book_new();
-
-  ['angel','arturo'].forEach(function(cid){
+  var choferes=Object.keys(datos).filter(function(cid){return datos[cid]&&datos[cid].paradas;});
+  if(!choferes.length){toast('Sin datos para descargar');return;}
+  choferes.forEach(function(cid){
     var d=datos[cid];
-    var nombre=(d&&d.choferNombre)||(cid==='angel'?'Angel':'Arturo');
+    var nombre=(d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
     var paradas=(d&&d.paradas)||[];
-    var ent=paradas.filter(function(p){return p.entregado;}).length;
-    var km=(d&&d.km)||'-';
-    var tiempo=(d&&d.tiempo)||'-';
-
     var rows=[];
     rows.push(['RESUMEN DEL DIA - VetReparto']);
-    rows.push(['Fecha:', fecha]);
-    rows.push(['Chofer:', nombre]);
-    rows.push(['Total paradas:', paradas.length, 'Entregados:', ent, 'Pendientes:', paradas.length-ent]);
-    rows.push(['Distancia:', km+' km', 'Tiempo:', tiempo]);
+    rows.push(['Fecha:',fecha,'Chofer:',nombre]);
+    rows.push(['Distancia:',((d&&d.km)||'-')+' km','Tiempo:',(d&&d.tiempo)||'-']);
     rows.push([]);
-    if(paradas.length){
-      rows.push(['No.','ID SAP','Cliente','No. Pedido','No. Factura','Estado','Hora entrega','Desde','Km tramo','Tiempo tramo']);
-      paradas.forEach(function(p,i){
-        rows.push([i+1,p.id||'',p.nombre||'',p.pedido||'',p.factura||'',p.entregado?'Entregado':'Pendiente',p.horaEntrega||'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
+    rows.push(['No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Desde','Km tramo','Tiempo tramo']);
+    paradas.forEach(function(p,i){
+      var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+      entregas.forEach(function(e,ei){
+        rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,p.esLibre?'Libre':'Cliente',ei+1,e.pedido||'',e.factura||'',e.entregado?'Entregado':'Pendiente',e.horaEntrega||'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
       });
-    } else {
-      rows.push(['Sin paradas registradas']);
-    }
-
+    });
     var ws=XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:12},{wch:12},{wch:12},{wch:12},{wch:25},{wch:10},{wch:10}];
-    XLSX.utils.book_append_sheet(wb, ws, nombre);
+    ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:8},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws,nombre.substring(0,31));
   });
-
-  XLSX.writeFile(wb, 'vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.xlsx');
+  XLSX.writeFile(wb,'vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.xlsx');
   toast('Descargado');
 }
 
+function showSection(s,e){
+  document.querySelectorAll('.tab-content').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('section-'+s).classList.add('active');
+  if(e&&e.target)e.target.classList.add('active');
+  var btn=document.getElementById('map-toggle-btn');
+  if(btn)btn.style.display=s==='rutas'?'':'none';
+  if(s==='rutas'&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
+}
+
+function toggleMap(){
+  showingMap=!showingMap;
+  var panel=document.getElementById('rutas-panel'),btn=document.getElementById('map-toggle-btn');
+  if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}
+  else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}
+  if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 function updateClock(){var now=new Date(),h=now.getHours().toString().padStart(2,'0'),m=now.getMinutes().toString().padStart(2,'0');document.getElementById('hora-actual').textContent=h+':'+m;}
-updateClock(); setInterval(updateClock,30000);
-var hoy=new Date(),dias=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'],meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-document.getElementById('fecha-hoy').textContent=dias[hoy.getDay()]+' '+hoy.getDate()+' de '+meses[hoy.getMonth()]+' '+hoy.getFullYear();
+updateClock();setInterval(updateClock,30000);
 window.initMap=initMap;
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX"></script>
