@@ -475,7 +475,7 @@ function agregarParadaAChofer(key){
 // Clientes CRUD
 function filtrarClientes(q){
   var query=(q||'').toLowerCase().trim();
-  clientesFiltrados=query?todosClientes.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();return n.indexOf(query)>=0||f.indexOf(query)>=0||c.id.toLowerCase().indexOf(query)>=0||(c.dir||'').toLowerCase().indexOf(query)>=0;}):todosClientes.slice();
+  clientesFiltrados=query?todosClientes.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();var id=(c.id||'').toLowerCase();var dir=(c.dir||'').toLowerCase();return n.indexOf(query)>=0||f.indexOf(query)>=0||id.indexOf(query)>=0||dir.indexOf(query)>=0;}):todosClientes.slice();
   document.getElementById('cp-count').textContent=clientesFiltrados.length+' de '+todosClientes.length;
   renderClientes();
 }
@@ -485,7 +485,7 @@ function renderClientes(){
   if(!clientesFiltrados.length){list.innerHTML='<div class="cp-empty">'+(todosClientes.length?'Sin resultados':'No hay clientes. Agrega el primero.')+'</div>';return;}
   var h='';
   clientesFiltrados.forEach(function(c){
-    h+='<div class="cp-item"><div class="cp-letra">'+esc(((c.nombreFiscal||c.nombre)||'?').charAt(0).toUpperCase())+'</div><div class="cp-info"><div class="cp-nombre">'+esc(c.nombreFiscal||c.nombre||'Sin nombre')+'</div><div class="cp-id">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+c.id+'</div><div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div></div><div class="cp-actions"><button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button><button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button></div></div>';
+    h+='<div class="cp-item"><div class="cp-letra">'+esc(((c.nombreFiscal||c.nombre)||'?').charAt(0).toUpperCase())+'</div><div class="cp-info"><div class="cp-nombre">'+esc(c.nombreFiscal||c.nombre||'Sin nombre')+'</div><div class="cp-id">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+(c.id||'')+'</div><div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div></div><div class="cp-actions"><button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button><button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button></div></div>';
   });
   list.innerHTML=h;
 }
@@ -645,7 +645,7 @@ function nr_buscar(v){
       })(c._key);
     }
     div.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc((c.nombreFiscal||c.nombre||'?').charAt(0))+'</div>'+
-      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+c.id+'</div></div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+(c.id||'')+'</div></div>'+
       (yaAgregado?'<div style="font-size:11px;color:#7a7870">Ya agregado</div>':'<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>');
     box.appendChild(div);
   });
