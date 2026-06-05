@@ -303,7 +303,7 @@ db.ref('clientes').on('value', function(snap){
     Object.keys(data).forEach(function(key){
       todosClientes.push(Object.assign({_key:key}, data[key]));
     });
-    todosClientes.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+    todosClientes.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
   }
   document.getElementById('total-clientes').textContent = todosClientes.length;
   filtrarClientes(document.getElementById('cp-search').value);
