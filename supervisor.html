@@ -485,7 +485,7 @@ function renderClientes(){
   if(!clientesFiltrados.length){list.innerHTML='<div class="cp-empty">'+(todosClientes.length?'Sin resultados':'No hay clientes. Agrega el primero.')+'</div>';return;}
   var h='';
   clientesFiltrados.forEach(function(c){
-    h+='<div class="cp-item"><div class="cp-letra">'+esc(c.nombre.charAt(0).toUpperCase())+'</div><div class="cp-info"><div class="cp-nombre">'+esc(c.nombre)+'</div><div class="cp-id">'+c.id+'</div><div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div></div><div class="cp-actions"><button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button><button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button></div></div>';
+    h+='<div class="cp-item"><div class="cp-letra">'+esc(((c.nombreFiscal||c.nombre)||'?').charAt(0).toUpperCase())+'</div><div class="cp-info"><div class="cp-nombre">'+esc(c.nombreFiscal||c.nombre||'Sin nombre')+'</div><div class="cp-id">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+c.id+'</div><div class="cp-dir">'+esc(c.dir||'Sin direccion')+'</div></div><div class="cp-actions"><button class="btn-edit" onclick="editarCliente(\''+c._key+'\')">Editar</button><button class="btn-del" onclick="eliminarCliente(\''+c._key+'\',\''+esc(c.nombre)+'\')">Eliminar</button></div></div>';
   });
   list.innerHTML=h;
 }
