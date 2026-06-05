@@ -329,7 +329,7 @@ function dibujar(){
     if(enR(c.id))return;
     var m=new google.maps.Marker({position:{lat:c.lat,lng:c.lng},map:map,title:c.nombre,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#1a6b4a',fillOpacity:0.7,strokeColor:'#fff',strokeWeight:1.5},zIndex:1});
     (function(cl){m.addListener('click',function(){
-      iw.setContent('<div style="font-family:Arial;padding:4px;min-width:150px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">'+esc(cl.nombre)+'</div><div style="font-size:11px;color:#777;margin-bottom:8px">'+cl.id+'</div><button id="iwb" style="width:100%;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar</button></div>');
+      iw.setContent('<div style="font-family:Arial;padding:4px;min-width:150px"><div style="font-size:13px;font-weight:700;margin-bottom:2px">'+esc(cl.nombreFiscal||cl.nombre)+'</div>'+(cl.nombreFiscal?'<div style="font-size:11px;color:#555;margin-bottom:2px">'+esc(cl.nombre)+'</div>':'')+'<div style="font-size:11px;color:#777;margin-bottom:8px">'+cl.id+'</div><button id="iwb" style="width:100%;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar</button></div>');
       iw.open(map,m);
       setTimeout(function(){var b=document.getElementById('iwb');if(b&&!enR(cl.id))b.onclick=function(){agregar(cl);iw.close();};},80);
     });})(c);
@@ -343,14 +343,14 @@ function buscar(v){
   var q=v.toLowerCase(),r=C.filter(function(c){return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||c.dir.toLowerCase().indexOf(q)>=0;}).slice(0,40);
   if(!r.length){box.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Sin resultados</div>';return;}
   var h='';
-  r.forEach(function(c){var ya=enR(c.id);h+='<div class="si"><div class="sich">'+esc(c.nombre.charAt(0))+'</div><div style="flex:1;min-width:0"><div class="snm">'+esc(c.nombre)+'</div><div class="sid2">'+c.id+'</div></div><button class="abtn'+(ya?' added':'')+'" data-id="'+c.id+'">'+(ya?'En ruta':'+ Agregar')+'</button></div>';});
+  r.forEach(function(c){var ya=enR(c.id);var fiscal=c.nombreFiscal||c.nombre;h+='<div class="si"><div class="sich">'+esc(fiscal.charAt(0))+'</div><div style="flex:1;min-width:0"><div class="snm">'+esc(fiscal)+'</div><div class="sid2">'+esc(c.nombre)+' &bull; '+c.id+'</div></div><button class="abtn'+(ya?' added':'')+'" data-id="'+c.id+'">'+(ya?'En ruta':'+ Agregar')+'</button></div>';});
   box.innerHTML=h;
   box.querySelectorAll('.abtn:not(.added)').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var c=C.find(function(x){return x.id===b.dataset.id;});if(c)agregar(c);});});
 }
 
 function agregar(c){
   if(!c||enR(c.id)){toast('Ya esta en la ruta');return;}
-  par.push({id:c.id,nombre:c.nombre,dir:c.dir,lat:c.lat,lng:c.lng,esLibre:false,
+  par.push({id:c.id,nombre:c.nombre,nombreFiscal:c.nombreFiscal||'',dir:c.dir,lat:c.lat,lng:c.lng,esLibre:false,
     entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
     kmDesde:null,minDesde:null,origenDesde:null});
   ui();if(map)map.panTo({lat:c.lat,lng:c.lng});
@@ -403,7 +403,7 @@ function ui(){
     var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||null}];
     var todasEntregadas=entregas.every(function(e){return e.entregado;});
     var esLibre=p.esLibre||false;
-    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div class="pnm">'+esc(p.nombre)+'</div>';
+    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+  '</div>';
     if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
     h+='</div>';
     if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
