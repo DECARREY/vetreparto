@@ -442,7 +442,7 @@ function buscarParada(v){
   var h='';
   r.forEach(function(c){
     h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f0efe9;cursor:pointer;transition:background 0.1s" onmouseover="this.style.background=\'#f7f6f2\'" onmouseout="this.style.background=\'\'" onclick="agregarParadaAChofer(\''+c._key+'\')">';
-    h+='<div style="width:28px;height:28px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>';
+    h+='<div style="width:28px;height:28px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc((c.nombreFiscal||c.nombre||'?').charAt(0))+'</div>';
     h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>';
     h+='<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div></div>';
   });
@@ -644,8 +644,8 @@ function nr_buscar(v){
         div.onclick=function(){nr_agregar(key);};
       })(c._key);
     }
-    div.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc(c.nombre.charAt(0))+'</div>'+
-      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+c.id+'</div></div>'+
+    div.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:#e8f5ef;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6b4a;flex-shrink:0">'+esc((c.nombreFiscal||c.nombre||'?').charAt(0))+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+(c.nombreFiscal?esc(c.nombre)+' &bull; ':'')+c.id+'</div></div>'+
       (yaAgregado?'<div style="font-size:11px;color:#7a7870">Ya agregado</div>':'<div style="font-size:11px;color:#1a6b4a;font-weight:700">+ Agregar</div>');
     box.appendChild(div);
   });
