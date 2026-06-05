@@ -215,7 +215,7 @@ db.ref('clientes').once('value').then(function(snap){
   var data=snap.val();
   if(data){
     C=Object.values(data);
-    C.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+    C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
     var el=document.getElementById('total-c');
     if(el)el.textContent=C.length;
     document.getElementById('sr').innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
@@ -227,7 +227,7 @@ db.ref('clientes').on('value',function(snap){
   var data=snap.val();
   if(data){
     C=Object.values(data);
-    C.sort(function(a,b){return a.nombre.localeCompare(b.nombre);});
+    C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
     var el=document.getElementById('total-c');
     if(el)el.textContent=C.length;
     if(map&&!rutaActiva)dibujar();
