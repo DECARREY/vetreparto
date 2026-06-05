@@ -177,12 +177,18 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
         </div>
         <div id="paqueteria-form" style="display:none">
           <div class="libre-box" style="background:#e6f1fb;border-color:#c7d8f0">
-            <select id="paq-empresa" style="width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff;margin-bottom:6px">
+            <select id="paq-empresa" onchange="document.getElementById('paq-otros-fields').style.display=this.value==='otros'?'block':'none';" style="width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff;margin-bottom:6px">
               <option value="">-- Selecciona paqueteria --</option>
               <option value="Paquetería Transurge">Transurge</option>
               <option value="Paquetería Inbox">Inbox</option>
               <option value="Paquetería ODM">ODM</option>
+              <option value="Paquetería Teamex">Teamex</option>
+              <option value="otros">Otra paqueteria...</option>
             </select>
+            <div id="paq-otros-fields" style="display:none">
+              <input type="text" id="paq-empresa-libre" placeholder="Nombre de la paqueteria..." style="margin-bottom:6px;width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box">
+              <input type="text" id="paq-empresa-dir" placeholder="Direccion de la paqueteria..." style="margin-bottom:6px;width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box">
+            </div>
             <input type="text" id="paq-cliente-search" placeholder="Buscar cliente destinatario..." oninput="paqBuscarCliente(this.value)" autocomplete="off" style="margin-bottom:4px">
             <div id="paq-cliente-results" style="max-height:120px;overflow-y:auto;border:1px solid #c7d8f0;border-radius:6px;margin-bottom:6px;display:none;background:#fff"></div>
             <div id="paq-cliente-selected" style="display:none;padding:5px 8px;background:#fff;border:1px solid #c7d8f0;border-radius:6px;font-size:11px;margin-bottom:6px;color:#0f4a8a;font-weight:600"></div>
@@ -754,13 +760,16 @@ function paqSeleccionarCliente(id, nombre){
 }
 
 function agregarPaqueteria(){
-  var empresa=document.getElementById('paq-empresa').value;
+  var empresaVal=document.getElementById('paq-empresa').value;
+  var empresa=empresaVal==='otros'?document.getElementById('paq-empresa-libre').value.trim():empresaVal;
+  var empresaDir=document.getElementById('paq-empresa-dir').value.trim();
   var clienteId=document.getElementById('paq-cliente-id').value;
   var clienteNombre=document.getElementById('paq-cliente-selected').textContent.replace('Destinatario: ','');
   var pedido=document.getElementById('paq-pedido').value.trim();
   var factura=document.getElementById('paq-factura').value.trim();
   var guia=document.getElementById('paq-guia').value.trim();
   if(!empresa){toast('Selecciona una paqueteria');return;}
+  if(empresaVal==='otros'&&!empresa){toast('Escribe el nombre de la paqueteria');return;}
   if(!clienteId){toast('Selecciona el cliente destinatario');return;}
   if(!guia){toast('Escribe el numero de guia');return;}
 
@@ -768,7 +777,8 @@ function agregarPaqueteria(){
   var paqData = {
     'Paquetería Transurge': {lat:25.70506754, lng:-100.3273723},
     'Paquetería Inbox': {lat:25.691731442249367, lng:-100.3239835},
-    'Paquetería ODM': {lat:25.687403815620367, lng:-100.3214941}
+    'Paquetería ODM': {lat:25.687403815620367, lng:-100.3214941},
+    'Paquetería Teamex': {lat:25.681553680100162, lng:-100.32371502760287}
   };
   var coords = paqData[empresa] || {lat:25.681553680100162, lng:-100.32371502760287};
 
@@ -777,7 +787,7 @@ function agregarPaqueteria(){
     id:id,
     nombre:empresa,
     nombreFiscal:empresa,
-    dir:'Envio a: '+clienteNombre,
+    dir:empresaDir?empresaDir+' - Envio a: '+clienteNombre:'Envio a: '+clienteNombre,
     lat:coords.lat,
     lng:coords.lng,
     esPaqueteria:true,
