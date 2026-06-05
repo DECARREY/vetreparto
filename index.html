@@ -150,13 +150,47 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       <div class="tc active" id="content-buscar">
         <div class="sbox"><input type="text" id="si" placeholder="Nombre o ID SAP..." oninput="buscar(this.value)" autocomplete="off"></div>
         <div style="padding:8px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0">
-          <button class="libre-toggle" onclick="toggleLibre()">&#x1F4CC; + Parada libre (direccion o actividad)</button>
+          <button class="libre-toggle" onclick="toggleLibre()">&#x1F4CC; + Parada libre / Cobranza</button>
+          <button class="libre-toggle" onclick="togglePaqueteria()" style="background:#e6f1fb;color:#0f4a8a;border-color:#c7d8f0;margin-top:6px">&#x1F4E6; + Envio por paqueteria</button>
         </div>
         <div id="libre-form" style="display:none">
           <div class="libre-box">
-            <input type="text" id="libre-dir" placeholder="Direccion o lugar..." autocomplete="off">
-            <input type="text" id="libre-motivo" placeholder="Motivo (ej: Deposito banco, Paqueteria...)">
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <button id="libre-tab-cliente" onclick="libreSetTab('cliente')" style="flex:1;padding:6px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">Cliente registrado</button>
+              <button id="libre-tab-dir" onclick="libreSetTab('dir')" style="flex:1;padding:6px;background:#e8f5ef;color:#1a6b4a;border:1px solid #b2ddc9;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">Direccion libre</button>
+            </div>
+            <div id="libre-panel-cliente">
+              <input type="text" id="libre-cliente-search" placeholder="Buscar cliente para cobranza..." oninput="libreClienteBuscar(this.value)" autocomplete="off" style="margin-bottom:4px">
+              <div id="libre-cliente-results" style="max-height:120px;overflow-y:auto;border:1px solid #b2ddc9;border-radius:6px;margin-bottom:6px;display:none;background:#fff"></div>
+              <div id="libre-cliente-selected" style="display:none;padding:5px 8px;background:#fff;border:1px solid #b2ddc9;border-radius:6px;font-size:11px;margin-bottom:6px;color:#1a6b4a;font-weight:600"></div>
+              <input type="hidden" id="libre-cliente-id">
+              <input type="hidden" id="libre-cliente-lat">
+              <input type="hidden" id="libre-cliente-lng">
+              <input type="hidden" id="libre-cliente-dir">
+            </div>
+            <div id="libre-panel-dir" style="display:none">
+              <input type="text" id="libre-dir" placeholder="Direccion o lugar..." autocomplete="off">
+            </div>
+            <input type="text" id="libre-motivo" placeholder="Motivo (ej: Cobranza, Deposito banco...)">
             <button class="libre-btn" onclick="agregarLibre()">Agregar parada</button>
+          </div>
+        </div>
+        <div id="paqueteria-form" style="display:none">
+          <div class="libre-box" style="background:#e6f1fb;border-color:#c7d8f0">
+            <select id="paq-empresa" style="width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff;margin-bottom:6px">
+              <option value="">-- Selecciona paqueteria --</option>
+              <option value="Paquetería Transurge">Transurge</option>
+              <option value="Paquetería Inbox">Inbox</option>
+              <option value="Paquetería ODM">ODM</option>
+            </select>
+            <input type="text" id="paq-cliente-search" placeholder="Buscar cliente destinatario..." oninput="paqBuscarCliente(this.value)" autocomplete="off" style="margin-bottom:4px">
+            <div id="paq-cliente-results" style="max-height:120px;overflow-y:auto;border:1px solid #c7d8f0;border-radius:6px;margin-bottom:6px;display:none;background:#fff"></div>
+            <div id="paq-cliente-selected" style="display:none;padding:5px 8px;background:#fff;border:1px solid #c7d8f0;border-radius:6px;font-size:11px;margin-bottom:6px;color:#0f4a8a;font-weight:600"></div>
+            <input type="hidden" id="paq-cliente-id">
+            <input type="text" id="paq-pedido" placeholder="No. Pedido">
+            <input type="text" id="paq-factura" placeholder="No. Factura">
+            <input type="text" id="paq-guia" placeholder="No. Guia de envio">
+            <button class="libre-btn" onclick="agregarPaqueteria()" style="background:#0f4a8a">Agregar envio</button>
           </div>
         </div>
         <div class="sres" id="sr"><div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre <span id="total-c">...</span> clientes</div></div>
@@ -282,41 +316,132 @@ function initMap(){
 
 function toggleLibre(){
   var f=document.getElementById('libre-form');
-  f.style.display=f.style.display==='none'?'block':'none';
+  var fp=document.getElementById('paqueteria-form');
+  fp.style.display='none';
+  var show=f.style.display==='none';
+  f.style.display=show?'block':'none';
+  if(show){
+    libreSetTab('cliente');
+    document.getElementById('libre-cliente-search').value='';
+    document.getElementById('libre-cliente-results').style.display='none';
+    document.getElementById('libre-cliente-selected').style.display='none';
+    document.getElementById('libre-cliente-id').value='';
+    document.getElementById('libre-dir').value='';
+    document.getElementById('libre-motivo').value='';
+  }
+}
+
+function libreSetTab(tab){
+  var isCliente=tab==='cliente';
+  document.getElementById('libre-panel-cliente').style.display=isCliente?'block':'none';
+  document.getElementById('libre-panel-dir').style.display=isCliente?'none':'block';
+  document.getElementById('libre-tab-cliente').style.background=isCliente?'#1a6b4a':'#e8f5ef';
+  document.getElementById('libre-tab-cliente').style.color=isCliente?'#fff':'#1a6b4a';
+  document.getElementById('libre-tab-cliente').style.border=isCliente?'none':'1px solid #b2ddc9';
+  document.getElementById('libre-tab-dir').style.background=isCliente?'#e8f5ef':'#1a6b4a';
+  document.getElementById('libre-tab-dir').style.color=isCliente?'#1a6b4a':'#fff';
+  document.getElementById('libre-tab-dir').style.border=isCliente?'1px solid #b2ddc9':'none';
+}
+
+function libreClienteBuscar(v){
+  var box=document.getElementById('libre-cliente-results');
+  if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
+  var q=v.toLowerCase();
+  var r=C.filter(function(c){
+    var n=(c.nombre||'').toLowerCase();
+    var f=(c.nombreFiscal||'').toLowerCase();
+    var id=(c.id||'').toLowerCase();
+    return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;
+  }).slice(0,10);
+  box.innerHTML='';
+  if(!r.length){box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Sin resultados</div>';box.style.display='block';return;}
+  r.forEach(function(c){
+    var div=document.createElement('div');
+    div.style.cssText='padding:7px 10px;border-bottom:1px solid #f0efe9;cursor:pointer;font-size:11px';
+    div.innerHTML='<div style="font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="color:#7a7870">'+esc(c.id||'')+'</div>';
+    div.onmouseover=function(){this.style.background='#f0faf5';};
+    div.onmouseout=function(){this.style.background='';};
+    (function(cl){div.onclick=function(){
+      document.getElementById('libre-cliente-id').value=cl.id;
+      document.getElementById('libre-cliente-lat').value=cl.lat;
+      document.getElementById('libre-cliente-lng').value=cl.lng;
+      document.getElementById('libre-cliente-dir').value=cl.dir||'';
+      document.getElementById('libre-cliente-search').value='';
+      document.getElementById('libre-cliente-results').style.display='none';
+      var sel=document.getElementById('libre-cliente-selected');
+      sel.textContent=(cl.nombreFiscal||cl.nombre)+' ('+cl.id+')';
+      sel.style.display='block';
+    };})(c);
+    box.appendChild(div);
+  });
+  box.style.display='block';
 }
 
 function agregarLibre(){
-  var dir=document.getElementById('libre-dir').value.trim();
   var motivo=document.getElementById('libre-motivo').value.trim();
-  if(!dir){toast('Escribe una direccion');return;}
-  if(!geocoder){toast('Mapa no listo');return;}
-  toast('Buscando direccion...');
-  geocoder.geocode({address:dir+', Monterrey, Mexico'},function(results,status){
-    if(status==='OK'&&results[0]){
-      var loc=results[0].geometry.location;
-      var id='LIBRE_'+Date.now();
-      par.push({
-        id:id,
-        nombre:motivo||dir,
-        dir:results[0].formatted_address,
-        lat:loc.lat(),
-        lng:loc.lng(),
-        esLibre:true,
-        motivo:motivo,
-        entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
-        kmDesde:null,minDesde:null,origenDesde:null
-      });
-      ui();
-      if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
-      document.getElementById('libre-dir').value='';
-      document.getElementById('libre-motivo').value='';
-      document.getElementById('libre-form').style.display='none';
-      toast('+ '+( motivo||dir));
-      guardarEnFirebase();
-    } else {
-      toast('No se encontro la direccion');
-    }
-  });
+  var clienteId=document.getElementById('libre-cliente-id').value;
+  var isCliente=document.getElementById('libre-panel-cliente').style.display!=='none';
+
+  if(isCliente){
+    // Cliente registrado como parada de cobranza
+    if(!clienteId){toast('Selecciona un cliente');return;}
+    var lat=parseFloat(document.getElementById('libre-cliente-lat').value);
+    var lng=parseFloat(document.getElementById('libre-cliente-lng').value);
+    var dir=document.getElementById('libre-cliente-dir').value;
+    var clienteObj=C.find(function(c){return c.id===clienteId;});
+    var nombre=motivo||(clienteObj?(clienteObj.nombreFiscal||clienteObj.nombre):clienteId);
+    var id='LIBRE_'+Date.now();
+    par.push({
+      id:id,
+      nombre:nombre,
+      nombreFiscal:clienteObj?(clienteObj.nombreFiscal||''):'',
+      dir:dir,
+      lat:lat,
+      lng:lng,
+      esLibre:true,
+      motivo:motivo||'Cobranza',
+      clienteRef:clienteId,
+      entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
+      kmDesde:null,minDesde:null,origenDesde:null
+    });
+    ui();
+    if(map)map.panTo({lat:lat,lng:lng});
+    document.getElementById('libre-form').style.display='none';
+    toast('+ '+nombre);
+    guardarEnFirebase();
+  } else {
+    // Direccion libre
+    var dir2=document.getElementById('libre-dir').value.trim();
+    if(!dir2){toast('Escribe una direccion');return;}
+    if(!geocoder){toast('Mapa no listo');return;}
+    toast('Buscando direccion...');
+    geocoder.geocode({address:dir2+', Monterrey, Mexico'},function(results,status){
+      if(status==='OK'&&results[0]){
+        var loc=results[0].geometry.location;
+        var id='LIBRE_'+Date.now();
+        par.push({
+          id:id,
+          nombre:motivo||dir2,
+          dir:results[0].formatted_address,
+          lat:loc.lat(),
+          lng:loc.lng(),
+          esLibre:true,
+          motivo:motivo,
+          entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
+          kmDesde:null,minDesde:null,origenDesde:null
+        });
+        ui();
+        if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
+        document.getElementById('libre-dir').value='';
+        document.getElementById('libre-motivo').value='';
+        document.getElementById('libre-form').style.display='none';
+        toast('+ '+(motivo||dir2));
+        guardarEnFirebase();
+      } else {
+        toast('No se encontro la direccion');
+      }
+    });
+  }
 }
 
 function enR(id){return par.some(function(p){return p.id===id;})}
@@ -403,15 +528,18 @@ function ui(){
     var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||null}];
     var todasEntregadas=entregas.every(function(e){return e.entregado;});
     var esLibre=p.esLibre||false;
-    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+  '</div>';
+    var esPaq=p.esPaqueteria||false;
+    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esPaq?' libre':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+  '</div>';
     if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
     h+='</div>';
     if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
     h+='<div class="entregas-list" id="el_'+p.id+'">';
+    if(p.esPaqueteria&&p.clienteDestinatario){h+='<div style="font-size:10px;color:#0f4a8a;margin-bottom:5px;font-weight:600">&#x1F4E6; Destinatario: '+esc(p.clienteDestinatario)+'</div>';}
     entregas.forEach(function(e,ei){
       h+='<div class="entrega-item'+(e.entregado?' done':'')+'">';
       h+='<div class="pfields"><div class="pfield"><label>No. Pedido</label><input type="text" placeholder="ej:75069" value="'+esc(e.pedido||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="pedido" class="pfin'+(e.pedido?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div>';
       h+='<div class="pfield"><label>No. Factura</label><input type="text" placeholder="ej:GI1520" value="'+esc(e.factura||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="factura" class="pfin'+(e.factura?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';
+      if(p.esPaqueteria){h+='<div class="pfields"><div class="pfield" style="grid-column:1/-1"><label>No. Guia</label><input type="text" placeholder="ej:1Z999AA10123456784" value="'+esc(e.guia||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="guia" class="pfin'+(e.guia?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';}
       h+='<div class="entrega-row">';
       if(e.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+e.horaEntrega+'</span>';}
       else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button>';}
@@ -545,8 +673,9 @@ function compartirWhatsApp(){
     var todasOk=entregas.every(function(e){return e.entregado;});
     msg+=(todasOk?'[OK]':'[  ]')+' '+(i+1)+'. '+p.nombre+(p.esLibre?' [LIBRE]':'')+nl;
     entregas.forEach(function(e){
-      if(e.pedido||e.factura)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;
+      if(e.pedido||e.factura||e.guia)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.guia?' GUA:'+e.guia:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;
     });
+    if(p.esPaqueteria&&p.clienteDestinatario)msg+='     Destinatario: '+p.clienteDestinatario+nl;
   });
   var totalE=0,entE=0;
   par.forEach(function(p){var e=p.entregas||[];totalE+=e.length;entE+=e.filter(function(x){return x.entregado;}).length;});
@@ -558,11 +687,13 @@ function descargarResumen(){
   var chofer=document.getElementById('chofer-nombre').value||'Repartidor';
   var hoy=new Date(),fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
   var csv='RESUMEN - '+chofer+'\r\nFecha: '+fecha+'\r\n\r\n';
-  csv+='"No.","ID SAP","Cliente","Tipo","Entrega","Pedido","Factura","Estado","Hora","Desde","Km","Tiempo"\r\n';
+  csv+='"No.","ID SAP","Cliente","Tipo","Entrega","Pedido","Factura","Guia","Destinatario","Estado","Hora","Desde","Km","Tiempo"\r\n';
   par.forEach(function(p,i){
     var entregas=p.entregas||[];
     entregas.forEach(function(e,ei){
-      csv+='"'+(i+1)+'","'+(p.esLibre?'LIBRE':p.id)+'","'+p.nombre+'","'+(p.esLibre?'Libre':'Cliente')+'","'+(entregas.length>1?(ei+1):'1')+'","'+(e.pedido||'')+'","'+(e.factura||'')+'","'+(e.entregado?'Entregado':'Pendiente')+'","'+(e.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
+      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+      var sapId=p.esPaqueteria||p.esLibre?tipo:p.id;
+      csv+='"'+(i+1)+'","'+sapId+'","'+p.nombre+'","'+tipo+'","'+(entregas.length>1?(ei+1):'1')+'","'+(e.pedido||'')+'","'+(e.factura||'')+'","'+(e.guia||'')+'","'+(p.clienteDestinatario||'')+'","'+(e.entregado?'Entregado':'Pendiente')+'","'+(e.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
     });
   });
   var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
@@ -573,6 +704,95 @@ function descargarResumen(){
 function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
 var showingMap=false;
 function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
+function togglePaqueteria(){
+  var f=document.getElementById('paqueteria-form');
+  var fl=document.getElementById('libre-form');
+  fl.style.display='none';
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='block'){
+    document.getElementById('paq-empresa').value='';
+    document.getElementById('paq-cliente-search').value='';
+    document.getElementById('paq-cliente-results').style.display='none';
+    document.getElementById('paq-cliente-selected').style.display='none';
+    document.getElementById('paq-cliente-id').value='';
+    document.getElementById('paq-pedido').value='';
+    document.getElementById('paq-factura').value='';
+    document.getElementById('paq-guia').value='';
+  }
+}
+
+function paqBuscarCliente(v){
+  var box=document.getElementById('paq-cliente-results');
+  if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
+  var q=v.toLowerCase();
+  var r=C.filter(function(c){
+    var n=(c.nombre||'').toLowerCase();
+    var f=(c.nombreFiscal||'').toLowerCase();
+    var id=(c.id||'').toLowerCase();
+    return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;
+  }).slice(0,10);
+  box.innerHTML='';
+  if(!r.length){box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Sin resultados</div>';box.style.display='block';return;}
+  r.forEach(function(c){
+    var div=document.createElement('div');
+    div.style.cssText='padding:7px 10px;border-bottom:1px solid #f0efe9;cursor:pointer;font-size:11px';
+    div.innerHTML='<div style="font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="color:#7a7870">'+esc(c.id||'')+'</div>';
+    div.onmouseover=function(){this.style.background='#f0faf5';};
+    div.onmouseout=function(){this.style.background='';};
+    (function(cid,cnombre){div.onclick=function(){paqSeleccionarCliente(cid,cnombre);};})(c.id,c.nombreFiscal||c.nombre);
+    box.appendChild(div);
+  });
+  box.style.display='block';
+}
+function paqSeleccionarCliente(id, nombre){
+  document.getElementById('paq-cliente-id').value=id;
+  document.getElementById('paq-cliente-search').value='';
+  document.getElementById('paq-cliente-results').style.display='none';
+  var sel=document.getElementById('paq-cliente-selected');
+  sel.textContent='Destinatario: '+nombre+' ('+id+')';
+  sel.style.display='block';
+}
+
+function agregarPaqueteria(){
+  var empresa=document.getElementById('paq-empresa').value;
+  var clienteId=document.getElementById('paq-cliente-id').value;
+  var clienteNombre=document.getElementById('paq-cliente-selected').textContent.replace('Destinatario: ','');
+  var pedido=document.getElementById('paq-pedido').value.trim();
+  var factura=document.getElementById('paq-factura').value.trim();
+  var guia=document.getElementById('paq-guia').value.trim();
+  if(!empresa){toast('Selecciona una paqueteria');return;}
+  if(!clienteId){toast('Selecciona el cliente destinatario');return;}
+  if(!guia){toast('Escribe el numero de guia');return;}
+
+  // Find paqueteria coordinates
+  var paqData = {
+    'Paquetería Transurge': {lat:25.70506754, lng:-100.3273723},
+    'Paquetería Inbox': {lat:25.691731442249367, lng:-100.3239835},
+    'Paquetería ODM': {lat:25.687403815620367, lng:-100.3214941}
+  };
+  var coords = paqData[empresa] || {lat:25.681553680100162, lng:-100.32371502760287};
+
+  var id='PAQ_'+Date.now();
+  par.push({
+    id:id,
+    nombre:empresa,
+    nombreFiscal:empresa,
+    dir:'Envio a: '+clienteNombre,
+    lat:coords.lat,
+    lng:coords.lng,
+    esPaqueteria:true,
+    clienteDestinatario:clienteNombre,
+    clienteDestinatarioId:clienteId,
+    entregas:[{pedido:pedido,factura:factura,guia:guia,entregado:false,horaEntrega:null}],
+    kmDesde:null,minDesde:null,origenDesde:null
+  });
+  ui();
+  if(map)map.panTo({lat:coords.lat,lng:coords.lng});
+  document.getElementById('paqueteria-form').style.display='none';
+  toast('&#x1F4E6; Envio a '+empresa+' agregado');
+  guardarEnFirebase();
+}
+
 function cambiarChofer(val){
   var inp=document.getElementById('chofer-nombre');
   if(val==='otros'){inp.style.display='block';inp.value='';inp.focus();}
