@@ -437,7 +437,7 @@ function buscarParada(v){
   var box=document.getElementById('mp-results');
   if(!v||v.length<2){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Escribe para buscar</div>';return;}
   var q=v.toLowerCase();
-  var r=todosClientes.filter(function(c){return c.nombre.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;}).slice(0,20);
+  var r=todosClientes.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();return n.indexOf(q)>=0||f.indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;}).slice(0,20);
   if(!r.length){box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>';return;}
   var h='';
   r.forEach(function(c){
@@ -475,7 +475,7 @@ function agregarParadaAChofer(key){
 // Clientes CRUD
 function filtrarClientes(q){
   var query=(q||'').toLowerCase().trim();
-  clientesFiltrados=query?todosClientes.filter(function(c){return c.nombre.toLowerCase().indexOf(query)>=0||c.id.toLowerCase().indexOf(query)>=0||(c.dir||'').toLowerCase().indexOf(query)>=0;}):todosClientes.slice();
+  clientesFiltrados=query?todosClientes.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();return n.indexOf(query)>=0||f.indexOf(query)>=0||c.id.toLowerCase().indexOf(query)>=0||(c.dir||'').toLowerCase().indexOf(query)>=0;}):todosClientes.slice();
   document.getElementById('cp-count').textContent=clientesFiltrados.length+' de '+todosClientes.length;
   renderClientes();
 }
