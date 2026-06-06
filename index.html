@@ -519,6 +519,18 @@ function marcarEntregaItem(pid,idx){
   p.entregas[idx].entregado=true;
   var now=new Date();
   p.entregas[idx].horaEntrega=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  // Capture GPS location at delivery time
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      p.entregas[idx].gpsLat=pos.coords.latitude;
+      p.entregas[idx].gpsLng=pos.coords.longitude;
+      p.entregas[idx].gpsAcc=Math.round(pos.coords.accuracy);
+      guardarEnFirebase();
+    },function(){
+      // GPS not available, continue without it
+      guardarEnFirebase();
+    },{enableHighAccuracy:true,timeout:5000,maximumAge:0});
+  }
   ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
   toast('Entregado a las '+p.entregas[idx].horaEntrega);
 }
