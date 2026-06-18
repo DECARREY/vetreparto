@@ -23,13 +23,15 @@ db.ref('.info/connected').on('value',function(s){
 function guardarEnFirebase(){
   var hoy=new Date();
   var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-  db.ref('rutas/'+CHOFER_ID+'/'+fecha).set({
+  var data={
     choferNombre:document.getElementById('chofer-nombre').value||CHOFER_ID,
     paradas:par||[],
     ultimaActualizacion:Date.now(),
     km:document.getElementById('sv-d').textContent,
     tiempo:document.getElementById('sv-t').textContent
-  }).catch(function(e){console.error('FB error:',e);});
+  };
+  db.ref('rutas/'+CHOFER_ID+'/'+fecha).set(data).catch(function(e){console.error('FB error:',e);});
+  db.ref('historial/'+CHOFER_ID+'/'+fecha).set(data).catch(function(e){console.error('FB historial error:',e);});
 }
 </script>
 <style>
