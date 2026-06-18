@@ -167,7 +167,7 @@ var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287,nombre:'Almacen VetR
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
 function initMap(){
-  map=new google.maps.Map(document.getElementById('map'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]});
+  map=new google.maps.Map(document.getElementById('map'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
   iw=new google.maps.InfoWindow();
   dr=new google.maps.DirectionsRenderer({suppressMarkers:true,polylineOptions:{strokeColor:'#1a6b4a',strokeWeight:5,strokeOpacity:0.8}});
   dr.setMap(map);
