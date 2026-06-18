@@ -129,14 +129,9 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
         </div>
       </div>
       <div class="mapwrap">
-        <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:4px;background:#fff;border-radius:8px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
-          <button id="btn-mapa-ruta" onclick="switchMapa('ruta')" style="padding:7px 14px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Ruta programada</button>
-          <button id="btn-mapa-efectivas" onclick="switchMapa('efectivas')" style="padding:7px 14px;background:none;color:#0f4a8a;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Entregas efectivas</button>
-        </div>
+
         <div id="map"></div>
-        <div id="map-efectivas" style="position:absolute;top:0;left:0;right:0;bottom:0;display:none"></div>
         <div class="legend" id="legend"></div>
-        <div class="legend" id="legend-efectivas" style="display:none"></div>
       </div>
     </div>
     <div class="tab-content" id="section-clientes">
@@ -299,8 +294,6 @@ db.ref('rutas').on('value', function(snap){
   }
   renderChoferes();
   if(map) actualizarMapa();
-  if(map2) actualizarMapaEfectivas();
-  else pendingEfectivasUpdate = true;
 });
 
 // Clientes
@@ -374,11 +367,13 @@ function renderChoferes(){
       paradas.forEach(function(p,i){
         var entregas = p.entregas || [];
         var ok = entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
+        var noEnt = p.noEntregado || false;
         var hora = entregas.length && entregas[entregas.length-1].horaEntrega ? entregas[entregas.length-1].horaEntrega : (p.horaEntrega||'');
         html += '<div class="parada-row">';
-        html += '<div class="pnum-s '+(ok?'ok':'pend')+'">'+(ok?'&#10003;':(i+1))+'</div>';
+        html += '<div class="pnum-s '+(ok?'ok':noEnt?'':'pend')+'"'+(noEnt?' style="background:#fee2e2;color:#dc2626"':'')+'>'+( ok?'&#10003;':noEnt?'&#x2716;':(i+1))+'</div>';
         html += '<div class="pnm-s">'+esc(p.nombre)+'</div>';
-        if(hora) html += '<div class="phora">'+hora+'</div>';
+        if(noEnt&&p.motivo) html += '<div style="font-size:10px;color:#dc2626;margin-left:auto">'+esc(p.motivo)+'</div>';
+        else if(hora) html += '<div class="phora">'+hora+'</div>';
         html += '</div>';
       });
     }
@@ -392,14 +387,24 @@ function renderChoferes(){
 
   legendHtml += '<div class="leg-item"><div class="leg-dot" style="border:2px solid #ccc;background:#fff"></div><span>Pendiente</span></div>';
   legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:#e8f5ef;border:2px solid #1a6b4a"></div><span>Entregado</span></div>';
+  legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:#fee2e2;border:2px solid #dc2626"></div><span>No entregado</span></div>';
+  legendHtml += '<div class="leg-item"><div style="width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #fff;flex-shrink:0"></div><span>GPS ≤50m</span></div>';
+  legendHtml += '<div class="leg-item"><div style="width:10px;height:10px;border-radius:50%;background:#f97316;border:2px solid #fff;flex-shrink:0"></div><span>GPS 51-200m</span></div>';
+  legendHtml += '<div class="leg-item"><div style="width:10px;height:10px;border-radius:50%;background:#dc2626;border:2px solid #fff;flex-shrink:0"></div><span>GPS &gt;200m</span></div>';
 
   container.innerHTML = html;
   legend.innerHTML = legendHtml;
 }
 
+function haversineM(lat1,lng1,lat2,lng2){
+  var R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
 function actualizarMapa(){
   Object.keys(markers).forEach(function(cid){
-    markers[cid].forEach(function(m){m.setMap(null);});
+    markers[cid].forEach(function(m){m.map=null;});
     markers[cid] = [];
   });
   Object.keys(datos).forEach(function(cid){
@@ -411,123 +416,55 @@ function actualizarMapa(){
     paradasArr.forEach(function(p,i){
       var entregas = p.entregas || [];
       var done = entregas.length ? entregas.every(function(e){return e.entregado;}) : p.entregado;
-      var svg='<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 2C10.4 2 5 7.4 5 14c0 9.5 12 26 12 26S29 23.5 29 14C29 7.4 23.6 2 17 2z" fill="'+(done?'#e8f5ef':color)+'" stroke="'+(done?color:'#fff')+'" stroke-width="2"/><text x="17" y="16" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="'+(done?color:'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
-      var m=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:map,icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(34,42),anchor:new google.maps.Point(17,42)},title:(i+1)+'. '+p.nombre,zIndex:done?10:100+i});
+      var noEnt = p.noEntregado || false;
+      // Pin color: verde=entregado, naranja=no entregado, color rep=pendiente
+      var fillColor = done ? '#e8f5ef' : noEnt ? '#fee2e2' : color;
+      var strokeColor = done ? color : noEnt ? '#dc2626' : '#fff';
+      var textColor = done ? color : noEnt ? '#dc2626' : '#fff';
+      var label = done ? '✓' : noEnt ? '✗' : (i+1);
+      var svg='<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 2C10.4 2 5 7.4 5 14c0 9.5 12 26 12 26S29 23.5 29 14C29 7.4 23.6 2 17 2z" fill="'+fillColor+'" stroke="'+strokeColor+'" stroke-width="2"/><text x="17" y="16" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="'+textColor+'">'+label+'</text></svg>';
+      var pinEl=document.createElement('div');pinEl.innerHTML=svg;pinEl.style.cssText='width:34px;height:42px;cursor:pointer;';
+      var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:p.lat,lng:p.lng},map:map,content:pinEl,title:(i+1)+'. '+p.nombre,zIndex:done?10:noEnt?11:100+i});
+      (function(pp,nd,ne){m.addListener('click',function(){
+        var info='<div style="font-family:Arial;padding:4px;min-width:150px"><b>'+(i+1)+'. '+esc(pp.nombre)+'</b>';
+        if(nd) info+='<div style="color:#1a6b4a;font-weight:700;margin-top:2px">✓ Entregado</div>';
+        else if(ne) info+='<div style="color:#dc2626;font-weight:700;margin-top:2px">✗ No entregado'+(pp.motivo?' — '+esc(pp.motivo):'')+'</div>';
+        info+='</div>';
+        iw.setContent(info);iw.open(map,m);
+      });})(p,done,noEnt);
       markers[cid].push(m);
-    });
-  });
-}
 
-var map2;
-var markers2 = {};
-var mapaActivo = 'ruta';
-var pendingEfectivasUpdate = false;
-
-function initMap(){
-  var mapOpts = {center:{lat:25.6866,lng:-100.3161},zoom:11,mapTypeControl:false,streetViewControl:false,styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]}]};
-  map = new google.maps.Map(document.getElementById('map'), mapOpts);
-  map2 = new google.maps.Map(document.getElementById('map-efectivas'), mapOpts);
-  var almacenIcon = {path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#ff8800',fillOpacity:1,strokeColor:'#fff',strokeWeight:2};
-  var almacenPos = {lat:25.681553680100162,lng:-100.32371502760287};
-  new google.maps.Marker({position:almacenPos,map:map,title:'Almacen',icon:almacenIcon,zIndex:3000});
-  new google.maps.Marker({position:almacenPos,map:map2,title:'Almacen',icon:almacenIcon,zIndex:3000});
-  actualizarMapa();
-  actualizarMapaEfectivas();
-  if(pendingEfectivasUpdate) actualizarMapaEfectivas();
-  pendingEfectivasUpdate = false;
-}
-
-function switchMapa(tipo){
-  mapaActivo = tipo;
-  var isRuta = tipo === 'ruta';
-  document.getElementById('map').style.display = isRuta ? 'block' : 'none';
-  document.getElementById('map-efectivas').style.display = isRuta ? 'none' : 'block';
-  document.getElementById('legend').style.display = isRuta ? 'block' : 'none';
-  document.getElementById('legend-efectivas').style.display = isRuta ? 'none' : 'block';
-  document.getElementById('btn-mapa-ruta').style.background = isRuta ? '#0f4a8a' : 'none';
-  document.getElementById('btn-mapa-ruta').style.color = isRuta ? '#fff' : '#0f4a8a';
-  document.getElementById('btn-mapa-efectivas').style.background = isRuta ? 'none' : '#0f4a8a';
-  document.getElementById('btn-mapa-efectivas').style.color = isRuta ? '#0f4a8a' : '#fff';
-  setTimeout(function(){
-    google.maps.event.trigger(isRuta ? map : map2, 'resize');
-  }, 100);
-}
-
-function actualizarMapaEfectivas(){
-  if(!map2) return;
-  // Clear existing markers
-  Object.keys(markers2).forEach(function(cid){
-    (markers2[cid]||[]).forEach(function(m){m.setMap(null);});
-    markers2[cid] = [];
-  });
-  var legendHtml = '';
-  var hasData = false;
-  if(!map2) return;
-  var bounds = new google.maps.LatLngBounds();
-
-  Object.keys(datos).forEach(function(cid){
-    var d = datos[cid];
-    if(!d||!d.paradas) return;
-    var color = getColor(cid);
-    var nombre = (d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
-    var paradasArr = Array.isArray(d.paradas) ? d.paradas : Object.values(d.paradas);
-    markers2[cid] = markers2[cid] || [];
-
-    paradasArr.forEach(function(p,i){
-      var entregas = p.entregas || [];
-      entregas.forEach(function(e,ei){
-        if(!e.entregado) return;
-        var lat, lng, isGps;
-        if(e.gpsLat && e.gpsLng){
-          lat = e.gpsLat; lng = e.gpsLng; isGps = true;
-        } else {
-          lat = p.lat; lng = p.lng; isGps = false;
-        }
-        if(!lat||!lng) return;
-        hasData = true;
-        var pos = {lat:lat, lng:lng};
-        bounds.extend(pos);
-        var hora = e.horaEntrega || '';
-        var label = (i+1)+(entregas.length>1?'-'+(ei+1):'');
-        var svg = '<svg width="38" height="48" viewBox="0 0 38 48" xmlns="http://www.w3.org/2000/svg">'
-          +'<path d="M19 2C12 2 6 8 6 15c0 10 13 31 13 31S32 25 32 15C32 8 26 2 19 2z" fill="'+color+'" stroke="#fff" stroke-width="2"/>'
-          +(isGps?'<circle cx="19" cy="15" r="6" fill="#fff" opacity="0.3"/>':'')
-          +'<text x="19" y="18" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="#fff">'+label+'</text>'
-          +'</svg>';
-        var m = new google.maps.Marker({
-          position:pos, map:map2,
-          icon:{url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(38,48),anchor:new google.maps.Point(19,48)},
-          title:(i+1)+'. '+p.nombre,
-          zIndex:100+i
-        });
-        (function(pp,ee,gps,hr){
-          m.addListener('click',function(){
-            var iw2 = new google.maps.InfoWindow();
-            iw2.setContent('<div style="font-family:Arial;padding:4px;min-width:160px">'
-              +'<b>'+esc(pp.nombre)+'</b><br>'
-              +'<small>'+esc(pp.id||'')+'</small><br>'
-              +'<span style="color:#1a6b4a;font-weight:700">✓ Entregado '+hr+'</span><br>'
-              +(gps?'<span style="color:#0f4a8a;font-size:10px">📍 Ubicación GPS</span>':'<span style="color:#7a7870;font-size:10px">📍 Ubicación del cliente</span>')
-              +'</div>');
-            iw2.open(map2,m);
-          });
-        })(p,e,isGps,hora);
-        markers2[cid].push(m);
+      // GPS dot — show where delivery was actually marked
+      entregas.forEach(function(e){
+        if(!e.entregado||!e.gpsLat||!e.gpsLng) return;
+        var dist = haversineM(p.lat,p.lng,e.gpsLat,e.gpsLng);
+        var dotColor = dist<=50?'#22c55e':dist<=200?'#f97316':'#dc2626';
+        var dotEl=document.createElement('div');
+        dotEl.style.cssText='width:10px;height:10px;border-radius:50%;background:'+dotColor+';border:2px solid #fff;box-sizing:border-box;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.4);';
+        var gm=new google.maps.marker.AdvancedMarkerElement({position:{lat:e.gpsLat,lng:e.gpsLng},map:map,content:dotEl,title:'GPS entrega: '+dist+'m del cliente',zIndex:200});
+        (function(pp2,ee,d2){gm.addListener('click',function(){
+          var distTxt=d2<1000?d2+'m':(d2/1000).toFixed(1)+'km';
+          var distColor=d2<=50?'#22c55e':d2<=200?'#f97316':'#dc2626';
+          iw.setContent('<div style="font-family:Arial;padding:4px"><div style="font-size:11px;color:#7a7870">📍 GPS de entrega</div><div style="font-weight:700">'+esc(pp2.nombre)+'</div><div style="margin-top:4px;font-size:13px;font-weight:700;color:'+distColor+'">'+distTxt+' del cliente</div>'+(ee.horaEntrega?'<div style="font-size:10px;color:#7a7870;margin-top:2px">'+ee.horaEntrega+'</div>':'')+'</div>');
+          iw.open(map,gm);
+        });})(p,e,dist);
+        markers[cid].push(gm);
       });
     });
-    if(markers2[cid].length > 0){
-      legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:'+color+'"></div><span>'+esc(nombre)+'</span></div>';
-    }
   });
-
-  legendHtml += '<div class="leg-item"><div style="width:12px;height:12px;border-radius:50%;background:#1a6b4a;opacity:0.7;flex-shrink:0;position:relative"><div style="position:absolute;inset:2px;border-radius:50%;background:rgba(255,255,255,0.3)"></div></div><span>GPS real</span></div>';
-  legendHtml += '<div class="leg-item"><div class="leg-dot" style="background:#1a6b4a"></div><span>Ubicacion cliente</span></div>';
-  document.getElementById('legend-efectivas').innerHTML = legendHtml || '<div style="font-size:11px;color:#7a7870">Sin entregas aun</div>';
-
-  if(hasData && map2) {
-    map2.fitBounds(bounds);
-  }
 }
+
+
+function initMap(){
+  var mapOpts = {center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false};
+  map = new google.maps.Map(document.getElementById('map'), mapOpts);
+  var almacenIcon = {path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:'#ff8800',fillOpacity:1,strokeColor:'#fff',strokeWeight:2};
+  var almacenPos = {lat:25.681553680100162,lng:-100.32371502760287};
+  var almEl=document.createElement('div');almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#ff8800;border:2px solid #fff;box-sizing:border-box;';new google.maps.marker.AdvancedMarkerElement({position:almacenPos,map:map,title:'Almacen',content:almEl,zIndex:3000});
+  actualizarMapa();
+}
+
+
 
 // Agregar parada desde supervisor
 function abrirAgregarParada(cid){
@@ -668,11 +605,13 @@ function descargarDia(){
     rows.push(['Fecha:',fecha,'Chofer:',nombre]);
     rows.push(['Distancia:',((d&&d.km)||'-')+' km','Tiempo:',(d&&d.tiempo)||'-']);
     rows.push([]);
-    rows.push(['No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Desde','Km tramo','Tiempo tramo']);
+    rows.push(['No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Motivo','Desde','Km tramo','Tiempo tramo']);
     paradas.forEach(function(p,i){
       var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
       entregas.forEach(function(e,ei){
-        rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,p.esLibre?'Libre':'Cliente',ei+1,e.pedido||'',e.factura||'',e.entregado?'Entregado':'Pendiente',e.horaEntrega||'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
+        var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+        var motivo=p.noEntregado?(p.motivo||''):'';
+        rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,p.esLibre?'Libre':'Cliente',ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
       });
     });
     var ws=XLSX.utils.aoa_to_sheet(rows);
@@ -823,6 +762,6 @@ function guardarNuevaRuta(){
 
 window.initMap=initMap;
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
 </body>
 </html>
