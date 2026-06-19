@@ -85,6 +85,17 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 .ebtn{flex:1;padding:5px 8px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial}
 .ebtn.pending{background:#1a6b4a;color:#fff}
 .ebtn.done{background:#e8f5ef;color:#1a6b4a;cursor:default;border:1px solid #b2ddc9}
+.ebtn.noent{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
+.ebtn.noent-done{background:#fee2e2;color:#dc2626;cursor:default;border:1px solid #fca5a5;flex:2}
+.motivo-row{margin-top:5px;display:none}
+.motivo-row.show{display:block}
+.motivo-sel{width:100%;padding:5px 8px;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-family:Arial;outline:none;background:#fff;color:#dc2626}
+.motivo-otro{width:100%;padding:5px 8px;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-family:Arial;outline:none;margin-top:4px;display:none}
+.motivo-otro.show{display:block}
+.motivo-confirmar{width:100%;padding:5px 8px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;margin-top:4px}
+.hora-noent{font-size:10px;color:#dc2626;font-weight:700}
+.recalc-btn{width:100%;padding:8px;background:#0f4a8a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial;margin-bottom:6px;display:none}
+.recalc-btn.show{display:block}
 .hora-entrega{font-size:10px;color:#1a6b4a;font-weight:700}
 .add-entrega-btn{width:100%;padding:5px;background:none;border:1px dashed #b2ddc9;border-radius:6px;font-size:11px;color:#1a6b4a;cursor:pointer;font-family:Arial;margin-top:2px}
 .del-entrega-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;padding:0 2px;flex-shrink:0}
@@ -220,6 +231,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
         </div>
         <div class="pfooter">
           <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
+          <button class="recalc-btn" id="recalc-btn" onclick="recalcularDesdeAqui()">Recalcular desde aqui</button>
           <div class="row2">
             <button class="clrbtn" onclick="limpiar()">Limpiar</button>
             <button class="clrbtn wa" onclick="switchTab('resumen');actualizarResumen()">WhatsApp</button>
@@ -521,20 +533,70 @@ function marcarEntregaItem(pid,idx){
   p.entregas[idx].entregado=true;
   var now=new Date();
   p.entregas[idx].horaEntrega=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  // Capture GPS location at delivery time
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(pos){
       p.entregas[idx].gpsLat=pos.coords.latitude;
       p.entregas[idx].gpsLng=pos.coords.longitude;
       p.entregas[idx].gpsAcc=Math.round(pos.coords.accuracy);
       guardarEnFirebase();
-    },function(){
-      // GPS not available, continue without it
-      guardarEnFirebase();
-    },{enableHighAccuracy:true,timeout:5000,maximumAge:0});
+    },function(){guardarEnFirebase();},{enableHighAccuracy:true,timeout:5000,maximumAge:0});
   }
   ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
+  var rb=document.getElementById('recalc-btn');if(rb)rb.classList.add('show');
   toast('Entregado a las '+p.entregas[idx].horaEntrega);
+}
+
+function marcarNoEntregado(id){
+  var sid=id.replace(/[^a-zA-Z0-9]/g,'_');
+  var row=document.getElementById('motivo-row-'+sid);
+  if(row)row.classList.toggle('show');
+}
+
+function confirmarMotivo(id){
+  var sid=id.replace(/[^a-zA-Z0-9]/g,'_');
+  var sel=document.getElementById('motivo-sel-'+sid);
+  var otro=document.getElementById('motivo-otro-'+sid);
+  var motivo=sel?sel.value:'';
+  if(motivo==='Otro')motivo=otro&&otro.value?otro.value:'Otro';
+  if(!motivo){toast('Selecciona un motivo');return;}
+  var p=par.find(function(x){return x.id===id;});if(!p)return;
+  p.noEntregado=true;p.entregado=false;
+  var now=new Date();
+  p.horaNoEntrega=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  p.motivoNoEntrega=motivo;
+  ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
+  var rb=document.getElementById('recalc-btn');if(rb)rb.classList.add('show');
+  toast('Visita registrada: '+motivo);
+}
+
+function recalcularDesdeAqui(){
+  if(!map||!navigator.geolocation){toast('GPS no disponible');return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var origen={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    var pendientes=par.filter(function(p){return !p.entregado&&!p.noEntregado;});
+    if(!pendientes.length){toast('No hay paradas pendientes');return;}
+    document.getElementById('ld').style.display='flex';
+    var ds=new google.maps.DirectionsService();
+    var req={
+      origin:origen,
+      destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},
+      waypoints:pendientes.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),
+      travelMode:google.maps.TravelMode.DRIVING,
+      optimizeWaypoints:true
+    };
+    ds.route(req,function(res,st){
+      document.getElementById('ld').style.display='none';
+      if(st!=='OK'){toast('Error recalculando: '+st);return;}
+      var ord=res.routes[0].waypoint_order;
+      var reordenadas=[];
+      ord.forEach(function(i){reordenadas.push(pendientes[i]);});
+      var completadas=par.filter(function(p){return p.entregado||p.noEntregado;});
+      par=completadas.concat(reordenadas);
+      dr.setDirections(res);
+      ui();pines();guardarEnFirebase();
+      toast('Ruta recalculada desde tu ubicacion');
+    });
+  },function(){toast('No se pudo obtener tu ubicacion');});
 }
 
 function ui(){
@@ -562,9 +624,26 @@ function ui(){
       if(p.esPaqueteria){h+='<div class="pfields"><div class="pfield" style="grid-column:1/-1"><label>No. Guia</label><input type="text" placeholder="ej:1Z999AA10123456784" value="'+esc(e.guia||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="guia" class="pfin'+(e.guia?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';}
       h+='<div class="entrega-row">';
       if(e.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+e.horaEntrega+'</span>';}
-      else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button>';}
-      if(entregas.length>1&&!e.entregado)h+='<button class="del-entrega-btn" data-pid="'+p.id+'" data-idx="'+ei+'">&#x2715;</button>';
-      h+='</div></div>';
+      else if(p.noEntregado){h+='<button class="ebtn noent-done">&#x2716; No entregado</button><span class="hora-noent">'+(p.horaNoEntrega||'')+'</span>';}
+      else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button><button class="ebtn noent" data-ne-id="'+p.id+'" style="flex:0.8">No entregado</button>';}
+      if(entregas.length>1&&!e.entregado&&!p.noEntregado)h+='<button class="del-entrega-btn" data-pid="'+p.id+'" data-idx="'+ei+'">&#x2715;</button>';
+      h+='</div>';
+      // Motivo no entregado
+      if(!e.entregado&&!p.noEntregado){
+        var sid2=p.id.replace(/[^a-zA-Z0-9]/g,'_');
+        var MOTIVOS=['Cliente cerrado','Cliente no se encontraba','Direccion incorrecta','Cliente cancelo el pedido','Otro'];
+        h+='<div class="motivo-row" id="motivo-row-'+sid2+'">';
+        h+='<select class="motivo-sel" id="motivo-sel-'+sid2+'" onchange="var o=document.getElementById(\'motivo-otro-'+sid2+'\');if(o)o.classList.toggle(\'show\',this.value===\'Otro\')">';
+        h+='<option value="">-- Selecciona motivo --</option>';
+        MOTIVOS.forEach(function(mv){h+='<option>'+mv+'</option>';});
+        h+='</select>';
+        h+='<input type="text" class="motivo-otro" id="motivo-otro-'+sid2+'" placeholder="Describe el motivo...">';
+        h+='<button class="motivo-confirmar" data-conf-id="'+p.id+'">Confirmar visita sin entrega</button>';
+        h+='</div>';
+      } else if(p.noEntregado&&p.motivoNoEntrega){
+        h+='<div style="font-size:10px;color:#dc2626;margin-top:4px;padding:3px 6px;background:#fee2e2;border-radius:4px">'+esc(p.motivoNoEntrega)+'</div>';
+      }
+      h+='</div>';
     });
     h+='</div>';
     if(!todasEntregadas)h+='<button class="add-entrega-btn" data-pid="'+p.id+'">+ Agregar pedido/factura</button>';
@@ -574,8 +653,12 @@ function ui(){
   pl.querySelectorAll('.rbtn').forEach(function(b){b.addEventListener('click',function(){quitar(b.dataset.id);});});
   pl.querySelectorAll('.pfin').forEach(function(inp){inp.addEventListener('input',function(){setEntregaField(inp.dataset.pid,parseInt(inp.dataset.idx),inp.dataset.field,inp.value);inp.classList.toggle('filled',inp.value.length>0);actualizarResumen();});});
   pl.querySelectorAll('.ebtn.pending').forEach(function(b){b.addEventListener('click',function(){marcarEntregaItem(b.dataset.pid,parseInt(b.dataset.idx));});});
+  pl.querySelectorAll('.ebtn.noent').forEach(function(b){b.addEventListener('click',function(){marcarNoEntregado(b.dataset.neId);});});
+  pl.querySelectorAll('.motivo-confirmar').forEach(function(b){b.addEventListener('click',function(){confirmarMotivo(b.dataset.confId);});});
   pl.querySelectorAll('.add-entrega-btn').forEach(function(b){b.addEventListener('click',function(){agregarEntrega(b.dataset.pid);});});
   pl.querySelectorAll('.del-entrega-btn').forEach(function(b){b.addEventListener('click',function(){eliminarEntrega(b.dataset.pid,parseInt(b.dataset.idx));});});
+  var rb=document.getElementById('recalc-btn');
+  if(rb)rb.classList.toggle('show',rutaActiva&&par.some(function(p){return p.entregado||p.noEntregado;}));
   document.getElementById('rs').style.display='grid';
   if(!rutaActiva)dibujar();actualizarResumen();
 }
