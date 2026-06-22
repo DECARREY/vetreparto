@@ -189,7 +189,8 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <div class="modal-body">
       <input type="hidden" id="edit-key">
       <div class="form-group"><label>ID SAP *</label><input type="text" id="f-id" placeholder="ej: MTY1900"></div>
-      <div class="form-group"><label>Nombre comercial *</label><input type="text" id="f-nombre" placeholder="ej: Veterinaria San Pedro"></div>
+      <div class="form-group"><label>Nombre fiscal *</label><input type="text" id="f-fiscal" placeholder="ej: VETERINARIA SAN PEDRO SA DE CV"></div>
+      <div class="form-group"><label>Nombre comercial</label><input type="text" id="f-nombre" placeholder="ej: Veterinaria San Pedro"></div>
       <div class="form-group"><label>Direccion de entrega</label><input type="text" id="f-dir" placeholder="ej: Av. Garza Sada 2501, Monterrey"></div>
       <div class="form-row">
         <div class="form-group"><label>Latitud *</label><input type="number" id="f-lat" placeholder="ej: 25.6500" step="0.0000001"></div>
@@ -574,27 +575,29 @@ function abrirModal(key,cliente){
   document.getElementById('modal-title').textContent=key?'Editar cliente':'Nuevo cliente';
   document.getElementById('edit-key').value=key||'';
   document.getElementById('f-id').value=(cliente&&cliente.id)||'';
+  document.getElementById('f-fiscal').value=(cliente&&cliente.nombreFiscal)||'';
   document.getElementById('f-nombre').value=(cliente&&cliente.nombre)||'';
   document.getElementById('f-dir').value=(cliente&&cliente.dir)||'';
   document.getElementById('f-lat').value=(cliente&&cliente.lat)||'';
   document.getElementById('f-lng').value=(cliente&&cliente.lng)||'';
   document.getElementById('f-id').disabled=!!key;
   document.getElementById('modal').classList.add('open');
-  setTimeout(function(){document.getElementById('f-id').disabled?document.getElementById('f-nombre').focus():document.getElementById('f-id').focus();},100);
+  setTimeout(function(){document.getElementById('f-id').disabled?document.getElementById('f-fiscal').focus():document.getElementById('f-id').focus();},100);
 }
 function cerrarModal(){document.getElementById('modal').classList.remove('open');}
 function editarCliente(key){var c=todosClientes.find(function(x){return x._key===key;});if(c)abrirModal(key,c);}
 function guardarCliente(){
   var key=document.getElementById('edit-key').value;
   var id=document.getElementById('f-id').value.trim().toUpperCase();
+  var fiscal=document.getElementById('f-fiscal').value.trim();
   var nombre=document.getElementById('f-nombre').value.trim();
   var dir=document.getElementById('f-dir').value.trim();
   var lat=parseFloat(document.getElementById('f-lat').value);
   var lng=parseFloat(document.getElementById('f-lng').value);
-  if(!id||!nombre){toast('ID y Nombre son obligatorios');return;}
+  if(!id||!fiscal){toast('ID y Nombre fiscal son obligatorios');return;}
   if(isNaN(lat)||isNaN(lng)){toast('Coordenadas invalidas');return;}
   if(lng>0)lng=-lng;
-  var data={id:id,nombre:nombre,dir:dir,lat:lat,lng:lng};
+  var data={id:id,nombreFiscal:fiscal,nombre:nombre||fiscal,dir:dir,lat:lat,lng:lng};
   if(key){
     db.ref('clientes/'+key).update(data).then(function(){toast('Cliente actualizado');cerrarModal();}).catch(function(e){toast('Error: '+e.message);});
   } else {
@@ -611,7 +614,13 @@ function limpiarDia(){
   var choferes=Object.keys(datos);
   if(!choferes.length){toast('No hay rutas activas');return;}
   if(!confirm('Limpiar todas las rutas del dia?\nEsta accion no se puede deshacer.')){return;}
-  var promises=choferes.map(function(cid){return db.ref('rutas/'+cid+'/'+fechaHoy).remove();});
+  var promises=[];
+  choferes.forEach(function(cid){
+    promises.push(db.ref('rutas/'+cid+'/'+fechaHoy).remove());
+    db.ref('rutas/'+cid+'/paradas').once('value').then(function(s){
+      if(s.exists()) db.ref('rutas/'+cid).remove();
+    });
+  });
   Promise.all(promises).then(function(){
     datos={};colores={};
     renderChoferes();
