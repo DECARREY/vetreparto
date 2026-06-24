@@ -308,19 +308,11 @@ db.ref('rutas').on('value', function(snap){
     Object.keys(val).forEach(function(cid){
       var rutaChofer = val[cid];
       if(!rutaChofer) return;
-      if(rutaChofer.paradas){
-        // Formato antiguo: datos directamente en rutas/cid
-        datos[cid] = rutaChofer;
-      } else if(rutaChofer[fechaHoy]){
+      if(rutaChofer[fechaHoy]){
         // Formato nuevo: datos en rutas/cid/fecha
         datos[cid] = rutaChofer[fechaHoy];
-      } else {
-        // Buscar la fecha más reciente disponible
-        var fechas = Object.keys(rutaChofer).sort().reverse();
-        if(fechas.length && rutaChofer[fechas[0]] && rutaChofer[fechas[0]].paradas){
-          datos[cid] = rutaChofer[fechas[0]];
-        }
       }
+      // No mostrar fechas anteriores - solo el día actual
     });
   }
   renderChoferes();
@@ -657,6 +649,30 @@ function descargarDia(){
     ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:8},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     XLSX.utils.book_append_sheet(wb,ws,nombre.substring(0,31));
   });
+  // Hoja consolidada resumen
+  var rowsAll=[];
+  rowsAll.push(['RESUMEN CONSOLIDADO - VetReparto']);
+  rowsAll.push(['Fecha:',fecha]);
+  rowsAll.push([]);
+  rowsAll.push(['Chofer','Paradas','Entregados','No entregados','Pendientes','Km']);
+  choferes.forEach(function(cid){
+    var d=datos[cid];
+    var nombre=(d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
+    var paradas=(d&&d.paradas)||[];
+    var ent=0,noEnt=0,pend=0;
+    paradas.forEach(function(p){
+      var entregas=p.entregas||[{entregado:p.entregado||false}];
+      if(entregas.every(function(e){return e.entregado;})) ent++;
+      else if(p.noEntregado) noEnt++;
+      else pend++;
+    });
+    rowsAll.push([nombre,paradas.length,ent,noEnt,pend,(d&&d.km)||'-']);
+  });
+  var wsAll=XLSX.utils.aoa_to_sheet(rowsAll);
+  wsAll['!cols']=[{wch:15},{wch:10},{wch:12},{wch:14},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,wsAll,'Resumen');
+  // Move Resumen sheet to first position
+  wb.SheetNames = ['Resumen'].concat(wb.SheetNames.filter(function(s){return s!=='Resumen';}));
   XLSX.writeFile(wb,'vetreparto_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'_'+hoy.getFullYear()+'.xlsx');
   toast('Descargado');
 }
