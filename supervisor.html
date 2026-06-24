@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VetReparto - Supervisor V2.1</title>
+<title>VetReparto - Supervisor</title>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -394,7 +394,7 @@ function renderChoferes(){
         var hora = entregas.length && entregas[entregas.length-1].horaEntrega ? entregas[entregas.length-1].horaEntrega : (p.horaEntrega||'');
         html += '<div class="parada-row">';
         html += '<div class="pnum-s '+(ok?'ok':noEnt?'':'pend')+'"'+(noEnt?' style="background:#fee2e2;color:#dc2626"':'')+'>'+( ok?'&#10003;':noEnt?'&#x2716;':(i+1))+'</div>';
-        html += '<div class="pnm-s">'+esc(p.nombre)+'</div>';
+        html += '<div class="pnm-s">'+esc(p.nombreFiscal||p.nombre)+'</div>';
         if(noEnt&&p.motivo) html += '<div style="font-size:10px;color:#dc2626;margin-left:auto">'+esc(p.motivo)+'</div>';
         else if(hora) html += '<div class="phora">'+hora+'</div>';
         html += '</div>';
@@ -447,9 +447,9 @@ function actualizarMapa(){
       var label = done ? '✓' : noEnt ? '✗' : (i+1);
       var svg='<svg width="34" height="42" viewBox="0 0 34 42" xmlns="http://www.w3.org/2000/svg"><path d="M17 2C10.4 2 5 7.4 5 14c0 9.5 12 26 12 26S29 23.5 29 14C29 7.4 23.6 2 17 2z" fill="'+fillColor+'" stroke="'+strokeColor+'" stroke-width="2"/><text x="17" y="16" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="11" font-weight="800" fill="'+textColor+'">'+label+'</text></svg>';
       var pinEl=document.createElement('div');pinEl.innerHTML=svg;pinEl.style.cssText='width:34px;height:42px;cursor:pointer;';
-      var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:p.lat,lng:p.lng},map:map,content:pinEl,title:(i+1)+'. '+p.nombre,zIndex:done?10:noEnt?11:100+i});
+      var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:p.lat,lng:p.lng},map:map,content:pinEl,title:(i+1)+'. '+(p.nombreFiscal||p.nombre),zIndex:done?10:noEnt?11:100+i});
       (function(pp,nd,ne){m.addListener('click',function(){
-        var info='<div style="font-family:Arial;padding:4px;min-width:150px"><b>'+(i+1)+'. '+esc(pp.nombre)+'</b>';
+        var info='<div style="font-family:Arial;padding:4px;min-width:150px"><b>'+(i+1)+'. '+esc(pp.nombreFiscal||pp.nombre)+'</b>';
         if(nd) info+='<div style="color:#1a6b4a;font-weight:700;margin-top:2px">✓ Entregado</div>';
         else if(ne) info+='<div style="color:#dc2626;font-weight:700;margin-top:2px">✗ No entregado'+(pp.motivo?' — '+esc(pp.motivo):'')+'</div>';
         info+='</div>';
@@ -716,7 +716,7 @@ function cargarHistorial(){
       entregas.forEach(function(e,ei){
         html+='<tr style="border-bottom:1px solid #f0efe9;background:'+bg+'">';
         html+='<td style="padding:6px 8px">'+(i+1)+(entregas.length>1?'-'+(ei+1):'')+'</td>';
-        html+='<td style="padding:6px 8px;font-weight:600">'+esc(p.nombre)+'</td>';
+        html+='<td style="padding:6px 8px;font-weight:600">'+esc(p.nombreFiscal||p.nombre)+'</td>';
         html+='<td style="padding:6px 8px">'+(e.pedido||'-')+'</td>';
         html+='<td style="padding:6px 8px">'+(e.factura||'-')+'</td>';
         html+='<td style="padding:6px 8px;font-weight:700;color:'+estadoColor+'">'+estado+'</td>';
@@ -873,7 +873,7 @@ function nr_renderLista(){
   nrParadas.forEach(function(p,i){
     h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f7f6f2;border-radius:6px;margin-bottom:4px">';
     h+='<div style="width:20px;height:20px;border-radius:50%;background:#1a6b4a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">'+(i+1)+'</div>';
-    h+='<div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+'</div>';
+    h+='<div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombreFiscal||p.nombre)+'</div>';
     h+='<button onclick="nr_quitarParada('+i+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;flex-shrink:0">&#x2715;</button>';
     h+='</div>';
   });
