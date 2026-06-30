@@ -165,8 +165,9 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
             <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha</label>
             <input type="date" id="hist-fecha" onchange="cargarHistorial()" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none">
           </div>
-          <div style="margin-top:14px">
+          <div style="margin-top:14px;display:flex;gap:6px">
             <button onclick="descargarHistorialExcel()" style="padding:8px 14px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar Excel</button>
+            <button onclick="descargarTodosHistorial()" style="padding:8px 14px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar todos</button>
           </div>
         </div>
       </div>
@@ -653,6 +654,46 @@ function cargarHistorial(){
     });
     html+='</tbody></table>'; body.innerHTML=html;
   }).catch(function(e){ body.innerHTML='<div style="color:#dc2626;font-size:13px;padding:16px">Error: '+e.message+'</div>'; });
+}
+
+function descargarTodosHistorial(){
+  var fecha=document.getElementById('hist-fecha').value;
+  if(!fecha){toast('Selecciona una fecha');return;}
+  toast('Descargando todos los choferes...');
+  var choferes=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+  var promesas=choferes.map(function(cid){
+    return db.ref('historial/'+cid+'/'+fecha).once('value').then(function(snap){
+      return {cid:cid, data:snap.val()};
+    });
+  });
+  Promise.all(promesas).then(function(resultados){
+    var rows=[['VetReparto - Historial consolidado'],['Fecha:',fecha],[],
+      ['Chofer','No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
+    var hayDatos=false;
+    resultados.forEach(function(r){
+      var d=r.data; if(!d||!d.paradas) return;
+      var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
+      if(!paradas.length) return;
+      hayDatos=true;
+      var nombre=(d.choferNombre||r.cid.charAt(0).toUpperCase()+r.cid.slice(1));
+      paradas.forEach(function(p,i){
+        var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+        entregas.forEach(function(e,ei){
+          var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+          var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+          var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
+          rows.push([nombre,i+1,p.esLibre?'LIBRE':p.id,p.nombre,tipo,ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
+        });
+      });
+    });
+    if(!hayDatos){toast('Sin datos para esa fecha');return;}
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.writeFile(wb,'historial_todos_'+fecha+'.xlsx');
+    toast('Descargado');
+  }).catch(function(e){toast('Error: '+e.message);});
 }
 
 function descargarHistorialExcel(){
