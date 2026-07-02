@@ -148,7 +148,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <div class="tab-content" id="section-historial" style="flex-direction:column;overflow:hidden">
       <div style="padding:14px 16px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#fff">
         <div style="font-size:14px;font-weight:700;margin-bottom:10px">Historial de rutas</div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
           <div>
             <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Chofer</label>
             <select id="hist-chofer" onchange="cargarHistorial()" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none;background:#fff">
@@ -165,9 +165,31 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
             <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha</label>
             <input type="date" id="hist-fecha" onchange="cargarHistorial()" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none">
           </div>
-          <div style="margin-top:14px;display:flex;gap:6px">
-            <button onclick="descargarHistorialExcel()" style="padding:8px 14px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar Excel</button>
-            <button onclick="descargarTodosHistorial()" style="padding:8px 14px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar todos</button>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0efe9;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div>
+            <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Chofer (descarga)</label>
+            <select id="hist-chofer-dl" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none;background:#fff">
+              <option value="todos">Todos</option>
+              <option value="angel">Angel</option>
+              <option value="arturo">Arturo</option>
+              <option value="silvia">Silvia</option>
+              <option value="mercedes">Mercedes</option>
+              <option value="luis">Luis</option>
+              <option value="marco">Marco</option>
+              <option value="eunice">Eunice</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha inicio</label>
+            <input type="date" id="rango-inicio" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha fin</label>
+            <input type="date" id="rango-fin" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none">
+          </div>
+          <div>
+            <button onclick="descargarRango()" style="padding:8px 14px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar Excel</button>
           </div>
         </div>
       </div>
@@ -656,6 +678,57 @@ function cargarHistorial(){
   }).catch(function(e){ body.innerHTML='<div style="color:#dc2626;font-size:13px;padding:16px">Error: '+e.message+'</div>'; });
 }
 
+function descargarRango(){
+  var choferSel=document.getElementById('hist-chofer-dl').value;
+  var inicio=document.getElementById('rango-inicio').value;
+  var fin=document.getElementById('rango-fin').value;
+  if(!inicio||!fin){toast('Selecciona fecha inicio y fin');return;}
+  if(inicio>fin){toast('La fecha inicio debe ser menor o igual a la fecha fin');return;}
+  var choferes=choferSel==='todos'?['angel','arturo','silvia','mercedes','luis','marco','eunice']:[choferSel];
+  toast('Descargando rango...');
+  var promesas=choferes.map(function(cid){
+    return db.ref('historial/'+cid).once('value').then(function(snap){
+      return {cid:cid, data:snap.val()};
+    });
+  });
+  Promise.all(promesas).then(function(resultados){
+    var rows=[['VetReparto - Historial por rango'],['Desde:',inicio,'Hasta:',fin,'Chofer:',choferSel==='todos'?'Todos':choferSel.charAt(0).toUpperCase()+choferSel.slice(1)],[],
+      ['Chofer','Fecha','No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
+    var hayDatos=false;
+    resultados.forEach(function(r){
+      if(!r.data) return;
+      var nombre=r.cid.charAt(0).toUpperCase()+r.cid.slice(1);
+      // Filtrar fechas dentro del rango
+      var fechas=Object.keys(r.data).filter(function(f){ return f>=inicio&&f<=fin; }).sort();
+      fechas.forEach(function(fecha){
+        var d=r.data[fecha]; if(!d||!d.paradas) return;
+        var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+        if(!paradas.length) return;
+        hayDatos=true;
+        var nombreChofer=d.choferNombre||nombre;
+        paradas.forEach(function(p,i){
+          var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+          if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+          entregas.forEach(function(e,ei){
+            var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+            var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+            var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
+            var idSap=p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''));
+            rows.push([nombreChofer,fecha,i+1,idSap,p.nombre||'',tipo,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
+          });
+        });
+      });
+    });
+    if(!hayDatos){toast('Sin datos para el rango seleccionado');return;}
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:12},{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.writeFile(wb,'historial_rango_'+inicio+'_'+fin+'.xlsx');
+    toast('Descargado');
+  }).catch(function(e){toast('Error: '+e.message);});
+}
+
 function descargarTodosHistorial(){
   var fecha=document.getElementById('hist-fecha').value;
   if(!fecha){toast('Selecciona una fecha');return;}
@@ -672,12 +745,13 @@ function descargarTodosHistorial(){
     var hayDatos=false;
     resultados.forEach(function(r){
       var d=r.data; if(!d||!d.paradas) return;
-      var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
+      var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
       if(!paradas.length) return;
       hayDatos=true;
       var nombre=(d.choferNombre||r.cid.charAt(0).toUpperCase()+r.cid.slice(1));
       paradas.forEach(function(p,i){
         var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+        if(!Array.isArray(entregas)) entregas=Object.values(entregas);
         entregas.forEach(function(e,ei){
           var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
           var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
@@ -697,23 +771,70 @@ function descargarTodosHistorial(){
 }
 
 function descargarHistorialExcel(){
-  if(!historialData||!historialData.paradas){toast('Primero carga un historial');return;}
-  var cid=document.getElementById('hist-chofer').value; var fecha=document.getElementById('hist-fecha').value;
-  var d=historialData; var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
-  var rows=[['VetReparto - Historial'],['Chofer:',d.choferNombre||cid,'Fecha:',fecha,'Km:',(d.km||'-'),'Tiempo:',(d.tiempo||'-')],[],
-    ['No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
-  paradas.forEach(function(p,i){
-    var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
-    entregas.forEach(function(e,ei){
-      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
-      var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
-      rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,tipo,ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'',p.kmDesde||'',p.minDesde||'']);
+  var cid=document.getElementById('hist-chofer').value;
+  var fecha=document.getElementById('hist-fecha').value;
+  if(!fecha){toast('Selecciona una fecha');return;}
+  if(cid==='todos'){
+    // Descargar todos los choferes del día
+    toast('Descargando todos los choferes...');
+    var choferes=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+    var promesas=choferes.map(function(c){
+      return db.ref('historial/'+c+'/'+fecha).once('value').then(function(snap){ return {cid:c,data:snap.val()}; });
     });
-  });
-  var ws=XLSX.utils.aoa_to_sheet(rows); var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Historial',ws);
-  XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
-  toast('Descargado');
+    Promise.all(promesas).then(function(resultados){
+      var rows=[['VetReparto - Historial consolidado'],['Fecha:',fecha],[],
+        ['Chofer','No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
+      var hayDatos=false;
+      resultados.forEach(function(r){
+        var d=r.data; if(!d||!d.paradas) return;
+        var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+        if(!paradas.length) return;
+        hayDatos=true;
+        var nombre=d.choferNombre||r.cid.charAt(0).toUpperCase()+r.cid.slice(1);
+        paradas.forEach(function(p,i){
+          var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+          if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+          entregas.forEach(function(e,ei){
+            var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+            var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+            var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
+            var idSap=p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''));
+            rows.push([nombre,i+1,idSap,p.nombre||'',tipo,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
+          });
+        });
+      });
+      if(!hayDatos){toast('Sin datos para esa fecha');return;}
+      var ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,'Historial',ws);
+      XLSX.writeFile(wb,'historial_todos_'+fecha+'.xlsx');
+      toast('Descargado');
+    }).catch(function(e){toast('Error: '+e.message);});
+  } else {
+    // Descargar chofer individual
+    if(!historialData||!historialData.paradas){toast('Primero carga el historial');return;}
+    var d=historialData;
+    var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+    var rows=[['VetReparto - Historial'],['Chofer:',d.choferNombre||cid,'Fecha:',fecha,'Km:',(d.km||'-'),'Tiempo:',(d.tiempo||'-')],[],
+      ['No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
+    paradas.forEach(function(p,i){
+      var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+      if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+      entregas.forEach(function(e,ei){
+        var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+        var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+        var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
+        var idSap=p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''));
+        rows.push([i+1,idSap,p.nombre||'',tipo,ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
+      });
+    });
+    var ws=XLSX.utils.aoa_to_sheet(rows); var wb=XLSX.utils.book_new();
+    ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
+    toast('Descargado');
+  }
 }
 
 function showSection(s,e){
