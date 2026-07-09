@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
   <div class="pin-sub">Norvet</div>
   <div class="pin-box">
     <div class="pin-label">Ingresa tu PIN</div>
-    <input type="password" id="pin-input" class="pin-input" maxlength="10" placeholder="••••" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
+    <input type="password" id="pin-input" class="pin-input" maxlength="10" placeholder="••••" inputmode="text" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
     <button class="pin-btn" onclick="verificarPin()">Entrar</button>
     <div class="pin-error" id="pin-error"></div>
   </div>
