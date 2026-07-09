@@ -724,15 +724,7 @@ function descargarRango(){
       });
     });
     if(!hayDatos){toast('Sin datos para el rango seleccionado');return;}
-    // Limpiar valores para evitar errores en XLSX
-    rows = rows.map(function(row){
-      return row.map(function(cell){
-        if(cell===null||cell===undefined) return '';
-        if(typeof cell==='object') return '';
-        return String(cell);
-      });
     rows=limpiarRows(rows);
-    });
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     var wb=XLSX.utils.book_new();
