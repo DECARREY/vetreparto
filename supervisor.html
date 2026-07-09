@@ -739,7 +739,7 @@ function descargarRango(){
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     var wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.utils.book_append_sheet(wb,ws,'Historial');
     XLSX.writeFile(wb,'historial_rango_'+inicio+'_'+fin+'.xlsx');
     toast('Descargado');
   }).catch(function(e){toast('Error: '+e.message);});
@@ -783,7 +783,7 @@ function descargarTodosHistorial(){
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     var wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.utils.book_append_sheet(wb,ws,'Historial');
     XLSX.writeFile(wb,'historial_todos_'+fecha+'.xlsx');
     toast('Descargado');
   }).catch(function(e){toast('Error: '+e.message);});
@@ -828,7 +828,7 @@ function descargarHistorialExcel(){
       var ws=XLSX.utils.aoa_to_sheet(rows);
       ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
       var wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,'Historial',ws);
+      XLSX.utils.book_append_sheet(wb,ws,'Historial');
       XLSX.writeFile(wb,'historial_todos_'+fecha+'.xlsx');
       toast('Descargado');
     }).catch(function(e){toast('Error: '+e.message);});
@@ -854,7 +854,7 @@ function descargarHistorialExcel(){
     rows=limpiarRows(rows);
     var ws=XLSX.utils.aoa_to_sheet(rows); var wb=XLSX.utils.book_new();
     ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
-    XLSX.utils.book_append_sheet(wb,'Historial',ws);
+    XLSX.utils.book_append_sheet(wb,ws,'Historial');
     XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
     toast('Descargado');
   }
@@ -1100,7 +1100,7 @@ function descargarDashboardExcel(){
     rowsRes.push([cid.charAt(0).toUpperCase()+cid.slice(1),dias,tP,tE,tNE,tF,tP?Math.round(tE/tP*100):0,tKm.toFixed(0),tMin]);
   });
   rowsRes=rowsRes.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});
-  var wsRes=XLSX.utils.aoa_to_sheet(rowsRes); XLSX.utils.book_append_sheet(wb,'Resumen',wsRes);
+  var wsRes=XLSX.utils.aoa_to_sheet(rowsRes); XLSX.utils.book_append_sheet(wb,wsRes,'Resumen');
   var rowsDet=[['Chofer','Fecha','Paradas','Entregadas','No entregadas','Fuera rango','Km','Tiempo (min)']];
   Object.keys(dashData).sort().forEach(function(cid){
     Object.keys(dashData[cid]).sort().forEach(function(fecha){
@@ -1115,7 +1115,7 @@ function descargarDashboardExcel(){
     });
   });
   rowsDet=rowsDet.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});
-  var wsDet=XLSX.utils.aoa_to_sheet(rowsDet); XLSX.utils.book_append_sheet(wb,'Detalle diario',wsDet);
+  var wsDet=XLSX.utils.aoa_to_sheet(rowsDet); XLSX.utils.book_append_sheet(wb,wsDet,'Detalle diario');
   XLSX.writeFile(wb,'dashboard_'+mes+'.xlsx');
   toast('Descargado');
 }
