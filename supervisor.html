@@ -690,41 +690,52 @@ function descargarRango(){
   if(inicio>fin){toast('La fecha inicio debe ser menor o igual a la fecha fin');return;}
   var choferes=choferSel==='todos'?['angel','arturo','silvia','mercedes','luis','marco','eunice']:[choferSel];
   toast('Descargando rango...');
-  var promesas=choferes.map(function(cid){
-    return db.ref('historial/'+cid).once('value').then(function(snap){
-      return {cid:cid, data:snap.val()};
-    });
-  });
-  Promise.all(promesas).then(function(resultados){
-    var rows=[['VetReparto - Historial por rango'],['Desde:',inicio,'Hasta:',fin,'Chofer:',choferSel==='todos'?'Todos':choferSel.charAt(0).toUpperCase()+choferSel.slice(1)],[],
-      ['Chofer','Fecha','No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']];
+  Promise.all(choferes.map(function(cid){
+    return db.ref('historial/'+cid).once('value').then(function(snap){return {cid:cid,data:snap.val()};});
+  })).then(function(resultados){
+    var rows=[
+      ['VetReparto - Historial por rango'],
+      ['Desde:',inicio,'Hasta:',fin,'Chofer:',choferSel==='todos'?'Todos':choferSel.charAt(0).toUpperCase()+choferSel.slice(1)],
+      [],
+      ['Chofer','Fecha','No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']
+    ];
     var hayDatos=false;
     resultados.forEach(function(r){
       if(!r.data) return;
       var nombre=r.cid.charAt(0).toUpperCase()+r.cid.slice(1);
-      // Filtrar fechas dentro del rango
-      var fechas=Object.keys(r.data).filter(function(f){ return f>=inicio&&f<=fin; }).sort();
-      fechas.forEach(function(fecha){
+      Object.keys(r.data).filter(function(f){return f>=inicio&&f<=fin;}).sort().forEach(function(fecha){
         var d=r.data[fecha]; if(!d||!d.paradas) return;
         var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
         if(!paradas.length) return;
         hayDatos=true;
-        var nombreChofer=d.choferNombre||nombre;
+        var nombreChofer=String(d.choferNombre||nombre);
         paradas.forEach(function(p,i){
-          var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+          var entregas=p.entregas||[{pedido:'',factura:'',entregado:false,horaEntrega:''}];
           if(!Array.isArray(entregas)) entregas=Object.values(entregas);
-          entregas.forEach(function(e,ei){
+          entregas.forEach(function(e){
             var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
             var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
-            var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
-            var idSap=p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''));
-            rows.push([nombreChofer,fecha,i+1,idSap,p.nombre||'',tipo,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
+            var motivo=p.noEntregado?String(p.motivoNoEntrega||p.motivo||''):'';
+            rows.push([
+              nombreChofer,
+              String(fecha),
+              String(i+1),
+              String(p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''))),
+              String(p.nombre||''),
+              String(tipo),
+              String(e.pedido||''),
+              String(e.factura||''),
+              String(estado),
+              String(e.horaEntrega||''),
+              String(motivo),
+              String(p.kmDesde||''),
+              String(p.minDesde||'')
+            ]);
           });
         });
       });
     });
     if(!hayDatos){toast('Sin datos para el rango seleccionado');return;}
-    rows=limpiarRows(rows);
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     var wb=XLSX.utils.book_new();
@@ -733,6 +744,7 @@ function descargarRango(){
     toast('Descargado');
   }).catch(function(e){toast('Error: '+e.message);});
 }
+
 
 function descargarTodosHistorial(){
   var fecha=document.getElementById('hist-fecha').value;
