@@ -612,6 +612,8 @@ function descargarDia(){
         rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,p.esLibre?'Libre':'Cliente',ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',p.noEntregado?(p.motivoNoEntrega||''):'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
       });
     });
+    rows=limpiarRows(rows);
+    rows=limpiarRows(rows);
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:8},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     XLSX.utils.book_append_sheet(wb,ws,nombre.substring(0,31));
@@ -728,6 +730,7 @@ function descargarRango(){
         if(typeof cell==='object') return '';
         return String(cell);
       });
+    rows=limpiarRows(rows);
     });
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
@@ -770,7 +773,8 @@ function descargarTodosHistorial(){
       });
     });
     if(!hayDatos){toast('Sin datos para esa fecha');return;}
-    rows=rows.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});
+    rows=limpiarRows(rows);
+    rows=limpiarRows(rows);
     var ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     var wb=XLSX.utils.book_new();
@@ -814,6 +818,8 @@ function descargarHistorialExcel(){
         });
       });
       if(!hayDatos){toast('Sin datos para esa fecha');return;}
+    rows=limpiarRows(rows);
+      rows=limpiarRows(rows);
       var ws=XLSX.utils.aoa_to_sheet(rows);
       ws['!cols']=[{wch:12},{wch:5},{wch:12},{wch:35},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
       var wb=XLSX.utils.book_new();
@@ -839,7 +845,8 @@ function descargarHistorialExcel(){
         rows.push([i+1,idSap,p.nombre||'',tipo,ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',motivo,p.kmDesde||'',p.minDesde||'']);
       });
     });
-    rows=rows.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});
+    rows=limpiarRows(rows);
+    rows=limpiarRows(rows);
     var ws=XLSX.utils.aoa_to_sheet(rows); var wb=XLSX.utils.book_new();
     ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:10},{wch:7},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25},{wch:10},{wch:10}];
     XLSX.utils.book_append_sheet(wb,'Historial',ws);
@@ -877,6 +884,7 @@ function toggleMap(){
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+function limpiarRows(rows){return rows.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});}
 function updateClock(){var now=new Date(),h=now.getHours().toString().padStart(2,'0'),m=now.getMinutes().toString().padStart(2,'0');document.getElementById('hora-actual').textContent=h+':'+m;}
 updateClock();setInterval(updateClock,30000);
 
