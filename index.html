@@ -12,7 +12,8 @@
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db=firebase.database();
-var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
+var CHOFER_ID='';
+var CHOFER_NOMBRE='';
 db.ref('.info/connected').on('value',function(s){
   var ok=s.val();
   var dot=document.getElementById('sync-dot');
@@ -21,10 +22,11 @@ db.ref('.info/connected').on('value',function(s){
   if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
 });
 function guardarEnFirebase(){
+  if(!CHOFER_ID) return;
   var hoy=new Date();
   var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   var data={
-    choferNombre:document.getElementById('chofer-nombre').value||CHOFER_ID,
+    choferNombre:CHOFER_NOMBRE||CHOFER_ID,
     paradas:par||[],
     ultimaActualizacion:Date.now(),
     km:document.getElementById('sv-d').textContent,
@@ -35,6 +37,17 @@ function guardarEnFirebase(){
 }
 </script>
 <style>
+/* ── Pantalla PIN ── */
+#pin-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:#1a6b4a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.pin-logo{font-size:48px;margin-bottom:8px}
+.pin-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:4px}
+.pin-sub{color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:32px}
+.pin-box{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.pin-label{font-size:12px;font-weight:700;color:#7a7870;margin-bottom:8px;text-align:center}
+.pin-input{width:100%;padding:14px;border:2px solid #e4e2da;border-radius:10px;font-size:24px;text-align:center;letter-spacing:6px;outline:none;box-sizing:border-box;font-family:Arial}
+.pin-input:focus{border-color:#1a6b4a}
+.pin-btn{width:100%;padding:14px;background:#1a6b4a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial;margin-top:12px}
+.pin-error{color:#dc2626;font-size:12px;text-align:center;margin-top:8px;min-height:18px}
 html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100vh}
 .topbar{height:52px;background:#1a6b4a;display:flex;align-items:center;padding:0 14px;gap:10px;color:#fff;flex-shrink:0}
@@ -145,7 +158,18 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 </style>
 </head>
 <body>
-<div id="app">
+<div id="pin-screen">
+  <div class="pin-logo">&#128062;</div>
+  <div class="pin-title">VetReparto</div>
+  <div class="pin-sub">Norvet</div>
+  <div class="pin-box">
+    <div class="pin-label">Ingresa tu PIN</div>
+    <input type="password" id="pin-input" class="pin-input" maxlength="10" placeholder="••••" inputmode="numeric" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
+    <button class="pin-btn" onclick="verificarPin()">Entrar</button>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+<div id="app" style="display:none">
   <div class="topbar">
     <span style="font-size:16px">&#128062;</span>
     <h1>VetReparto</h1>
@@ -192,10 +216,10 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
           <div class="libre-box" style="background:#e6f1fb;border-color:#c7d8f0">
             <select id="paq-empresa" onchange="document.getElementById('paq-otros-fields').style.display=this.value==='otros'?'block':'none';" style="width:100%;padding:7px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;background:#fff;margin-bottom:6px">
               <option value="">-- Selecciona paqueteria --</option>
-              <option value="Paquetería Transurge">Transurge</option>
-              <option value="Paquetería Inbox">Inbox</option>
-              <option value="Paquetería ODM">ODM</option>
-              <option value="Paquetería Teamex">Teamex</option>
+              <option value="Paqueteria Transurge">Transurge</option>
+              <option value="Paqueteria Inbox">Inbox</option>
+              <option value="Paqueteria ODM">ODM</option>
+              <option value="Paqueteria Teamex">Teamex</option>
               <option value="otros">Otra paqueteria...</option>
             </select>
             <div id="paq-otros-fields" style="display:none">
@@ -212,7 +236,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
             <button class="libre-btn" onclick="agregarPaqueteria()" style="background:#0f4a8a">Agregar envio</button>
           </div>
         </div>
-        <div class="sres" id="sr"><div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre <span id="total-c">...</span> clientes</div></div>
+        <div class="sres" id="sr"><div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre <span id="total-c2">...</span> clientes</div></div>
       </div>
       <div class="tc" id="content-ruta">
         <div class="chofer-box">
@@ -265,18 +289,6 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 var C=[];
 var geocoder;
 
-db.ref('clientes').once('value').then(function(snap){
-  var data=snap.val();
-  if(data){
-    C=Object.values(data);
-    C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
-    var el=document.getElementById('total-c');
-    if(el)el.textContent=C.length;
-    document.getElementById('sr').innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
-    if(map)dibujar();
-  }
-}).catch(function(e){console.error('Error cargando clientes:',e);});
-
 db.ref('clientes').on('value',function(snap){
   var data=snap.val();
   if(data){
@@ -284,6 +296,8 @@ db.ref('clientes').on('value',function(snap){
     C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
     var el=document.getElementById('total-c');
     if(el)el.textContent=C.length;
+    var sr=document.getElementById('sr');
+    if(sr)sr.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
     if(map&&!rutaActiva)dibujar();
   }
 });
@@ -291,38 +305,48 @@ db.ref('clientes').on('value',function(snap){
 var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
-window.addEventListener('load',function(){
-  var sel=document.getElementById('chofer-select');
-  var inp=document.getElementById('chofer-nombre');
-  var nombres=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
-  if(nombres.indexOf(CHOFER_ID)>=0){
-    var nombre=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
-    sel.value=nombre;
-    inp.style.display='none';
-  } else if(CHOFER_ID){
-    sel.value='otros';
-    inp.style.display='block';
-    inp.value=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
-  }
-  var hoy=new Date();
-  var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-  db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
-    var d=s.val();
-    if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
-      par=d.paradas;
+// ── Sistema de PIN ────────────────────────────────────────────────────────────
+function verificarPin(){
+  var pin=document.getElementById('pin-input').value.trim();
+  var errEl=document.getElementById('pin-error');
+  if(!pin){errEl.textContent='Ingresa tu PIN';return;}
+  errEl.textContent='Verificando...';
+  db.ref('pines').once('value').then(function(snap){
+    var pines=snap.val();
+    if(!pines){errEl.textContent='Error al cargar configuracion';return;}
+    var encontrado=null;
+    Object.keys(pines).forEach(function(cid){
+      if(String(pines[cid].pin)===String(pin)&&pines[cid].activo!==false)
+        encontrado={cid:cid,nombre:pines[cid].nombre||cid};
+    });
+    if(encontrado){
+      CHOFER_ID=encontrado.cid;
+      CHOFER_NOMBRE=encontrado.nombre;
+      var cs=document.getElementById('chofer-select');
       var cn=document.getElementById('chofer-nombre');
-      var sel=document.getElementById('chofer-select');
-      if(d.choferNombre&&cn){
-        cn.value=d.choferNombre;
-        var opt=Array.from(sel.options).find(function(o){return o.value===d.choferNombre;});
-        if(opt){sel.value=d.choferNombre;}
-        else{sel.value='otros';cn.style.display='block';}
-      }
-      ui();
-      toast('Ruta restaurada: '+d.paradas.length+' paradas');
+      var opt=Array.from(cs.options).find(function(o){return o.value.toLowerCase()===CHOFER_ID.toLowerCase();});
+      if(opt){cs.value=opt.value;cn.style.display='none';}
+      else{cs.value='otros';cn.style.display='block';cn.value=CHOFER_NOMBRE;}
+      document.getElementById('pin-screen').style.display='none';
+      document.getElementById('app').style.display='flex';
+      var hoy=new Date();
+      var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+      db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
+        var d=s.val();
+        if(d&&d.paradas&&d.paradas.length>0){
+          par=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
+          ui();toast('Ruta restaurada: '+par.length+' paradas');
+        }
+      }).catch(function(){});
+      if(map)setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
+    } else {
+      errEl.textContent='PIN incorrecto';
+      document.getElementById('pin-input').value='';
+      document.getElementById('pin-input').focus();
     }
-  }).catch(function(e){console.log('No saved route:',e);});
-});
+  }).catch(function(){document.getElementById('pin-error').textContent='Error de conexion';});
+}
+// ── Fin sistema de PIN ────────────────────────────────────────────────────────
 
 function initMap(){
   map=new google.maps.Map(document.getElementById('map'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
@@ -368,9 +392,7 @@ function libreClienteBuscar(v){
   if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
   var q=v.toLowerCase();
   var r=C.filter(function(c){
-    var n=(c.nombre||'').toLowerCase();
-    var f=(c.nombreFiscal||'').toLowerCase();
-    var id=(c.id||'').toLowerCase();
+    var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();var id=(c.id||'').toLowerCase();
     return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;
   }).slice(0,10);
   box.innerHTML='';
@@ -401,9 +423,7 @@ function agregarLibre(){
   var motivo=document.getElementById('libre-motivo').value.trim();
   var clienteId=document.getElementById('libre-cliente-id').value;
   var isCliente=document.getElementById('libre-panel-cliente').style.display!=='none';
-
   if(isCliente){
-    // Cliente registrado como parada de cobranza
     if(!clienteId){toast('Selecciona un cliente');return;}
     var lat=parseFloat(document.getElementById('libre-cliente-lat').value);
     var lng=parseFloat(document.getElementById('libre-cliente-lng').value);
@@ -411,26 +431,11 @@ function agregarLibre(){
     var clienteObj=C.find(function(c){return c.id===clienteId;});
     var nombre=motivo||(clienteObj?(clienteObj.nombreFiscal||clienteObj.nombre):clienteId);
     var id='LIBRE_'+Date.now();
-    par.push({
-      id:id,
-      nombre:nombre,
-      nombreFiscal:clienteObj?(clienteObj.nombreFiscal||''):'',
-      dir:dir,
-      lat:lat,
-      lng:lng,
-      esLibre:true,
-      motivo:motivo||'Cobranza',
-      clienteRef:clienteId,
-      entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
-      kmDesde:null,minDesde:null,origenDesde:null
-    });
-    ui();
-    if(map)map.panTo({lat:lat,lng:lng});
+    par.push({id:id,nombre:nombre,nombreFiscal:clienteObj?(clienteObj.nombreFiscal||''):'',dir:dir,lat:lat,lng:lng,esLibre:true,motivo:motivo||'Cobranza',clienteRef:clienteId,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+    ui();if(map)map.panTo({lat:lat,lng:lng});
     document.getElementById('libre-form').style.display='none';
-    toast('+ '+nombre);
-    guardarEnFirebase();
+    toast('+ '+nombre);guardarEnFirebase();
   } else {
-    // Direccion libre
     var dir2=document.getElementById('libre-dir').value.trim();
     if(!dir2){toast('Escribe una direccion');return;}
     if(!geocoder){toast('Mapa no listo');return;}
@@ -439,40 +444,26 @@ function agregarLibre(){
       if(status==='OK'&&results[0]){
         var loc=results[0].geometry.location;
         var id='LIBRE_'+Date.now();
-        par.push({
-          id:id,
-          nombre:motivo||dir2,
-          dir:results[0].formatted_address,
-          lat:loc.lat(),
-          lng:loc.lng(),
-          esLibre:true,
-          motivo:motivo,
-          entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
-          kmDesde:null,minDesde:null,origenDesde:null
-        });
-        ui();
-        if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
-        document.getElementById('libre-dir').value='';
-        document.getElementById('libre-motivo').value='';
+        par.push({id:id,nombre:motivo||dir2,dir:results[0].formatted_address,lat:loc.lat(),lng:loc.lng(),esLibre:true,motivo:motivo,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+        ui();if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
+        document.getElementById('libre-dir').value='';document.getElementById('libre-motivo').value='';
         document.getElementById('libre-form').style.display='none';
-        toast('+ '+(motivo||dir2));
-        guardarEnFirebase();
-      } else {
-        toast('No se encontro la direccion');
-      }
+        toast('+ '+(motivo||dir2));guardarEnFirebase();
+      } else {toast('No se encontro la direccion');}
     });
   }
 }
 
 function enR(id){return par.some(function(p){return p.id===id;})}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 function dibujar(){
   if(!map)return;
   bm.forEach(function(m){m.map=null;}); bm=[];
   C.forEach(function(c){
     if(enR(c.id))return;
-    var dotEl=document.createElement('div');dotEl.style.cssText='width:12px;height:12px;border-radius:50%;background:#1a6b4a;border:1.5px solid #fff;box-sizing:border-box;opacity:0.7;cursor:pointer;';var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:c.lat,lng:c.lng},map:map,title:c.nombre,content:dotEl,zIndex:1});
+    var dotEl=document.createElement('div');dotEl.style.cssText='width:12px;height:12px;border-radius:50%;background:#1a6b4a;border:1.5px solid #fff;box-sizing:border-box;opacity:0.7;cursor:pointer;';
+    var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:c.lat,lng:c.lng},map:map,title:c.nombre,content:dotEl,zIndex:1});
     (function(cl){m.addListener('click',function(){
       iw.setContent('<div style="font-family:Arial;padding:4px;min-width:150px"><div style="font-size:13px;font-weight:700;margin-bottom:2px">'+esc(cl.nombreFiscal||cl.nombre)+'</div>'+(cl.nombreFiscal?'<div style="font-size:11px;color:#555;margin-bottom:2px">'+esc(cl.nombre)+'</div>':'')+'<div style="font-size:11px;color:#777;margin-bottom:8px">'+cl.id+'</div><button id="iwb" style="width:100%;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar</button></div>');
       iw.open(map,m);
@@ -495,9 +486,7 @@ function buscar(v){
 
 function agregar(c){
   if(!c||enR(c.id)){toast('Ya esta en la ruta');return;}
-  par.push({id:c.id,nombre:c.nombre,nombreFiscal:c.nombreFiscal||'',dir:c.dir,lat:c.lat,lng:c.lng,esLibre:false,
-    entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],
-    kmDesde:null,minDesde:null,origenDesde:null});
+  par.push({id:c.id,nombre:c.nombre,nombreFiscal:c.nombreFiscal||'',dir:c.dir,lat:c.lat,lng:c.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
   ui();if(map)map.panTo({lat:c.lat,lng:c.lng});
   toast('+ '+c.nombre);guardarEnFirebase();
   var inp=document.getElementById('si');if(inp.value.length>=2)buscar(inp.value);
@@ -512,19 +501,12 @@ function setEntregaField(pid,idx,field,val){
 
 function agregarEntrega(pid){
   var p=par.find(function(x){return x.id===pid;});
-  if(p){
-    if(!p.entregas)p.entregas=[];
-    p.entregas.push({pedido:'',factura:'',entregado:false,horaEntrega:null});
-    ui();guardarEnFirebase();
-  }
+  if(p){if(!p.entregas)p.entregas=[];p.entregas.push({pedido:'',factura:'',entregado:false,horaEntrega:null});ui();guardarEnFirebase();}
 }
 
 function eliminarEntrega(pid,idx){
   var p=par.find(function(x){return x.id===pid;});
-  if(p&&p.entregas&&p.entregas.length>1){
-    p.entregas.splice(idx,1);
-    ui();guardarEnFirebase();
-  }
+  if(p&&p.entregas&&p.entregas.length>1){p.entregas.splice(idx,1);ui();guardarEnFirebase();}
 }
 
 function marcarEntregaItem(pid,idx){
@@ -577,23 +559,15 @@ function recalcularDesdeAqui(){
     if(!pendientes.length){toast('No hay paradas pendientes');return;}
     document.getElementById('ld').style.display='flex';
     var ds=new google.maps.DirectionsService();
-    var req={
-      origin:origen,
-      destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},
-      waypoints:pendientes.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),
-      travelMode:google.maps.TravelMode.DRIVING,
-      optimizeWaypoints:true
-    };
+    var req={origin:origen,destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},waypoints:pendientes.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:true};
     ds.route(req,function(res,st){
       document.getElementById('ld').style.display='none';
       if(st!=='OK'){toast('Error recalculando: '+st);return;}
       var ord=res.routes[0].waypoint_order;
-      var reordenadas=[];
-      ord.forEach(function(i){reordenadas.push(pendientes[i]);});
+      var reordenadas=[];ord.forEach(function(i){reordenadas.push(pendientes[i]);});
       var completadas=par.filter(function(p){return p.entregado||p.noEntregado;});
       par=completadas.concat(reordenadas);
-      dr.setDirections(res);
-      ui();pines();guardarEnFirebase();
+      dr.setDirections(res);ui();pines();guardarEnFirebase();
       toast('Ruta recalculada desde tu ubicacion');
     });
   },function(){toast('No se pudo obtener tu ubicacion');});
@@ -609,9 +583,8 @@ function ui(){
   par.forEach(function(p,i){
     var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||null}];
     var todasEntregadas=entregas.every(function(e){return e.entregado;});
-    var esLibre=p.esLibre||false;
-    var esPaq=p.esPaqueteria||false;
-    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esPaq?' libre':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+  '</div>';
+    var esLibre=p.esLibre||false;var esPaq=p.esPaqueteria||false;
+    h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esPaq?' libre':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+'</div>';
     if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
     h+='</div>';
     if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
@@ -628,7 +601,6 @@ function ui(){
       else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button><button class="ebtn noent" data-ne-id="'+p.id+'" style="flex:0.8">No entregado</button>';}
       if(entregas.length>1&&!e.entregado&&!p.noEntregado)h+='<button class="del-entrega-btn" data-pid="'+p.id+'" data-idx="'+ei+'">&#x2715;</button>';
       h+='</div>';
-      // Motivo no entregado
       if(!e.entregado&&!p.noEntregado){
         var sid2=p.id.replace(/[^a-zA-Z0-9]/g,'_');
         var MOTIVOS=['Cliente cerrado','Cliente no se encontraba','Direccion incorrecta','Cliente cancelo el pedido','Otro'];
@@ -673,9 +645,7 @@ function actualizarResumen(){
   var h='<div class="res-header"><div class="res-title">'+esc(chofer)+'</div><div class="res-sub">'+fecha+'</div></div>';
   h+='<div class="res-stats"><div class="res-stat"><div class="res-stat-val">'+par.length+'</div><div class="res-stat-lbl">Paradas</div></div><div class="res-stat"><div class="res-stat-val" style="color:#1a6b4a">'+entEntregas+'</div><div class="res-stat-lbl">Entregados</div></div><div class="res-stat"><div class="res-stat-val" style="color:#e65100">'+(totalEntregas-entEntregas)+'</div><div class="res-stat-lbl">Pendientes</div></div></div>';
   par.forEach(function(p,i){
-    var entregas=p.entregas||[];
-    var todasOk=entregas.every(function(e){return e.entregado;});
-    var esLibre=p.esLibre||false;
+    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});var esLibre=p.esLibre||false;
     h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+(todasOk?' done':esLibre?' libre':'')+'">'+(todasOk?'&#10003;':(i+1))+'</div><div class="res-nombre">'+esc(p.nombre)+'</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
     if(esLibre&&p.motivo)h+='<div style="font-size:10px;color:#ff8800;margin-bottom:4px">&#x1F4CC; '+esc(p.motivo)+'</div>';
     entregas.forEach(function(e,ei){
@@ -694,29 +664,17 @@ function calcular(){
   if(par.length<2||!map)return;
   document.getElementById('ld').style.display='flex';document.getElementById('cb').disabled=true;clearRmk();
   var ds=new google.maps.DirectionsService();
-  var req={
-    origin:{lat:ALMACEN.lat,lng:ALMACEN.lng},
-    destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},
-    waypoints:par.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),
-    travelMode:google.maps.TravelMode.DRIVING,
-    optimizeWaypoints:true
-  };
+  var req={origin:{lat:ALMACEN.lat,lng:ALMACEN.lng},destination:{lat:ALMACEN.lat,lng:ALMACEN.lng},waypoints:par.map(function(p){return{location:{lat:p.lat,lng:p.lng},stopover:true};}),travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:true};
   ds.route(req,function(res,st){
-    if(st==='OK'){
-      procesarRuta(res);
-    } else if(st==='ZERO_RESULTS'||st==='NOT_FOUND'){
+    if(st==='OK'){procesarRuta(res);}
+    else if(st==='ZERO_RESULTS'||st==='NOT_FOUND'){
       req.optimizeWaypoints=false;
       ds.route(req,function(r2,s2){
-        document.getElementById('ld').style.display='none';
-        document.getElementById('cb').disabled=false;
+        document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;
         if(s2==='OK'){procesarRuta(r2);}
         else{toast('Error al calcular ruta. Verifica las coordenadas de los clientes.');console.error('Directions error:',s2);}
       });
-    } else {
-      document.getElementById('ld').style.display='none';
-      document.getElementById('cb').disabled=false;
-      toast('Error ruta: '+st);
-    }
+    } else {document.getElementById('ld').style.display='none';document.getElementById('cb').disabled=false;toast('Error ruta: '+st);}
   });
 }
 
@@ -728,13 +686,8 @@ function procesarRuta(res){
   par=ro;
   var td=0,tt=0;
   res.routes[0].legs.forEach(function(leg,i){
-    td+=leg.distance.value;
-    tt+=(leg.duration_in_traffic||leg.duration).value;
-    if(i<par.length){
-      par[i].kmDesde=leg.distance.text;
-      par[i].minDesde=(leg.duration_in_traffic||leg.duration).text;
-      par[i].origenDesde=i===0?'Almacen':par[i-1].nombre;
-    }
+    td+=leg.distance.value;tt+=(leg.duration_in_traffic||leg.duration).value;
+    if(i<par.length){par[i].kmDesde=leg.distance.text;par[i].minDesde=(leg.duration_in_traffic||leg.duration).text;par[i].origenDesde=i===0?'Almacen':par[i-1].nombre;}
   });
   var km=(td/1000).toFixed(1),mins=Math.round(tt/60),hrs=Math.floor(mins/60),rem=mins%60;
   document.getElementById('sv-d').textContent=km;document.getElementById('sv-t').textContent=hrs>0?hrs+'h '+rem+'m':mins+'min';
@@ -746,13 +699,11 @@ function procesarRuta(res){
 function pines(){
   if(!map)return;clearRmk();bm.forEach(function(m){m.map=null;});
   par.forEach(function(p,i){
-    var entregas=p.entregas||[];
-    var done=entregas.every(function(e){return e.entregado;});
-    var esLibre=p.esLibre||false;
-    var color=done?'#e8f5ef':esLibre?'#ff8800':'#1a6b4a';
-    var stroke=done?'#1a6b4a':esLibre?'#fff':'#fff';
+    var entregas=p.entregas||[];var done=entregas.every(function(e){return e.entregado;});var esLibre=p.esLibre||false;
+    var color=done?'#e8f5ef':esLibre?'#ff8800':'#1a6b4a';var stroke=done?'#1a6b4a':esLibre?'#fff':'#fff';
     var svg='<svg width="38" height="48" viewBox="0 0 38 48" xmlns="http://www.w3.org/2000/svg"><path d="M19 2C12 2 6 8 6 15c0 10 13 31 13 31S32 25 32 15C32 8 26 2 19 2z" fill="'+color+'" stroke="'+stroke+'" stroke-width="2"/><text x="19" y="18" text-anchor="middle" dominant-baseline="central" font-family="Arial" font-size="12" font-weight="800" fill="'+(done?'#1a6b4a':'#fff')+'">'+(done?'&#10003;':(i+1))+'</text></svg>';
-    var pinEl=document.createElement('div');pinEl.innerHTML=svg;pinEl.style.cssText='width:38px;height:48px;cursor:pointer;';var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:p.lat,lng:p.lng},map:map,content:pinEl,zIndex:1000+i,title:(i+1)+'. '+p.nombre});
+    var pinEl=document.createElement('div');pinEl.innerHTML=svg;pinEl.style.cssText='width:38px;height:48px;cursor:pointer;';
+    var m=new google.maps.marker.AdvancedMarkerElement({position:{lat:p.lat,lng:p.lng},map:map,content:pinEl,zIndex:1000+i,title:(i+1)+'. '+p.nombre});
     (function(pp,nn){m.addListener('click',function(){iw.setContent('<div style="font-family:Arial;padding:4px"><b>Parada '+nn+'</b><br>'+esc(pp.nombre)+'<br><small>'+(pp.esLibre?'&#x1F4CC; Parada libre':pp.id)+'</small>'+(done?'<br><b style="color:#1a6b4a">Completado</b>':'')+'</div>');iw.open(map,m);});})(p,i+1);
     rm.push(m);
   });
@@ -772,16 +723,12 @@ function compartirWhatsApp(){
   if(km&&km!=='-')msg+='Distancia: '+km+' km / '+tiempo+nl;
   msg+='-------------------'+nl;
   par.forEach(function(p,i){
-    var entregas=p.entregas||[];
-    var todasOk=entregas.every(function(e){return e.entregado;});
+    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});
     msg+=(todasOk?'[OK]':'[  ]')+' '+(i+1)+'. '+p.nombre+(p.esLibre?' [LIBRE]':'')+nl;
-    entregas.forEach(function(e){
-      if(e.pedido||e.factura||e.guia)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.guia?' GUA:'+e.guia:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;
-    });
+    entregas.forEach(function(e){if(e.pedido||e.factura||e.guia)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.guia?' GUA:'+e.guia:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;});
     if(p.esPaqueteria&&p.clienteDestinatario)msg+='     Destinatario: '+p.clienteDestinatario+nl;
   });
-  var totalE=0,entE=0;
-  par.forEach(function(p){var e=p.entregas||[];totalE+=e.length;entE+=e.filter(function(x){return x.entregado;}).length;});
+  var totalE=0,entE=0;par.forEach(function(p){var e=p.entregas||[];totalE+=e.length;entE+=e.filter(function(x){return x.entregado;}).length;});
   msg+='-------------------'+nl+par.length+' paradas | '+entE+'/'+totalE+' entregas';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
@@ -804,23 +751,14 @@ function descargarResumen(){
   toast('Descargado');
 }
 
-function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
-var showingMap=false;
-function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
 function togglePaqueteria(){
-  var f=document.getElementById('paqueteria-form');
-  var fl=document.getElementById('libre-form');
-  fl.style.display='none';
+  var f=document.getElementById('paqueteria-form');var fl=document.getElementById('libre-form');fl.style.display='none';
   f.style.display=f.style.display==='none'?'block':'none';
   if(f.style.display==='block'){
-    document.getElementById('paq-empresa').value='';
-    document.getElementById('paq-cliente-search').value='';
-    document.getElementById('paq-cliente-results').style.display='none';
-    document.getElementById('paq-cliente-selected').style.display='none';
-    document.getElementById('paq-cliente-id').value='';
-    document.getElementById('paq-pedido').value='';
-    document.getElementById('paq-factura').value='';
-    document.getElementById('paq-guia').value='';
+    document.getElementById('paq-empresa').value='';document.getElementById('paq-cliente-search').value='';
+    document.getElementById('paq-cliente-results').style.display='none';document.getElementById('paq-cliente-selected').style.display='none';
+    document.getElementById('paq-cliente-id').value='';document.getElementById('paq-pedido').value='';
+    document.getElementById('paq-factura').value='';document.getElementById('paq-guia').value='';
   }
 }
 
@@ -828,32 +766,23 @@ function paqBuscarCliente(v){
   var box=document.getElementById('paq-cliente-results');
   if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
   var q=v.toLowerCase();
-  var r=C.filter(function(c){
-    var n=(c.nombre||'').toLowerCase();
-    var f=(c.nombreFiscal||'').toLowerCase();
-    var id=(c.id||'').toLowerCase();
-    return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;
-  }).slice(0,10);
+  var r=C.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();var id=(c.id||'').toLowerCase();return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;}).slice(0,10);
   box.innerHTML='';
   if(!r.length){box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Sin resultados</div>';box.style.display='block';return;}
   r.forEach(function(c){
-    var div=document.createElement('div');
-    div.style.cssText='padding:7px 10px;border-bottom:1px solid #f0efe9;cursor:pointer;font-size:11px';
+    var div=document.createElement('div');div.style.cssText='padding:7px 10px;border-bottom:1px solid #f0efe9;cursor:pointer;font-size:11px';
     div.innerHTML='<div style="font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="color:#7a7870">'+esc(c.id||'')+'</div>';
-    div.onmouseover=function(){this.style.background='#f0faf5';};
-    div.onmouseout=function(){this.style.background='';};
+    div.onmouseover=function(){this.style.background='#f0faf5';};div.onmouseout=function(){this.style.background='';};
     (function(cid,cnombre){div.onclick=function(){paqSeleccionarCliente(cid,cnombre);};})(c.id,c.nombreFiscal||c.nombre);
     box.appendChild(div);
   });
   box.style.display='block';
 }
-function paqSeleccionarCliente(id, nombre){
-  document.getElementById('paq-cliente-id').value=id;
-  document.getElementById('paq-cliente-search').value='';
+
+function paqSeleccionarCliente(id,nombre){
+  document.getElementById('paq-cliente-id').value=id;document.getElementById('paq-cliente-search').value='';
   document.getElementById('paq-cliente-results').style.display='none';
-  var sel=document.getElementById('paq-cliente-selected');
-  sel.textContent='Destinatario: '+nombre+' ('+id+')';
-  sel.style.display='block';
+  var sel=document.getElementById('paq-cliente-selected');sel.textContent='Destinatario: '+nombre+' ('+id+')';sel.style.display='block';
 }
 
 function agregarPaqueteria(){
@@ -866,38 +795,15 @@ function agregarPaqueteria(){
   var factura=document.getElementById('paq-factura').value.trim();
   var guia=document.getElementById('paq-guia').value.trim();
   if(!empresa){toast('Selecciona una paqueteria');return;}
-  if(empresaVal==='otros'&&!empresa){toast('Escribe el nombre de la paqueteria');return;}
   if(!clienteId){toast('Selecciona el cliente destinatario');return;}
   if(!guia){toast('Escribe el numero de guia');return;}
-
-  // Find paqueteria coordinates
-  var paqData = {
-    'Paquetería Transurge': {lat:25.70506754, lng:-100.3273723},
-    'Paquetería Inbox': {lat:25.691731442249367, lng:-100.3239835},
-    'Paquetería ODM': {lat:25.687403815620367, lng:-100.3214941},
-    'Paquetería Teamex': {lat:25.681553680100162, lng:-100.32371502760287}
-  };
-  var coords = paqData[empresa] || {lat:25.681553680100162, lng:-100.32371502760287};
-
+  var paqData={'Paqueteria Transurge':{lat:25.70506754,lng:-100.3273723},'Paqueteria Inbox':{lat:25.691731442249367,lng:-100.3239835},'Paqueteria ODM':{lat:25.687403815620367,lng:-100.3214941},'Paqueteria Teamex':{lat:25.681553680100162,lng:-100.32371502760287}};
+  var coords=paqData[empresa]||{lat:25.681553680100162,lng:-100.32371502760287};
   var id='PAQ_'+Date.now();
-  par.push({
-    id:id,
-    nombre:empresa,
-    nombreFiscal:empresa,
-    dir:empresaDir?empresaDir+' - Envio a: '+clienteNombre:'Envio a: '+clienteNombre,
-    lat:coords.lat,
-    lng:coords.lng,
-    esPaqueteria:true,
-    clienteDestinatario:clienteNombre,
-    clienteDestinatarioId:clienteId,
-    entregas:[{pedido:pedido,factura:factura,guia:guia,entregado:false,horaEntrega:null}],
-    kmDesde:null,minDesde:null,origenDesde:null
-  });
-  ui();
-  if(map)map.panTo({lat:coords.lat,lng:coords.lng});
+  par.push({id:id,nombre:empresa,nombreFiscal:empresa,dir:empresaDir?empresaDir+' - Envio a: '+clienteNombre:'Envio a: '+clienteNombre,lat:coords.lat,lng:coords.lng,esPaqueteria:true,clienteDestinatario:clienteNombre,clienteDestinatarioId:clienteId,entregas:[{pedido:pedido,factura:factura,guia:guia,entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+  ui();if(map)map.panTo({lat:coords.lat,lng:coords.lng});
   document.getElementById('paqueteria-form').style.display='none';
-  toast('&#x1F4E6; Envio a '+empresa+' agregado');
-  guardarEnFirebase();
+  toast('&#x1F4E6; Envio a '+empresa+' agregado');guardarEnFirebase();
 }
 
 function cambiarChofer(val){
@@ -906,6 +812,10 @@ function cambiarChofer(val){
   else if(val===''){inp.style.display='none';inp.value='';}
   else{window.location.href=window.location.pathname+'?chofer='+val.toLowerCase();}
 }
+
+function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
+var showingMap=false;
+function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 window.initMap=initMap;
 </script>
