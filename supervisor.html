@@ -606,6 +606,7 @@ function descargarDia(){
     rows.push(['No.','ID SAP','Cliente','Tipo','Entrega','Pedido','Factura','Estado','Hora','Motivo','Desde','Km tramo','Tiempo tramo']);
     paradas.forEach(function(p,i){
       var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+      if(!Array.isArray(entregas))entregas=Object.values(entregas);
       entregas.forEach(function(e,ei){
         var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
         rows.push([i+1,p.esLibre?'LIBRE':p.id,p.nombre,p.esLibre?'Libre':'Cliente',ei+1,e.pedido||'',e.factura||'',estado,e.horaEntrega||'',p.noEntregado?(p.motivoNoEntrega||''):'',p.origenDesde||'',p.kmDesde||'',p.minDesde||'']);
