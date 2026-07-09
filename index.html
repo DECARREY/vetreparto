@@ -9,24 +9,29 @@
 <meta name="theme-color" content="#1a6b4a">
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db=firebase.database();
-var CHOFER_ID='';
-var CHOFER_NOMBRE='';
-db.ref('.info/connected').on('value',function(s){
-  var ok=s.val();
-  var dot=document.getElementById('sync-dot');
-  var lbl=document.getElementById('sync-label');
-  if(dot)dot.style.background=ok?'#4ade80':'#f87171';
-  if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
+var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
+// Autenticacion anonima — requerida para Firebase Security Rules
+firebase.auth().signInAnonymously().catch(function(e){console.error('Auth error:',e);});
+firebase.auth().onAuthStateChanged(function(user){
+  if(!user) return;
+  db.ref('.info/connected').on('value',function(s){
+    var ok=s.val();
+    var dot=document.getElementById('sync-dot');
+    var lbl=document.getElementById('sync-label');
+    if(dot)dot.style.background=ok?'#4ade80':'#f87171';
+    if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
+  });
 });
 function guardarEnFirebase(){
-  if(!CHOFER_ID) return;
+  if(!firebase.auth().currentUser) return;
   var hoy=new Date();
   var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   var data={
-    choferNombre:CHOFER_NOMBRE||CHOFER_ID,
+    choferNombre:document.getElementById('chofer-nombre').value||CHOFER_ID,
     paradas:par||[],
     ultimaActualizacion:Date.now(),
     km:document.getElementById('sv-d').textContent,
@@ -37,17 +42,6 @@ function guardarEnFirebase(){
 }
 </script>
 <style>
-/* ── Pantalla PIN ── */
-#pin-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:#1a6b4a;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.pin-logo{font-size:48px;margin-bottom:8px}
-.pin-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:4px}
-.pin-sub{color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:32px}
-.pin-box{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
-.pin-label{font-size:12px;font-weight:700;color:#7a7870;margin-bottom:8px;text-align:center}
-.pin-input{width:100%;padding:14px;border:2px solid #e4e2da;border-radius:10px;font-size:24px;text-align:center;letter-spacing:6px;outline:none;box-sizing:border-box;font-family:Arial}
-.pin-input:focus{border-color:#1a6b4a}
-.pin-btn{width:100%;padding:14px;background:#1a6b4a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial;margin-top:12px}
-.pin-error{color:#dc2626;font-size:12px;text-align:center;margin-top:8px;min-height:18px}
 html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100vh}
 .topbar{height:52px;background:#1a6b4a;display:flex;align-items:center;padding:0 14px;gap:10px;color:#fff;flex-shrink:0}
@@ -158,18 +152,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 </style>
 </head>
 <body>
-<div id="pin-screen">
-  <div class="pin-logo">&#128062;</div>
-  <div class="pin-title">VetReparto</div>
-  <div class="pin-sub">Norvet</div>
-  <div class="pin-box">
-    <div class="pin-label">Ingresa tu PIN</div>
-    <input type="password" id="pin-input" class="pin-input" maxlength="10" placeholder="••••" inputmode="text" autocomplete="off" onkeydown="if(event.key==='Enter')verificarPin()">
-    <button class="pin-btn" onclick="verificarPin()">Entrar</button>
-    <div class="pin-error" id="pin-error"></div>
-  </div>
-</div>
-<div id="app" style="display:none">
+<div id="app">
   <div class="topbar">
     <span style="font-size:16px">&#128062;</span>
     <h1>VetReparto</h1>
@@ -289,64 +272,62 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
 var C=[];
 var geocoder;
 
-db.ref('clientes').on('value',function(snap){
-  var data=snap.val();
-  if(data){
-    C=Object.values(data);
-    C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
-    var el=document.getElementById('total-c');
-    if(el)el.textContent=C.length;
-    var sr=document.getElementById('sr');
-    if(sr)sr.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
-    if(map&&!rutaActiva)dibujar();
-  }
+firebase.auth().onAuthStateChanged(function(user){
+  if(!user) return;
+  // Carga inicial de clientes
+  db.ref('clientes').on('value',function(snap){
+    var data=snap.val();
+    if(data){
+      C=Object.values(data);
+      C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
+      var el=document.getElementById('total-c');
+      if(el)el.textContent=C.length;
+      var el2=document.getElementById('total-c2');
+      if(el2)el2.textContent=C.length;
+      document.getElementById('sr').innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar entre '+C.length+' clientes</div>';
+      if(map&&!rutaActiva)dibujar();
+    }
+  });
 });
 
 var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
-// ── Sistema de PIN ────────────────────────────────────────────────────────────
-function verificarPin(){
-  var pin=document.getElementById('pin-input').value.trim();
-  var errEl=document.getElementById('pin-error');
-  if(!pin){errEl.textContent='Ingresa tu PIN';return;}
-  errEl.textContent='Verificando...';
-  db.ref('pines').once('value').then(function(snap){
-    var pines=snap.val();
-    if(!pines){errEl.textContent='Error al cargar configuracion';return;}
-    var encontrado=null;
-    Object.keys(pines).forEach(function(cid){
-      if(String(pines[cid].pin)===String(pin)&&pines[cid].activo!==false)
-        encontrado={cid:cid,nombre:pines[cid].nombre||cid};
-    });
-    if(encontrado){
-      CHOFER_ID=encontrado.cid;
-      CHOFER_NOMBRE=encontrado.nombre;
-      var cs=document.getElementById('chofer-select');
-      var cn=document.getElementById('chofer-nombre');
-      var opt=Array.from(cs.options).find(function(o){return o.value.toLowerCase()===CHOFER_ID.toLowerCase();});
-      if(opt){cs.value=opt.value;cn.style.display='none';}
-      else{cs.value='otros';cn.style.display='block';cn.value=CHOFER_NOMBRE;}
-      document.getElementById('pin-screen').style.display='none';
-      document.getElementById('app').style.display='flex';
-      var hoy=new Date();
-      var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-      db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
-        var d=s.val();
-        if(d&&d.paradas&&d.paradas.length>0){
-          par=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
-          ui();toast('Ruta restaurada: '+par.length+' paradas');
+window.addEventListener('load',function(){
+  var sel=document.getElementById('chofer-select');
+  var inp=document.getElementById('chofer-nombre');
+  var nombres=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+  if(nombres.indexOf(CHOFER_ID)>=0){
+    var nombre=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
+    sel.value=nombre;
+    inp.style.display='none';
+  } else if(CHOFER_ID){
+    sel.value='otros';
+    inp.style.display='block';
+    inp.value=CHOFER_ID.charAt(0).toUpperCase()+CHOFER_ID.slice(1);
+  }
+  var hoy=new Date();
+  var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  firebase.auth().onAuthStateChanged(function(user){
+    if(!user) return;
+    db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
+      var d=s.val();
+      if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
+        par=d.paradas;
+        var cn=document.getElementById('chofer-nombre');
+        var sel2=document.getElementById('chofer-select');
+        if(d.choferNombre&&cn){
+          cn.value=d.choferNombre;
+          var opt=Array.from(sel2.options).find(function(o){return o.value===d.choferNombre;});
+          if(opt){sel2.value=d.choferNombre;}
+          else{sel2.value='otros';cn.style.display='block';}
         }
-      }).catch(function(){});
-      if(map)setTimeout(function(){google.maps.event.trigger(map,'resize');},100);
-    } else {
-      errEl.textContent='PIN incorrecto';
-      document.getElementById('pin-input').value='';
-      document.getElementById('pin-input').focus();
-    }
-  }).catch(function(){document.getElementById('pin-error').textContent='Error de conexion';});
-}
-// ── Fin sistema de PIN ────────────────────────────────────────────────────────
+        ui();
+        toast('Ruta restaurada: '+d.paradas.length+' paradas');
+      }
+    }).catch(function(e){console.log('No saved route:',e);});
+  });
+});
 
 function initMap(){
   map=new google.maps.Map(document.getElementById('map'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
@@ -724,7 +705,7 @@ function compartirWhatsApp(){
   msg+='-------------------'+nl;
   par.forEach(function(p,i){
     var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});
-    msg+=(todasOk?'[OK]':'[  ]')+' '+(i+1)+'. '+p.nombre+(p.esLibre?' [LIBRE]':'')+nl;
+    msg+=(i+1)+'. '+p.nombre+(p.esLibre?' [LIBRE]':'')+(todasOk?' ✓':'')+nl;
     entregas.forEach(function(e){if(e.pedido||e.factura||e.guia)msg+='     '+(e.pedido?'Ped:'+e.pedido:'')+(e.factura?' FAC:'+e.factura:'')+(e.guia?' GUA:'+e.guia:'')+(e.entregado&&e.horaEntrega?' '+e.horaEntrega:'')+nl;});
     if(p.esPaqueteria&&p.clienteDestinatario)msg+='     Destinatario: '+p.clienteDestinatario+nl;
   });
