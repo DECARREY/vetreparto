@@ -166,6 +166,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
         <button class="tab active" id="tab-buscar" onclick="switchTab('buscar')">Buscar</button>
         <button class="tab" id="tab-ruta" onclick="switchTab('ruta')">Ruta (<span id="rc">0</span>)</button>
         <button class="tab" id="tab-resumen" onclick="switchTab('resumen');actualizarResumen()">Resumen</button>
+        <button class="tab" id="tab-equipo" onclick="switchTab('equipo');cargarEquipo()">Equipo</button>
       </div>
       <div class="tc active" id="content-buscar">
         <div class="sbox"><input type="text" id="si" placeholder="Nombre o ID SAP..." oninput="buscar(this.value)" autocomplete="off"></div>
@@ -258,6 +259,15 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
           <button class="dl-btn csv" onclick="descargarResumen()">Descargar CSV</button>
         </div>
         <div class="resumen-body" id="resumen-body"><div style="padding:16px;text-align:center;color:#7a7870;font-size:13px">Agrega paradas para ver el resumen</div></div>
+      </div>
+      <div class="tc" id="content-equipo" style="flex-direction:column;overflow:hidden">
+        <div style="padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:13px;font-weight:700">Equipo — Entregas del dia</div>
+          <button onclick="cargarEquipo()" style="background:#1a6b4a;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">Actualizar</button>
+        </div>
+        <div id="equipo-body" style="flex:1;overflow-y:auto;padding:10px 12px">
+          <div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>
+        </div>
       </div>
     </div>
     <div class="mapwrap">
@@ -798,6 +808,79 @@ function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.cl
 var showingMap=false;
 function toggleMap(){showingMap=!showingMap;var panel=document.getElementById('panel'),btn=document.getElementById('map-toggle-btn');if(showingMap){panel.classList.add('map-view');btn.textContent='Ver paradas';}else{panel.classList.remove('map-view');btn.textContent='Ver mapa';}if(showingMap&&map)setTimeout(function(){google.maps.event.trigger(map,'resize');},350);}
 function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+// ── Vista Equipo ──────────────────────────────────────────────────────────────
+function cargarEquipo(){
+  var body = document.getElementById('equipo-body');
+  if(!body) return;
+  body.innerHTML = '<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>';
+  var hoy = new Date();
+  var fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  db.ref('rutas').once('value').then(function(snap){
+    var val = snap.val();
+    if(!val){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin rutas activas hoy</div>';return;}
+    var choferes = [];
+    Object.keys(val).forEach(function(cid){
+      var rutaChofer = val[cid];
+      if(rutaChofer && rutaChofer[fechaHoy]) choferes.push({cid:cid, data:rutaChofer[fechaHoy]});
+    });
+    if(!choferes.length){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin rutas activas hoy</div>';return;}
+    var COLORES=['#1a6b4a','#0f4a8a','#9333ea','#ea580c','#0891b2','#be123c','#65a30d','#b45309'];
+    var h='';
+    choferes.forEach(function(ch, idx){
+      var d = ch.data;
+      var nombre = d.choferNombre || ch.cid.charAt(0).toUpperCase()+ch.cid.slice(1);
+      var paradas = Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+      var ent = paradas.filter(function(p){var e=p.entregas||[];return e.length?e.every(function(x){return x.entregado;}):p.entregado;}).length;
+      var color = COLORES[idx % COLORES.length];
+      h += '<div style="margin-bottom:14px;border:1px solid #e4e2da;border-radius:10px;overflow:hidden">';
+      h += '<div style="padding:8px 12px;background:'+color+'18;border-bottom:1px solid #e4e2da;display:flex;align-items:center;gap:8px">';
+      h += '<div style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></div>';
+      h += '<div style="font-size:13px;font-weight:700;flex:1">'+esc(nombre)+'</div>';
+      h += '<div style="font-size:11px;color:'+color+';font-weight:700">'+ent+'/'+paradas.length+' entregas</div>';
+      if(d.km&&d.km!=='-') h += '<div style="font-size:10px;color:#7a7870;margin-left:4px">'+d.km+' km</div>';
+      h += '</div>';
+      paradas.forEach(function(p,i){
+        var entregas = p.entregas||[];
+        if(!Array.isArray(entregas)) entregas = Object.values(entregas);
+        var todasOk = entregas.every(function(e){return e.entregado;});
+        var noEnt = p.noEntregado||false;
+        var bgColor = todasOk?'#f0faf5':noEnt?'#fff5f5':'#fff';
+        var numColor = todasOk?'#1a6b4a':noEnt?'#dc2626':'#7a7870';
+        var numBg = todasOk?'#e8f5ef':noEnt?'#fee2e2':'#f0efe9';
+        var numTxt = todasOk?'✓':noEnt?'✗':(i+1);
+        h += '<div style="padding:7px 10px;border-bottom:1px solid #f0efe9;background:'+bgColor+'">';
+        h += '<div style="display:flex;align-items:center;gap:7px">';
+        h += '<div style="width:20px;height:20px;border-radius:50%;background:'+numBg+';color:'+numColor+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">'+numTxt+'</div>';
+        h += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombreFiscal||p.nombre)+'</div>';
+        if(noEnt&&(p.motivoNoEntrega||p.motivo)) h += '<div style="font-size:10px;color:#dc2626">'+esc(p.motivoNoEntrega||p.motivo)+'</div>';
+        h += '</div>';
+        if(todasOk&&entregas[0]&&entregas[0].horaEntrega) h += '<div style="font-size:10px;color:#1a6b4a;font-weight:700;flex-shrink:0">'+entregas[0].horaEntrega+'</div>';
+        h += '</div>';
+        // Pedidos y facturas
+        var infoExtra = '';
+        entregas.forEach(function(e,ei){
+          if(e.pedido||e.factura){
+            infoExtra += '<div style="font-size:10px;color:#7a7870;margin-top:2px;padding-left:27px">';
+            if(entregas.length>1) infoExtra += 'Entrega '+(ei+1)+': ';
+            if(e.pedido) infoExtra += 'Ped:'+e.pedido+' ';
+            if(e.factura) infoExtra += 'FAC:'+e.factura;
+            if(e.entregado&&e.horaEntrega&&entregas.length>1) infoExtra += ' <span style="color:#1a6b4a;font-weight:700">'+e.horaEntrega+'</span>';
+            infoExtra += '</div>';
+          }
+        });
+        if(infoExtra) h += infoExtra;
+        h += '</div>';
+      });
+      h += '</div>';
+    });
+    body.innerHTML = h;
+  }).catch(function(e){
+    body.innerHTML = '<div style="text-align:center;color:#dc2626;font-size:13px;padding:24px">Error: '+e.message+'</div>';
+  });
+}
+// ── Fin Vista Equipo ──────────────────────────────────────────────────────────
+
 window.initMap=initMap;
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
