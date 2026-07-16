@@ -659,19 +659,26 @@ function cargarHistorial(){
     html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#dc2626">'+noEnt+'</div><div style="font-size:11px;color:#7a7870">No entregados</div></div>';
     html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#0f4a8a">'+(d.km||'-')+'</div><div style="font-size:11px;color:#7a7870">Km</div></div></div>';
     html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html+='<thead><tr style="background:#f0efe9"><th style="padding:7px 8px;text-align:left">#</th><th style="padding:7px 8px;text-align:left">Cliente</th><th style="padding:7px 8px;text-align:left">Pedido</th><th style="padding:7px 8px;text-align:left">Factura</th><th style="padding:7px 8px;text-align:left">Estado</th><th style="padding:7px 8px;text-align:left">Hora</th><th style="padding:7px 8px;text-align:left">Motivo</th></tr></thead><tbody>';
+    html+='<thead><tr style="background:#f0efe9"><th style="padding:7px 8px;text-align:left">#</th><th style="padding:7px 8px;text-align:left">Tipo</th><th style="padding:7px 8px;text-align:left">Cliente / Empresa</th><th style="padding:7px 8px;text-align:left">Destinatario</th><th style="padding:7px 8px;text-align:left">Pedido</th><th style="padding:7px 8px;text-align:left">Factura</th><th style="padding:7px 8px;text-align:left">No. Guia</th><th style="padding:7px 8px;text-align:left">Estado</th><th style="padding:7px 8px;text-align:left">Hora</th><th style="padding:7px 8px;text-align:left">Motivo</th></tr></thead><tbody>';
     paradas.forEach(function(p,i){
       var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
       var ok=entregas.every(function(e){return e.entregado;}); var noE=p.noEntregado||false;
       var bg=ok?'#f0faf5':noE?'#fff5f5':'#fff';
       var estadoColor=ok?'#1a6b4a':noE?'#dc2626':'#7a7870';
       var estado=ok?'&#10003; Entregado':noE?'&#x2716; No entregado':'Pendiente';
+      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
+      var tipoColor=p.esPaqueteria?'#0f4a8a':(p.esLibre?'#ff8800':'#1a6b4a');
+      var tipoBg=p.esPaqueteria?'#e6f1fb':(p.esLibre?'#fff8ee':'#e8f5ef');
+      var destinatario=p.esPaqueteria?(p.clienteDestinatario||'-'):'-';
       entregas.forEach(function(e,ei){
         html+='<tr style="border-bottom:1px solid #f0efe9;background:'+bg+'">';
         html+='<td style="padding:6px 8px">'+(i+1)+(entregas.length>1?'-'+(ei+1):'')+'</td>';
+        html+='<td style="padding:6px 8px"><span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span></td>';
         html+='<td style="padding:6px 8px;font-weight:600">'+esc(p.nombreFiscal||p.nombre)+'</td>';
+        html+='<td style="padding:6px 8px;color:#0f4a8a">'+esc(destinatario)+'</td>';
         html+='<td style="padding:6px 8px">'+(e.pedido||'-')+'</td>';
         html+='<td style="padding:6px 8px">'+(e.factura||'-')+'</td>';
+        html+='<td style="padding:6px 8px">'+(e.guia||'-')+'</td>';
         html+='<td style="padding:6px 8px;font-weight:700;color:'+estadoColor+'">'+estado+'</td>';
         html+='<td style="padding:6px 8px">'+(e.horaEntrega||'-')+'</td>';
         html+='<td style="padding:6px 8px;color:#dc2626">'+(noE?(p.motivoNoEntrega||p.motivo||''):'')+'</td>';
@@ -697,7 +704,7 @@ function descargarRango(){
       ['VetReparto - Historial por rango'],
       ['Desde:',inicio,'Hasta:',fin,'Chofer:',choferSel==='todos'?'Todos':choferSel.charAt(0).toUpperCase()+choferSel.slice(1)],
       [],
-      ['Chofer','Fecha','No.','ID SAP','Cliente','Tipo','Pedido','Factura','Estado','Hora','Motivo','Km tramo','Tiempo tramo']
+      ['Chofer','Fecha','No.','Tipo','Cliente / Empresa','Destinatario','Pedido','Factura','No. Guia','Estado','Hora','Motivo','Km tramo','Tiempo tramo']
     ];
     var hayDatos=false;
     resultados.forEach(function(r){
@@ -713,18 +720,20 @@ function descargarRango(){
           var entregas=p.entregas||[{pedido:'',factura:'',entregado:false,horaEntrega:''}];
           if(!Array.isArray(entregas)) entregas=Object.values(entregas);
           entregas.forEach(function(e){
-            var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
+            var tipoR=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
             var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
             var motivo=p.noEntregado?String(p.motivoNoEntrega||p.motivo||''):'';
+            var destR=p.esPaqueteria?String(p.clienteDestinatario||''):'';
             rows.push([
-              nombreChofer,
+              String(nombreChofer),
               String(fecha),
               String(i+1),
-              String(p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''))),
-              String(p.nombre||''),
-              String(tipo),
+              String(tipoR),
+              String(p.nombreFiscal||p.nombre||''),
+              String(destR),
               String(e.pedido||''),
               String(e.factura||''),
+              String(e.guia||''),
               String(estado),
               String(e.horaEntrega||''),
               String(motivo),
