@@ -559,6 +559,23 @@ function recalcularDesdeAqui(){
       var reordenadas=[];ord.forEach(function(i){reordenadas.push(pendientes[i]);});
       var completadas=par.filter(function(p){return p.entregado||p.noEntregado;});
       par=completadas.concat(reordenadas);
+      // Actualizar km y tiempo con los datos del recálculo
+      var td=0,tt=0;
+      res.routes[0].legs.forEach(function(leg,i){
+        td+=leg.distance.value;tt+=(leg.duration_in_traffic||leg.duration).value;
+        if(i<reordenadas.length){
+          reordenadas[i].kmDesde=leg.distance.text;
+          reordenadas[i].minDesde=(leg.duration_in_traffic||leg.duration).text;
+          reordenadas[i].origenDesde=i===0?'Ubicacion actual':reordenadas[i-1]?reordenadas[i-1].nombre:'';
+        }
+      });
+      var km=(td/1000).toFixed(1),mins=Math.round(tt/60),hrs=Math.floor(mins/60),rem=mins%60;
+      var tiempoStr=hrs>0?hrs+'h '+rem+'m':mins+'min';
+      // Sumar km ya recorridos
+      var kmPrevio=parseFloat(document.getElementById('sv-d').textContent)||0;
+      var kmTotal=(kmPrevio+parseFloat(km)).toFixed(1);
+      document.getElementById('sv-d').textContent=kmTotal;
+      document.getElementById('sv-t').textContent=tiempoStr;
       dr.setDirections(res);ui();pines();guardarEnFirebase();
       toast('Ruta recalculada desde tu ubicacion');
     });
