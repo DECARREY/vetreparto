@@ -636,13 +636,25 @@ function actualizarResumen(){
   var h='<div class="res-header"><div class="res-title">'+esc(chofer)+'</div><div class="res-sub">'+fecha+'</div></div>';
   h+='<div class="res-stats"><div class="res-stat"><div class="res-stat-val">'+par.length+'</div><div class="res-stat-lbl">Paradas</div></div><div class="res-stat"><div class="res-stat-val" style="color:#1a6b4a">'+entEntregas+'</div><div class="res-stat-lbl">Entregados</div></div><div class="res-stat"><div class="res-stat-val" style="color:#e65100">'+(totalEntregas-entEntregas)+'</div><div class="res-stat-lbl">Pendientes</div></div></div>';
   par.forEach(function(p,i){
-    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});var esLibre=p.esLibre||false;
-    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+(todasOk?' done':esLibre?' libre':'')+'">'+(todasOk?'&#10003;':(i+1))+'</div><div class="res-nombre">'+esc(p.nombre)+'</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
+    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});
+    var esLibre=p.esLibre||false;var esPaq=p.esPaqueteria||false;
+    var tipo=esPaq?'Paqueteria':(esLibre?'Parada Libre/Cobranza':'Entrega local');
+    var tipoColor=esPaq?'#0f4a8a':(esLibre?'#ff8800':'#1a6b4a');
+    var tipoBg=esPaq?'#e6f1fb':(esLibre?'#fff8ee':'#e8f5ef');
+    var numClass=todasOk?' done':esPaq?' libre':esLibre?' libre':'';
+    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+numClass+'">'+(todasOk?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0"><div class="res-nombre">'+esc(p.nombreFiscal||p.nombre)+'</div>';
+    if(p.nombreFiscal&&p.nombre!==p.nombreFiscal)h+='<div style="font-size:10px;color:#7a7870">'+esc(p.nombre)+'</div>';
+    h+='</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
+    h+='<div style="margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span></div>';
     if(esLibre&&p.motivo)h+='<div style="font-size:10px;color:#ff8800;margin-bottom:4px">&#x1F4CC; '+esc(p.motivo)+'</div>';
+    if(esPaq&&p.clienteDestinatario)h+='<div style="font-size:10px;color:#0f4a8a;margin-bottom:4px;font-weight:600">&#x1F4E6; Destinatario: '+esc(p.clienteDestinatario)+'</div>';
     entregas.forEach(function(e,ei){
       h+='<div class="res-fields" style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #f0efe9">';
       if(entregas.length>1)h+='<span class="rfl">Entrega '+(ei+1)+':</span><span class="rfv">'+(e.entregado?'&#10003;':'-')+'</span>';
-      h+='<span class="rfl">Pedido:</span><span class="rfv">'+(e.pedido||'-')+'</span><span class="rfl">Factura:</span><span class="rfv">'+(e.factura||'-')+'</span><span class="rfl">Hora:</span><span class="rfv">'+(e.horaEntrega||'-')+'</span>';
+      h+='<span class="rfl">Pedido:</span><span class="rfv">'+(e.pedido||'-')+'</span>';
+      h+='<span class="rfl">Factura:</span><span class="rfv">'+(e.factura||'-')+'</span>';
+      if(esPaq)h+='<span class="rfl">No. Guia:</span><span class="rfv">'+(e.guia||'-')+'</span>';
+      h+='<span class="rfl">Hora:</span><span class="rfv">'+(e.horaEntrega||'-')+'</span>';
       h+='</div>';
     });
     if(p.kmDesde)h+='<div class="res-fields"><span class="rfl">Desde:</span><span class="rfv">'+esc(p.origenDesde)+'</span><span class="rfl">Dist:</span><span class="rfv">'+p.kmDesde+' / '+p.minDesde+'</span></div>';
