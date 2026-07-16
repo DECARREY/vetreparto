@@ -7,6 +7,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#1a6b4a">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
@@ -256,7 +257,7 @@ html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:h
       <div class="tc" id="content-resumen">
         <div class="res-btns">
           <button class="dl-btn wa" onclick="compartirWhatsApp()">Compartir WhatsApp</button>
-          <button class="dl-btn csv" onclick="descargarResumen()">Descargar CSV</button>
+          <button class="dl-btn csv" onclick="descargarResumen()">Descargar Excel</button>
         </div>
         <div class="resumen-body" id="resumen-body"><div style="padding:16px;text-align:center;color:#7a7870;font-size:13px">Agrega paradas para ver el resumen</div></div>
       </div>
@@ -636,25 +637,13 @@ function actualizarResumen(){
   var h='<div class="res-header"><div class="res-title">'+esc(chofer)+'</div><div class="res-sub">'+fecha+'</div></div>';
   h+='<div class="res-stats"><div class="res-stat"><div class="res-stat-val">'+par.length+'</div><div class="res-stat-lbl">Paradas</div></div><div class="res-stat"><div class="res-stat-val" style="color:#1a6b4a">'+entEntregas+'</div><div class="res-stat-lbl">Entregados</div></div><div class="res-stat"><div class="res-stat-val" style="color:#e65100">'+(totalEntregas-entEntregas)+'</div><div class="res-stat-lbl">Pendientes</div></div></div>';
   par.forEach(function(p,i){
-    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});
-    var esLibre=p.esLibre||false;var esPaq=p.esPaqueteria||false;
-    var tipo=esPaq?'Paqueteria':(esLibre?'Parada Libre/Cobranza':'Entrega local');
-    var tipoColor=esPaq?'#0f4a8a':(esLibre?'#ff8800':'#1a6b4a');
-    var tipoBg=esPaq?'#e6f1fb':(esLibre?'#fff8ee':'#e8f5ef');
-    var numClass=todasOk?' done':esPaq?' libre':esLibre?' libre':'';
-    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+numClass+'">'+(todasOk?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0"><div class="res-nombre">'+esc(p.nombreFiscal||p.nombre)+'</div>';
-    if(p.nombreFiscal&&p.nombre!==p.nombreFiscal)h+='<div style="font-size:10px;color:#7a7870">'+esc(p.nombre)+'</div>';
-    h+='</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
-    h+='<div style="margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span></div>';
+    var entregas=p.entregas||[];var todasOk=entregas.every(function(e){return e.entregado;});var esLibre=p.esLibre||false;
+    h+='<div class="res-item"><div class="res-item-top"><div class="res-num'+(todasOk?' done':esLibre?' libre':'')+'">'+(todasOk?'&#10003;':(i+1))+'</div><div class="res-nombre">'+esc(p.nombre)+'</div>'+(todasOk?'<span class="res-tag tag-ok">OK</span>':'<span class="res-tag tag-pend">Pendiente</span>')+'</div>';
     if(esLibre&&p.motivo)h+='<div style="font-size:10px;color:#ff8800;margin-bottom:4px">&#x1F4CC; '+esc(p.motivo)+'</div>';
-    if(esPaq&&p.clienteDestinatario)h+='<div style="font-size:10px;color:#0f4a8a;margin-bottom:4px;font-weight:600">&#x1F4E6; Destinatario: '+esc(p.clienteDestinatario)+'</div>';
     entregas.forEach(function(e,ei){
       h+='<div class="res-fields" style="margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #f0efe9">';
       if(entregas.length>1)h+='<span class="rfl">Entrega '+(ei+1)+':</span><span class="rfv">'+(e.entregado?'&#10003;':'-')+'</span>';
-      h+='<span class="rfl">Pedido:</span><span class="rfv">'+(e.pedido||'-')+'</span>';
-      h+='<span class="rfl">Factura:</span><span class="rfv">'+(e.factura||'-')+'</span>';
-      if(esPaq)h+='<span class="rfl">No. Guia:</span><span class="rfv">'+(e.guia||'-')+'</span>';
-      h+='<span class="rfl">Hora:</span><span class="rfv">'+(e.horaEntrega||'-')+'</span>';
+      h+='<span class="rfl">Pedido:</span><span class="rfv">'+(e.pedido||'-')+'</span><span class="rfl">Factura:</span><span class="rfv">'+(e.factura||'-')+'</span><span class="rfl">Hora:</span><span class="rfv">'+(e.horaEntrega||'-')+'</span>';
       h+='</div>';
     });
     if(p.kmDesde)h+='<div class="res-fields"><span class="rfl">Desde:</span><span class="rfv">'+esc(p.origenDesde)+'</span><span class="rfl">Dist:</span><span class="rfv">'+p.kmDesde+' / '+p.minDesde+'</span></div>';
@@ -739,18 +728,41 @@ function compartirWhatsApp(){
 function descargarResumen(){
   var chofer=document.getElementById('chofer-nombre').value||'Repartidor';
   var hoy=new Date(),fecha=hoy.getDate()+'/'+(hoy.getMonth()+1)+'/'+hoy.getFullYear();
-  var csv='RESUMEN - '+chofer+'\r\nFecha: '+fecha+'\r\n\r\n';
-  csv+='"No.","ID SAP","Cliente","Tipo","Entrega","Pedido","Factura","Guia","Destinatario","Estado","Hora","Desde","Km","Tiempo"\r\n';
+  var rows=[
+    ['VetReparto - Resumen de ruta'],
+    ['Chofer:',chofer,'Fecha:',fecha],
+    [],
+    ['No.','Tipo','Cliente / Empresa','Destinatario','Pedido','Factura','No. Guia','Estado','Hora','Motivo','Desde','Km','Tiempo']
+  ];
   par.forEach(function(p,i){
     var entregas=p.entregas||[];
+    var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
+    var dest=p.esPaqueteria?(p.clienteDestinatario||''):'';
     entregas.forEach(function(e,ei){
-      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Libre':'Cliente');
-      var sapId=p.esPaqueteria||p.esLibre?tipo:p.id;
-      csv+='"'+(i+1)+'","'+sapId+'","'+p.nombre+'","'+tipo+'","'+(entregas.length>1?(ei+1):'1')+'","'+(e.pedido||'')+'","'+(e.factura||'')+'","'+(e.guia||'')+'","'+(p.clienteDestinatario||'')+'","'+(e.entregado?'Entregado':'Pendiente')+'","'+(e.horaEntrega||'')+'","'+(p.origenDesde||'')+'","'+(p.kmDesde||'')+'","'+(p.minDesde||'')+'"\r\n';
+      var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+      var motivo=p.noEntregado?(p.motivoNoEntrega||p.motivo||''):'';
+      rows.push([
+        String(i+1),
+        String(tipo),
+        String(p.nombreFiscal||p.nombre||''),
+        String(dest),
+        String(e.pedido||''),
+        String(e.factura||''),
+        String(e.guia||''),
+        String(estado),
+        String(e.horaEntrega||''),
+        String(motivo),
+        String(p.origenDesde||''),
+        String(p.kmDesde||''),
+        String(p.minDesde||'')
+      ]);
     });
   });
-  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ruta_'+chofer.replace(/\s+/g,'_')+'_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'.csv';a.click();
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:22},{wch:35},{wch:25},{wch:10},{wch:10},{wch:15},{wch:12},{wch:8},{wch:25},{wch:12},{wch:8},{wch:10}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Ruta');
+  XLSX.writeFile(wb,'ruta_'+chofer.replace(/\s+/g,'_')+'_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'.xlsx');
   toast('Descargado');
 }
 
