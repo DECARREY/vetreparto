@@ -333,7 +333,13 @@ window.addEventListener('load',function(){
           if(opt){sel2.value=d.choferNombre;}
           else{sel2.value='otros';cn.style.display='block';}
         }
+        // Restaurar km y tiempo guardados, no solo las paradas
+        if(d.km) document.getElementById('sv-d').textContent = d.km;
+        if(d.tiempo) document.getElementById('sv-t').textContent = d.tiempo;
+        // Si ya se habia calculado ruta (tiene datos de distancia por parada), marcar como activa
+        if(par.some(function(p){return p.kmDesde;})) rutaActiva = true;
         ui();
+        if(rutaActiva && typeof pines === 'function') pines();
         toast('Ruta restaurada: '+d.paradas.length+' paradas');
       }
     }).catch(function(e){console.log('No saved route:',e);});
