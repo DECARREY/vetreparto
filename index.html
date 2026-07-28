@@ -1,15 +1,11 @@
-https://raw.githubusercontent.com/decarrey/vetreparto/main/index.html
-→ https://raw.githubusercontent.com/decarrey/vetreparto/main/index.html
-Content-Type: text/plain; charset=utf-8
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VetReparto</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1a6b4a">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
@@ -48,6 +44,8 @@ function guardarEnFirebase(){
 </script>
 <style>
 html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;overflow:hidden}
+button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:manipulation}
+.add-entrega-btn{min-height:40px}
 #app{display:flex;flex-direction:column;height:100vh}
 .topbar{height:52px;background:#1a6b4a;display:flex;align-items:center;padding:0 14px;gap:10px;color:#fff;flex-shrink:0}
 .topbar h1{font-size:14px;font-weight:700;margin:0;flex:1}
@@ -641,13 +639,24 @@ function ui(){
     h+='</div>';
   });
   pl.innerHTML=h;
-  pl.querySelectorAll('.rbtn').forEach(function(b){b.addEventListener('click',function(){quitar(b.dataset.id);});});
+  // tap(): responde de forma confiable en celular. En movil, un toque que primero
+  // cierra el teclado o "se come" el click no llegaba al boton; touchend dispara en
+  // el primer toque aunque haya un input enfocado. Se ignora si el dedo se movio (scroll)
+  // y se evita el doble disparo del click fantasma.
+  function tap(b,fn){
+    var sx=0,sy=0,moved=false;
+    b.addEventListener('touchstart',function(e){var t=e.touches[0];sx=t.clientX;sy=t.clientY;moved=false;},{passive:true});
+    b.addEventListener('touchmove',function(e){var t=e.touches[0];if(Math.abs(t.clientX-sx)>10||Math.abs(t.clientY-sy)>10)moved=true;},{passive:true});
+    b.addEventListener('touchend',function(e){if(moved)return;e.preventDefault();b._t=Date.now();fn();},{passive:false});
+    b.addEventListener('click',function(){if(b._t&&Date.now()-b._t<600)return;fn();});
+  }
+  pl.querySelectorAll('.rbtn').forEach(function(b){tap(b,function(){quitar(b.dataset.id);});});
   pl.querySelectorAll('.pfin').forEach(function(inp){inp.addEventListener('input',function(){setEntregaField(inp.dataset.pid,parseInt(inp.dataset.idx),inp.dataset.field,inp.value);inp.classList.toggle('filled',inp.value.length>0);actualizarResumen();});});
-  pl.querySelectorAll('.ebtn.pending').forEach(function(b){b.addEventListener('click',function(){marcarEntregaItem(b.dataset.pid,parseInt(b.dataset.idx));});});
-  pl.querySelectorAll('.ebtn.noent').forEach(function(b){b.addEventListener('click',function(){marcarNoEntregado(b.dataset.neId);});});
-  pl.querySelectorAll('.motivo-confirmar').forEach(function(b){b.addEventListener('click',function(){confirmarMotivo(b.dataset.confId);});});
-  pl.querySelectorAll('.add-entrega-btn').forEach(function(b){b.addEventListener('click',function(){agregarEntrega(b.dataset.pid);});});
-  pl.querySelectorAll('.del-entrega-btn').forEach(function(b){b.addEventListener('click',function(){eliminarEntrega(b.dataset.pid,parseInt(b.dataset.idx));});});
+  pl.querySelectorAll('.ebtn.pending').forEach(function(b){tap(b,function(){marcarEntregaItem(b.dataset.pid,parseInt(b.dataset.idx));});});
+  pl.querySelectorAll('.ebtn.noent').forEach(function(b){tap(b,function(){marcarNoEntregado(b.dataset.neId);});});
+  pl.querySelectorAll('.motivo-confirmar').forEach(function(b){tap(b,function(){confirmarMotivo(b.dataset.confId);});});
+  pl.querySelectorAll('.add-entrega-btn').forEach(function(b){tap(b,function(){agregarEntrega(b.dataset.pid);});});
+  pl.querySelectorAll('.del-entrega-btn').forEach(function(b){tap(b,function(){eliminarEntrega(b.dataset.pid,parseInt(b.dataset.idx));});});
   var rb=document.getElementById('recalc-btn');
   if(rb)rb.classList.toggle('show',rutaActiva&&par.some(function(p){return p.entregado||p.noEntregado;}));
   document.getElementById('rs').style.display='grid';
@@ -904,7 +913,6 @@ function cargarEquipo(){
         h += '<div style="display:flex;align-items:center;gap:7px">';
         h += '<div style="width:20px;height:20px;border-radius:50%;background:'+numBg+';color:'+numColor+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">'+numTxt+'</div>';
         h += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombreFiscal||p.nombre)+'</div>';
-        if(p.esPaqueteria&&p.clienteDestinatario) h += '<div style="font-size:10px;color:#0f4a8a;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">&#x1F4E6; Para: '+esc(p.clienteDestinatario)+'</div>';
         if(noEnt&&(p.motivoNoEntrega||p.motivo)) h += '<div style="font-size:10px;color:#dc2626">'+esc(p.motivoNoEntrega||p.motivo)+'</div>';
         h += '</div>';
         if(todasOk&&entregas[0]&&entregas[0].horaEntrega) h += '<div style="font-size:10px;color:#1a6b4a;font-weight:700;flex-shrink:0">'+entregas[0].horaEntrega+'</div>';
@@ -912,12 +920,11 @@ function cargarEquipo(){
         // Pedidos y facturas
         var infoExtra = '';
         entregas.forEach(function(e,ei){
-          if(e.pedido||e.factura||e.guia){
+          if(e.pedido||e.factura){
             infoExtra += '<div style="font-size:10px;color:#7a7870;margin-top:2px;padding-left:27px">';
             if(entregas.length>1) infoExtra += 'Entrega '+(ei+1)+': ';
             if(e.pedido) infoExtra += 'Ped:'+e.pedido+' ';
             if(e.factura) infoExtra += 'FAC:'+e.factura;
-            if(e.guia) infoExtra += ' Guia:'+e.guia;
             if(e.entregado&&e.horaEntrega&&entregas.length>1) infoExtra += ' <span style="color:#1a6b4a;font-weight:700">'+e.horaEntrega+'</span>';
             infoExtra += '</div>';
           }
