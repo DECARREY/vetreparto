@@ -1583,14 +1583,20 @@ function balLimpiarPedidos(){
   balClearMapa(); var lg=document.getElementById('bal-legend'); if(lg) lg.style.display='none';
 }
 function balRenderPedidos(){
-  var nl=0,nf=0,np=0;
-  balPedidos.forEach(function(p){ if(p.tipo==='LOCAL')nl++; else if(p.tipo==='FORANEO')nf++; else np++; });
-  document.getElementById('bal-n-local').textContent=nl;
-  document.getElementById('bal-n-for').textContent=nf;
-  document.getElementById('bal-n-paq').textContent=np;
+  var grupos={LOCAL:[],FORANEO:[],PAQUETERIA:[]};
+  balPedidos.forEach(function(p){ (grupos[p.tipo]||grupos.LOCAL).push(p); });
+  document.getElementById('bal-n-local').textContent=grupos.LOCAL.length;
+  document.getElementById('bal-n-for').textContent=grupos.FORANEO.length;
+  document.getElementById('bal-n-paq').textContent=grupos.PAQUETERIA.length;
   var box=document.getElementById('bal-chips'); var h='';
-  balPedidos.forEach(function(p){
-    h+='<div class="bal-chip"><span class="bal-tag tag-'+p.tipo+'">'+p.tipo.charAt(0)+'</span><span class="nm">'+esc(p.nombreFiscal||p.nombre)+'</span><span class="x" onclick="balQuitar(\''+String(p.id).replace(/'/g,"")+'\')">&#x2715;</span></div>';
+  var labels={LOCAL:'Local',FORANEO:'Foraneo',PAQUETERIA:'Paqueteria'};
+  ['LOCAL','FORANEO','PAQUETERIA'].forEach(function(t){
+    var arr=grupos[t]; if(!arr.length) return;
+    arr.sort(function(a,b){ return (a.nombreFiscal||a.nombre||'').localeCompare(b.nombreFiscal||b.nombre||'','es',{sensitivity:'base'}); });
+    h+='<div style="font-size:10px;font-weight:800;color:#0d3d73;background:#eef0f4;padding:3px 6px;border-top:1px solid #e4e2da;position:sticky;top:0">'+labels[t]+' ('+arr.length+')</div>';
+    arr.forEach(function(p){
+      h+='<div class="bal-chip"><span class="bal-tag tag-'+p.tipo+'">'+p.tipo.charAt(0)+'</span><span class="nm">'+esc(p.nombreFiscal||p.nombre)+'</span><span class="x" onclick="balQuitar(\''+String(p.id).replace(/'/g,"")+'\')">&#x2715;</span></div>';
+    });
   });
   box.innerHTML=h||'<div style="padding:10px;text-align:center;color:#bbb;font-size:11px">Sin pedidos</div>';
 }
