@@ -1,7 +1,3 @@
-https://raw.githubusercontent.com/decarrey/vetreparto/main/supervisor.html
-→ https://raw.githubusercontent.com/decarrey/vetreparto/main/supervisor.html
-Content-Type: text/plain; charset=utf-8
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1522,7 +1518,9 @@ function balBuscar(v){
     if(balPedidos.some(function(p){return p.id===c.id;})) return false;
     var m=balMapa()[c.id]||{};
     return (c.nombre||'').toLowerCase().indexOf(q)>=0||(c.nombreFiscal||'').toLowerCase().indexOf(q)>=0||(c.id||'').toLowerCase().indexOf(q)>=0||(m.vendedor||'').toLowerCase().indexOf(q)>=0;
-  }).slice(0,25);
+  });
+  r.sort(function(a,b){var ap=((a.id||'').toLowerCase().indexOf(q)===0||(a.nombre||'').toLowerCase().indexOf(q)===0||(a.nombreFiscal||'').toLowerCase().indexOf(q)===0)?0:1;var bp=((b.id||'').toLowerCase().indexOf(q)===0||(b.nombre||'').toLowerCase().indexOf(q)===0||(b.nombreFiscal||'').toLowerCase().indexOf(q)===0)?0:1;return ap-bp;});
+  r=r.slice(0,50);
   if(!r.length){ box.innerHTML='<div style="padding:10px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>'; return; }
   box.innerHTML='';
   r.forEach(function(c){
