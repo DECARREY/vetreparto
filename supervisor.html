@@ -1576,7 +1576,12 @@ function balAgregarTodos(){
   toast('Agregados '+add+(skip?' ('+skip+' locales sin coordenadas omitidos)':''));
 }
 function balQuitar(id){ balPedidos=balPedidos.filter(function(p){return p.id!==id;}); balRenderPedidos(); }
-function balLimpiarPedidos(){ balPedidos=[]; balRenderPedidos(); }
+function balLimpiarPedidos(){
+  balPedidos=[]; balPlan=null; balLocks={}; balForEstado={};
+  balRenderPedidos();
+  var rs=document.getElementById('bal-resultados'); if(rs) rs.style.display='none';
+  balClearMapa(); var lg=document.getElementById('bal-legend'); if(lg) lg.style.display='none';
+}
 function balRenderPedidos(){
   var nl=0,nf=0,np=0;
   balPedidos.forEach(function(p){ if(p.tipo==='LOCAL')nl++; else if(p.tipo==='FORANEO')nf++; else np++; });
