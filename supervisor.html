@@ -1,3 +1,7 @@
+https://raw.githubusercontent.com/decarrey/vetreparto/main/supervisor.html
+→ https://raw.githubusercontent.com/decarrey/vetreparto/main/supervisor.html
+Content-Type: text/plain; charset=utf-8
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -97,6 +101,45 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
   .topbar h1{font-size:12px}
   .topbar button{font-size:10px;padding:4px 8px}
 }
+/* ─── Pestaña Balanceo v2 ─── */
+#section-balanceo{flex-direction:row}
+.bal-panel{width:360px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+.bal-map{position:relative;flex:1;min-height:0}
+#mapB{position:absolute;top:0;left:0;right:0;bottom:0}
+.bal-sec{padding:12px 14px;border-bottom:1px solid #eee}
+.bal-h{font-size:12px;font-weight:800;color:#0d3d73;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
+.bal-chofer{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;user-select:none;border:1px solid #eee;margin:0 4px 4px 0}
+.bal-chofer:hover{background:#f7f6f2}
+.bal-sw{width:12px;height:12px;border-radius:3px;flex-shrink:0;display:inline-block}
+.bal-btn{width:100%;padding:9px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial}
+.bal-add-item{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #f0efe9;cursor:pointer;font-size:12px}
+.bal-add-item:hover{background:#f7f6f2}
+.bal-tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;vertical-align:middle;letter-spacing:.3px}
+.tag-LOCAL{background:#e8f5ef;color:#1a6b4a}
+.tag-FORANEO{background:#fef3e2;color:#b45309}
+.tag-PAQUETERIA{background:#eee;color:#666}
+.bal-chip{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid #f4f3ef;font-size:11px}
+.bal-chip .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bal-chip .x{cursor:pointer;color:#c00;font-weight:700}
+.bal-drv{margin-bottom:10px;border:1px solid #eee;border-radius:8px;overflow:hidden}
+.bal-drv-h{display:flex;align-items:center;gap:8px;padding:7px 9px;font-size:12px;font-weight:700;color:#fff}
+.bal-drv-row{display:flex;align-items:center;gap:6px;padding:4px 9px;font-size:11px;border-top:1px solid #f4f3ef}
+.bal-drv-row .n{width:16px;color:#999;flex-shrink:0}
+.bal-drv-row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bal-drv-row select{font-size:10px;font-family:Arial;border:1px solid #ddd;border-radius:4px;padding:1px 2px;max-width:92px}
+.bal-for-row{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11px;border:1px solid #f0e6d6;border-radius:6px;margin-bottom:4px;background:#fffdf8}
+.bal-toggle{display:inline-flex;border:1px solid #d9b483;border-radius:20px;overflow:hidden;font-size:10px;font-weight:700}
+.bal-toggle button{border:none;background:#fff;color:#b45309;padding:2px 8px;cursor:pointer;font-family:Arial}
+.bal-toggle button.on{background:#b45309;color:#fff}
+.bal-legend{position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.96);border-radius:8px;padding:8px 10px;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.18);max-width:220px}
+#balMapToggle{display:none}
+@media(max-width:820px){
+  #section-balanceo .bal-panel{width:100%;position:absolute;inset:0;transition:transform .3s ease}
+  #section-balanceo .bal-map{position:absolute;inset:0}
+  #section-balanceo.map-on .bal-panel{transform:translateX(-100%)}
+  #balMapToggle{display:block}
+}
+
 </style>
 </head>
 <body>
@@ -115,6 +158,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <button class="nav-tab" onclick="showSection('clientes',event)">Clientes (<span id="total-clientes">...</span>)</button>
     <button class="nav-tab" onclick="showSection('historial',event)">Historial</button>
     <button class="nav-tab" onclick="showSection('dashboard',event)">Dashboard</button>
+    <button class="nav-tab" onclick="showSection('balanceo',event)">Balanceo</button>
   </div>
   <div class="body">
     <div class="tab-content active" id="section-rutas">
@@ -215,6 +259,54 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
         <div style="color:#7a7870;font-size:13px;text-align:center;padding:40px">Selecciona un mes y presiona Cargar</div>
       </div>
     </div>
+    <div class="tab-content" id="section-balanceo">
+      <div class="bal-panel">
+        <div class="bal-sec">
+          <div class="bal-h">1 &middot; Choferes que salen hoy</div>
+          <div id="bal-choferes"></div>
+        </div>
+        <div class="bal-sec">
+          <div class="bal-h">2 &middot; Pedidos del dia</div>
+          <input id="bal-search" placeholder="Buscar cliente por nombre, ID o vendedor..." oninput="balBuscar(this.value)" style="width:100%;padding:8px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none;box-sizing:border-box">
+          <div id="bal-search-res" style="max-height:180px;overflow-y:auto;margin-top:2px"></div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="bal-btn" style="background:#eef3fb;color:#0f4a8a;flex:1" onclick="balAgregarTodos()">Agregar todos</button>
+            <button class="bal-btn" style="background:#fbeeee;color:#be123c;flex:1" onclick="balLimpiarPedidos()">Vaciar</button>
+          </div>
+          <div style="font-size:11px;color:#555;margin:10px 0 4px;display:flex;gap:10px;flex-wrap:wrap">
+            <span><span class="bal-tag tag-LOCAL">LOCAL</span> <b id="bal-n-local">0</b></span>
+            <span><span class="bal-tag tag-FORANEO">FORANEO</span> <b id="bal-n-for">0</b></span>
+            <span><span class="bal-tag tag-PAQUETERIA">PAQ</span> <b id="bal-n-paq">0</b></span>
+          </div>
+          <div id="bal-chips" style="max-height:150px;overflow-y:auto;border:1px solid #f0efe9;border-radius:6px"></div>
+        </div>
+        <div class="bal-sec">
+          <div class="bal-h">3 &middot; Prioridad</div>
+          <div style="font-size:10px;color:#7a7870;display:flex;justify-content:space-between"><span>Ignora zona</span><span>Respeta zona del vendedor</span></div>
+          <input type="range" id="bal-aff" min="0" max="100" value="65" style="width:100%" oninput="document.getElementById('bal-aff-v').textContent=this.value+'%'">
+          <div style="text-align:center;font-size:11px;color:#0d3d73;font-weight:700;margin-bottom:8px">Afinidad: <span id="bal-aff-v">65%</span></div>
+          <div style="font-size:10px;color:#7a7870;display:flex;justify-content:space-between"><span>Libre</span><span>Cargas parejas</span></div>
+          <input type="range" id="bal-bal" min="0" max="100" value="70" style="width:100%" oninput="document.getElementById('bal-bal-v').textContent=this.value+'%'">
+          <div style="text-align:center;font-size:11px;color:#0d3d73;font-weight:700">Balance: <span id="bal-bal-v">70%</span></div>
+          <button class="bal-btn" style="background:#0f4a8a;color:#fff;margin-top:10px;font-size:14px" onclick="balPlanificar()">&#128506; PLANIFICAR</button>
+        </div>
+        <div class="bal-sec" id="bal-resultados" style="display:none">
+          <div class="bal-h">4 &middot; Propuesta (editable)</div>
+          <div id="bal-res-tot" style="font-size:11px;color:#555;margin-bottom:8px"></div>
+          <div id="bal-res-local"></div>
+          <div id="bal-res-for"></div>
+          <div id="bal-res-paq"></div>
+          <button class="bal-btn" style="background:#1a6b4a;color:#fff;margin-top:10px" onclick="balCrearRutas()">&#10003; Crear rutas en el sistema</button>
+          <div style="font-size:10px;color:#7a7870;margin-top:6px;line-height:1.4">Km en linea recta (referencia). Puedes reasignar cada cliente a mano antes de crear. Al crear se sobreescriben las rutas de HOY de los choferes con ruta.</div>
+        </div>
+      </div>
+      <div class="bal-map">
+        <div id="mapB"></div>
+        <div class="bal-legend" id="bal-legend" style="display:none"></div>
+      </div>
+      <button class="bal-btn" id="balMapToggle" onclick="balToggleMap()" style="position:fixed;bottom:14px;right:14px;width:auto;padding:12px 18px;border-radius:50px;background:#0f4a8a;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:200">Ver mapa</button>
+    </div>
+
   </div>
 </div>
 
@@ -408,6 +500,7 @@ function renderChoferes(){
       html+='<div class="pnm-s">'+esc(p.nombreFiscal||p.nombre)+'</div>';
       if(noEnt&&p.motivo) html+='<div style="font-size:10px;color:#dc2626;margin-left:auto">'+esc(p.motivo)+'</div>';
       else if(hora) html+='<div class="phora">'+hora+'</div>';
+      html+='<button onclick="quitarParadaDeChofer(\''+cid+'\','+i+')" title="Quitar parada" style="margin-left:6px;background:none;border:none;color:#c0392b;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;padding:0 2px">&#x2715;</button>';
       html+='</div>';
     }); }
     html+='</div><div style="padding:6px 8px;border-top:1px solid #e4e2da">';
@@ -481,6 +574,18 @@ function initMap(){
   actualizarMapa();
 }
 
+function quitarParadaDeChofer(cid,idx){
+  var d=datos[cid]; if(!d) return;
+  var paradas=Array.isArray(d.paradas)?d.paradas.slice():Object.values(d.paradas||{});
+  var p=paradas[idx]; if(!p){ toast('Parada no encontrada'); return; }
+  var nombreP=p.nombreFiscal||p.nombre||'esta parada';
+  var nombreC=(d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
+  if(!confirm('Quitar "'+nombreP+'" de la ruta de '+nombreC+'?\n\nEl chofer destino debera darla de alta con "+ Agregar parada".')) return;
+  paradas.splice(idx,1);
+  db.ref('rutas/'+cid+'/'+fechaHoy).update({paradas:paradas,ultimaActualizacion:Date.now()}).then(function(){
+    toast('Parada quitada de '+nombreC);
+  }).catch(function(e){ toast('Error: '+e.message); });
+}
 function abrirAgregarParada(cid){
   paradaTargetChofer=cid;
   var d=datos[cid]; var nombre=(d&&d.choferNombre)||cid.charAt(0).toUpperCase()+cid.slice(1);
@@ -886,6 +991,7 @@ function showSection(s,e){
     var dm=document.getElementById('dash-mes');
     if(dm&&dm.value) cargarDashboard();
   }
+  if(s==='balanceo'){ initBalanceo(); }
 }
 
 function toggleMap(){
@@ -1129,6 +1235,422 @@ function descargarDashboardExcel(){
   toast('Descargado');
 }
 // ─── FIN DASHBOARD ───────────────────────────────────────────────────────────
+
+/* ==== MAPA DE ASIGNACION (generado desde el Excel) ==== */
+/* Mapa de asignacion generado desde 'ASIGNACION DE CHOFER POR VENDEDRO CLIENTE.xlsx'.
+   Clave = NUMERO SAP. aff=chofer afin (vendedor-persona) o null. permit=choferes permitidos (null=Todos, []=solo paqueteria). tipo=LOCAL/PAQUETERIA/FORANEO. */
+window.ASIGNACION = {"MTY0010": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0014": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0015": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0017": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0018": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0028": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0029": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0032": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0033": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0038": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0044": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0045": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0050": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0053": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0068": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0076": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0078": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0082": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0084": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0104": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0110": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0117": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0119": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0120": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0122": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0129": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0133": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0136": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0139": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0153": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0159": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0166": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0178": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0181": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0187": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0191": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0192": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0194": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0215": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0221": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0222": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0235": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0239": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0251": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0252": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0255": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0256": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0260": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0261": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0269": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0271": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0277": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0281": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0287": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0299": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0300": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0304": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0308": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0312": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0314": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0321": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0328": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0331": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0332": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0335": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0339": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0347": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0350": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0354": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0355": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0359": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0367": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0368": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0378": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0386": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0387": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0391": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0392": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0393": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0395": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0397": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0399": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0400": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0402": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0408": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0409": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0417": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0421": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0425": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0429": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0432": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0440": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0442": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0446": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0450": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0465": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0468": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0473": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0474": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0477": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0479": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0481": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0489": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0490": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0511": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0518": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0534": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0535": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0540": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0542": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0544": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0553": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0575": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0582": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0618": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0621": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0630": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0659": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0677": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0680": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0688": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0689": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0710": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0717": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0724": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0731": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0735": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0738": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0745": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0754": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0761": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0762": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0783": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0784": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY0794": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0795": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0820": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0821": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0833": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY0839": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0841": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0894": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0905": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0906": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0911": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0926": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0927": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0936": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0937": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0939": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0942": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0946": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0952": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0954": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0955": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0962": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0969": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY0974": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0975": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY0995": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1004": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1032": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1033": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1037": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1053": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1056": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1063": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1067": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1069": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1084": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1087": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1088": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1091": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1099": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1106": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1120": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1123": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1131": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1132": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1133": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1140": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1141": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1150": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1151": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1154": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1157": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1162": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1164": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1165": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1173": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1174": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1180": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1185": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1192": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1196": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1208": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1212": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1220": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1222": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1223": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1225": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1237": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1240": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1244": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1258": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1268": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1269": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1272": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1274": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1278": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1288": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1291": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1299": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1303": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1304": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1312": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1322": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1325": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1326": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1336": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1339": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1341": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1342": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1344": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1346": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1349": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1354": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1355": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1366": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1368": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1377": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1380": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1385": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1391": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1392": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1397": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1398": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1399": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1406": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1409": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1410": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1411": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1412": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1414": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1415": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1419": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1421": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1437": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1440": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1441": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1443": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1445": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1447": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1448": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1452": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1453": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1459": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1460": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1461": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1462": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1470": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1471": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1472": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1477": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1481": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1482": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1487": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1488": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1489": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1494": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1496": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1498": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1500": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1502": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1503": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1507": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1511": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1515": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1520": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1521": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1522": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1524": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1527": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1529": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1530": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1531": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1536": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1539": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1540": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1542": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1543": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1544": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1545": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1546": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1547": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1548": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1549": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1552": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1559": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1560": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1561": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1562": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1564": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1565": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1572": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1575": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1580": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1581": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1585": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1587": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1589": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1590": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1593": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1594": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1595": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1598": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1602": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1603": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1604": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1605": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1606": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1609": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1610": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1612": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1613": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1614": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1615": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1619": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1620": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1623": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1624": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1625": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1626": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1627": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1629": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1630": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1632": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1636": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1638": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1640": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1641": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1642": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1643": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1646": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1647": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1648": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1650": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1653": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1654": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1657": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1658": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1659": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1661": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1662": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1663": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1664": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1665": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1670": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1674": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1678": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1681": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1683": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1685": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1687": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1688": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1692": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1693": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1694": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1695": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1696": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1697": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1699": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1700": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1701": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1702": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1703": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1704": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1705": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1707": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1708": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1709": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1710": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1712": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1713": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1714": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1715": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1716": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1718": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1721": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1722": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1723": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1725": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1726": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1728": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1729": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1730": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1731": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1732": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1735": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1736": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1738": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1739": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1740": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1742": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1743": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1744": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1746": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1747": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1748": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1751": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1752": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1754": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1755": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1756": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1758": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1759": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1760": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1761": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1762": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1763": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1764": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1765": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1766": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1767": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1768": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1769": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1770": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1771": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1772": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1773": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1774": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1775": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1776": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1777": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1778": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1779": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1780": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1781": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1782": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1783": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1784": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1785": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1786": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1787": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1788": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1789": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1790": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1791": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1792": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1793": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1794": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1795": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1796": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1797": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1798": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1799": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1800": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1801": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1802": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1803": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1804": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1805": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1806": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1807": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1808": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1809": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1810": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1811": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1812": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1813": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1814": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1815": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1816": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1817": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1818": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1819": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1820": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1821": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1822": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1823": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1824": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1825": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1826": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1827": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1828": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1829": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1830": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1831": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1832": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1833": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1834": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1835": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1836": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1837": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1838": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1841": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1842": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1843": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1844": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1845": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1846": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1847": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1848": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1849": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1850": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1851": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1854": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1855": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1856": {"vendedor": "LUIS CARRANZA (Laredo)", "vend": "luis", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1857": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1858": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1859": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY198": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1010": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1337": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY0091": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0923": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1860": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1861": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1863": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1862": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1864": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1865": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1869": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1868": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1867": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1870": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0333": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1871": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1874": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1872": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1873": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0965": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1877": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1878": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1879": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1875": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1880": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1128": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1881": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1883": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1882": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1885": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1884": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0099": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1886": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1711": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1717": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1887": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1535": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY0469": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1888": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1889": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1891": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1306": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1892": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1893": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1895": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1896": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1894": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY0034": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1897": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1898": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1901": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1899": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1900": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1902": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1903": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1508": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1904": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1906": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1905": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1506": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1907": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1582": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1908": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1909": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1910": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1911": {"vendedor": "MARCO PALACIOS (Foraneo)", "vend": "marco", "def": null, "permit": [], "tipo": "FORANEO"}, "MTY1912": {"vendedor": "MARCO PALACIOS (Saltillo)", "vend": "marco", "def": "marco", "permit": ["marco"], "tipo": "FORANEO"}, "MTY1180FU": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1914": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1913": {"vendedor": "MERCEDES", "vend": "mercedes", "def": "angel", "permit": ["angel"], "tipo": "LOCAL"}, "MTY1915": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1916": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1014": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1917": {"vendedor": "TELEMARKETING", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}, "MTY1920": {"vendedor": "MARCO PALACIOS (MTY)", "vend": "marco", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1918": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1919": {"vendedor": "EUNICE", "vend": "eunice", "def": null, "permit": [], "tipo": "PAQUETERIA"}, "MTY1922": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1921": {"vendedor": "SILVIA FLORES", "vend": "silvia", "def": "arturo", "permit": ["arturo"], "tipo": "LOCAL"}, "MTY1923": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1926": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1924": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "MTY1566": {"vendedor": "LUIS CARRANZA", "vend": "luis", "def": "arturo", "permit": ["luis", "arturo"], "tipo": "LOCAL"}, "Total general": {"vendedor": "", "vend": null, "def": null, "permit": null, "tipo": "LOCAL"}};
+/* ==== MOTOR BALANCEO v2 (identico a balanceo_algo.js, verificado con Node) ==== */
+/* ============================================================================
+   VetReparto - Motor de asignacion balanceada de reparto (v2, con afinidad)
+   - asignarV2: balancea SOLO clientes locales entre los choferes del dia.
+   - Afinidad suave: el cliente tiende a irse con su vendedor (si hoy es chofer)
+     y con los choferes "permitidos"; nada es candado (salvo locks manuales).
+   - Balance por cantidad con tolerancia; distancia como desempate.
+   - Orden de paradas: vecino-mas-cercano + 2-opt desde el almacen.
+   Distancias: haversine (linea recta). NO es distancia por carretera.
+   ========================================================================== */
+(function (root) {
+  'use strict';
+
+  function haversine(a, b) {
+    var R = 6371;
+    var dLat = (b.lat - a.lat) * Math.PI / 180;
+    var dLng = (b.lng - a.lng) * Math.PI / 180;
+    var la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+
+  function optimizarRuta(stops, almacen) {
+    if (stops.length <= 1) return stops.slice();
+    var remaining = stops.slice(), route = [], current = almacen;
+    while (remaining.length) {
+      var bi = 0, bd = Infinity;
+      for (var i = 0; i < remaining.length; i++) {
+        var d = haversine(current, remaining[i]);
+        if (d < bd) { bd = d; bi = i; }
+      }
+      current = remaining[bi];
+      route.push(remaining.splice(bi, 1)[0]);
+    }
+    function legDist(rt) {
+      var total = haversine(almacen, rt[0]);
+      for (var i = 0; i < rt.length - 1; i++) total += haversine(rt[i], rt[i + 1]);
+      total += haversine(rt[rt.length - 1], almacen);
+      return total;
+    }
+    var improved = true, pass = 0;
+    while (improved && pass++ < 60) {
+      improved = false;
+      for (var i = 0; i < route.length - 1; i++) {
+        for (var k = i + 1; k < route.length; k++) {
+          var nr = route.slice(0, i).concat(route.slice(i, k + 1).reverse(), route.slice(k + 1));
+          if (legDist(nr) + 1e-9 < legDist(route)) { route = nr; improved = true; }
+        }
+      }
+    }
+    return route;
+  }
+
+  function rutaKm(stops, almacen) {
+    if (!stops.length) return 0;
+    var total = haversine(almacen, stops[0]);
+    for (var i = 0; i < stops.length - 1; i++) total += haversine(stops[i], stops[i + 1]);
+    total += haversine(stops[stops.length - 1], almacen);
+    return total;
+  }
+
+  /* asignarV2(pedidos, choferes, almacen, opts)
+     pedidos: [{id,nombre,nombreFiscal,dir,lat,lng, aff, permit}]
+       aff    = chofer afin (persona del vendedor) o null
+       permit = null (Todos) | array de choferes permitidos | [] (ninguno)
+     choferes: keys de los choferes que salen hoy
+     opts: { affinity:0..1, balance:0..1, seed, locks:{id:chofer} }
+       affinity 1 = respeta al maximo la zona del vendedor
+       balance  1 = cargas lo mas parejas posible
+     Retorna: { rutas:{chofer:{stops,km,count}}, totalKm, balanceIdx, assigned, affRate } */
+  function asignarV2(pedidos, choferes, almacen, opts) {
+    opts = opts || {};
+    var affinity = opts.affinity == null ? 0.6 : opts.affinity;
+    var balance  = opts.balance  == null ? 0.6 : opts.balance;
+    var locks = opts.locks || {};
+    var K = choferes.length, N = pedidos.length;
+    var rutas = {}; choferes.forEach(function (c) { rutas[c] = { stops: [], km: 0, count: 0 }; });
+    if (!N || !K) return { rutas: rutas, totalKm: 0, balanceIdx: 0, assigned: {}, affRate: 1 };
+
+    var setP = {}; choferes.forEach(function (c) { setP[c] = true; });
+    var AFF_KM = affinity * 60; // km-equivalente por romper afinidad
+
+    function penal(p, c) {
+      var pen = 0;
+      if (p.aff && p.aff !== c && setP[p.aff]) pen += AFF_KM;            // su vendedor esta hoy y no es c
+      if (p.permit && p.permit.length && p.permit.indexOf(c) < 0) pen += AFF_KM * 0.7; // c no permitido
+      return pen;
+    }
+
+    var assigned = {};
+    // 1) locks manuales
+    pedidos.forEach(function (p) { if (locks[p.id] && setP[locks[p.id]]) assigned[p.id] = locks[p.id]; });
+    // 2) siembra por afinidad (vendedor participa)
+    pedidos.forEach(function (p) { if (!assigned[p.id] && p.aff && setP[p.aff]) assigned[p.id] = p.aff; });
+
+    function centroids() {
+      var acc = {}; choferes.forEach(function (c) { acc[c] = { la: 0, ln: 0, n: 0 }; });
+      pedidos.forEach(function (p) { var c = assigned[p.id]; if (c) { acc[c].la += p.lat; acc[c].ln += p.lng; acc[c].n++; } });
+      var cen = {}; choferes.forEach(function (c) {
+        cen[c] = acc[c].n ? { lat: acc[c].la / acc[c].n, lng: acc[c].ln / acc[c].n } : { lat: almacen.lat, lng: almacen.lng };
+      });
+      return cen;
+    }
+    var cen = centroids();
+    // 3) colocar los sin dueño disponible al chofer de menor costo (distancia + penal)
+    pedidos.forEach(function (p) {
+      if (assigned[p.id]) return;
+      var best = choferes[0], bc = Infinity;
+      choferes.forEach(function (c) {
+        var cost = haversine(p, cen[c]) + penal(p, c);
+        if (cost < bc) { bc = cost; best = c; }
+      });
+      assigned[p.id] = best;
+    });
+    cen = centroids();
+
+    // 4) rebalanceo por cantidad: mueve el pedido mas barato del sobrecargado
+    //    al sub-poblado. Los sin-afinidad (Todos) salen primero por costo 0.
+    function counts() { var s = {}; choferes.forEach(function (c) { s[c] = 0; }); pedidos.forEach(function (p) { s[assigned[p.id]]++; }); return s; }
+    var tol = Math.max(0, Math.round((1 - balance) * (N / K)));
+    var guard = 0, maxIter = N * K + 300;
+    while (guard++ < maxIter) {
+      var s = counts();
+      var over = choferes[0], mx = -1, mn = 1e9;
+      choferes.forEach(function (c) { if (s[c] > mx) { mx = s[c]; over = c; } if (s[c] < mn) { mn = s[c]; } });
+      if (mx - mn <= tol) break;
+      var bestP = null, bestc = Infinity, bestTo = null;
+      pedidos.forEach(function (p) {
+        if (assigned[p.id] !== over || locks[p.id]) return;
+        choferes.forEach(function (to) {
+          if (to === over || s[to] >= s[over] - 1) return;
+          var cost = (haversine(p, cen[to]) + penal(p, to)) - (haversine(p, cen[over]) + penal(p, over));
+          if (cost < bestc) { bestc = cost; bestP = p; bestTo = to; }
+        });
+      });
+      if (!bestP) break;
+      assigned[bestP.id] = bestTo;
+      cen = centroids();
+    }
+
+    // 5) armar rutas + optimizar orden
+    pedidos.forEach(function (p) { rutas[assigned[p.id]].stops.push(p); });
+    var totalKm = 0, cnts = [];
+    choferes.forEach(function (c) {
+      rutas[c].stops = optimizarRuta(rutas[c].stops, almacen);
+      rutas[c].km = rutaKm(rutas[c].stops, almacen);
+      rutas[c].count = rutas[c].stops.length;
+      totalKm += rutas[c].km; cnts.push(rutas[c].count);
+    });
+    var mx2 = Math.max.apply(null, cnts), mn2 = Math.min.apply(null, cnts);
+    var affTot = 0, affOk = 0;
+    pedidos.forEach(function (p) { if (p.aff && setP[p.aff]) { affTot++; if (assigned[p.id] === p.aff) affOk++; } });
+    return { rutas: rutas, totalKm: totalKm, balanceIdx: mx2 - mn2, assigned: assigned, affRate: affTot ? affOk / affTot : 1 };
+  }
+
+  var api = { haversine: haversine, optimizarRuta: optimizarRuta, rutaKm: rutaKm, asignarV2: asignarV2 };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.VetBalanceo = api;
+})(typeof self !== 'undefined' ? self : this);
+
+
+// ─── PESTAÑA BALANCEO v2 (afinidad por vendedor + tipos) ──────────────────────
+var BAL_CHOFERES=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+var ALMACEN_POS={lat:25.681553680100162,lng:-100.32371502760287};
+var mapB=null, mapBReady=false, balInit=false;
+var balPedidos=[], balPlan=null, balLocks={}, balForEstado={};
+var balMarkers=[], balPolys=[], balAlmMarker=null;
+
+function balColor(cid){ var i=BAL_CHOFERES.indexOf(cid); if(i<0)i=0; return PALETA[i%PALETA.length]; }
+function balNombre(cid){ return cid.charAt(0).toUpperCase()+cid.slice(1); }
+function balMapa(){ return (typeof window!=='undefined'&&window.ASIGNACION)||{}; }
+
+function balEnrich(c){
+  var m=balMapa()[c.id]||{};
+  return {id:c.id,nombre:c.nombre,nombreFiscal:c.nombreFiscal||'',dir:c.dir||'',
+    lat:(c.lat!=null?+c.lat:null),lng:(c.lng!=null?+c.lng:null),
+    vend:m.vend||null, def:m.def||null, permit:(m.permit!==undefined?m.permit:null), tipo:m.tipo||'LOCAL', vendedor:m.vendedor||''};
+}
+
+function initBalanceo(){
+  if(balInit){ balResizeMap(); return; }
+  balInit=true;
+  balRenderChoferes(); balRenderPedidos(); balCrearMapa();
+}
+function balCrearMapa(){
+  if(typeof google==='undefined'||!google.maps||!google.maps.Map){ setTimeout(balCrearMapa,300); return; }
+  mapB=new google.maps.Map(document.getElementById('mapB'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
+  var almEl=document.createElement('div'); almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#ff8800;border:2px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px rgba(0,0,0,.15)';
+  balAlmMarker=new google.maps.marker.AdvancedMarkerElement({position:ALMACEN_POS,map:mapB,title:'Almacen',content:almEl,zIndex:3000});
+  mapBReady=true;
+}
+function balResizeMap(){ if(mapBReady&&mapB) setTimeout(function(){google.maps.event.trigger(mapB,'resize');},150); }
+
+function balRenderChoferes(){
+  var box=document.getElementById('bal-choferes'); var h='';
+  BAL_CHOFERES.forEach(function(cid){
+    h+='<label class="bal-chofer"><input type="checkbox" class="bal-ch-chk" value="'+cid+'"'+((cid==='angel'||cid==='arturo')?' checked':'')+'>'
+      +'<span class="bal-sw" style="background:'+balColor(cid)+'"></span>'+balNombre(cid)+'</label>';
+  });
+  box.innerHTML=h;
+}
+function balSelectedChoferes(){ var o=[]; document.querySelectorAll('.bal-ch-chk').forEach(function(c){ if(c.checked)o.push(c.value); }); return o; }
+
+function balBuscar(v){
+  var box=document.getElementById('bal-search-res');
+  if(!v||v.length<2){ box.innerHTML=''; return; }
+  var q=v.toLowerCase();
+  var r=todosClientes.filter(function(c){
+    if(balPedidos.some(function(p){return p.id===c.id;})) return false;
+    var m=balMapa()[c.id]||{};
+    return (c.nombre||'').toLowerCase().indexOf(q)>=0||(c.nombreFiscal||'').toLowerCase().indexOf(q)>=0||(c.id||'').toLowerCase().indexOf(q)>=0||(m.vendedor||'').toLowerCase().indexOf(q)>=0;
+  }).slice(0,25);
+  if(!r.length){ box.innerHTML='<div style="padding:10px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>'; return; }
+  box.innerHTML='';
+  r.forEach(function(c){
+    var m=balMapa()[c.id]||{}; var tipo=m.tipo||'LOCAL';
+    var div=document.createElement('div'); div.className='bal-add-item';
+    div.innerHTML='<div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.nombreFiscal||c.nombre)+' <span class="bal-tag tag-'+tipo+'">'+tipo+'</span></div><div style="font-size:11px;color:#7a7870">'+(c.id||'')+(m.vendedor?' &bull; '+esc(m.vendedor):'')+'</div></div><div style="color:#1a6b4a;font-weight:700;font-size:12px">+</div>';
+    (function(key){ div.onclick=function(){ balAgregar(key); }; })(c._key);
+    box.appendChild(div);
+  });
+}
+function balAgregar(key){
+  var c=todosClientes.find(function(x){return x._key===key;}); if(!c) return;
+  if(balPedidos.some(function(p){return p.id===c.id;})) return;
+  var e=balEnrich(c);
+  if(e.tipo==='LOCAL'&&!(e.lat&&e.lng)){ toast('Ese cliente local no tiene coordenadas'); return; }
+  balPedidos.push(e); balRenderPedidos(); balBuscar(document.getElementById('bal-search').value);
+}
+function balAgregarTodos(){
+  var add=0, skip=0;
+  todosClientes.forEach(function(c){
+    if(balPedidos.some(function(p){return p.id===c.id;})) return;
+    var e=balEnrich(c);
+    if(e.tipo==='LOCAL'&&!(e.lat&&e.lng)){ skip++; return; }
+    balPedidos.push(e); add++;
+  });
+  balRenderPedidos();
+  toast('Agregados '+add+(skip?' ('+skip+' locales sin coordenadas omitidos)':''));
+}
+function balQuitar(id){ balPedidos=balPedidos.filter(function(p){return p.id!==id;}); balRenderPedidos(); }
+function balLimpiarPedidos(){ balPedidos=[]; balRenderPedidos(); }
+function balRenderPedidos(){
+  var nl=0,nf=0,np=0;
+  balPedidos.forEach(function(p){ if(p.tipo==='LOCAL')nl++; else if(p.tipo==='FORANEO')nf++; else np++; });
+  document.getElementById('bal-n-local').textContent=nl;
+  document.getElementById('bal-n-for').textContent=nf;
+  document.getElementById('bal-n-paq').textContent=np;
+  var box=document.getElementById('bal-chips'); var h='';
+  balPedidos.forEach(function(p){
+    h+='<div class="bal-chip"><span class="bal-tag tag-'+p.tipo+'">'+p.tipo.charAt(0)+'</span><span class="nm">'+esc(p.nombreFiscal||p.nombre)+'</span><span class="x" onclick="balQuitar(\''+String(p.id).replace(/'/g,"")+'\')">&#x2715;</span></div>';
+  });
+  box.innerHTML=h||'<div style="padding:10px;text-align:center;color:#bbb;font-size:11px">Sin pedidos</div>';
+}
+
+// ── PLANIFICAR ──
+function balPlanificar(){
+  var choferes=balSelectedChoferes();
+  if(!choferes.length){ toast('Elige al menos un chofer'); return; }
+  if(!balPedidos.length){ toast('Agrega pedidos del dia'); return; }
+  if(!window.VetBalanceo||!window.VetBalanceo.asignarV2){ toast('Motor no cargado'); return; }
+  var locales=balPedidos.filter(function(p){return p.tipo==='LOCAL'&&p.lat&&p.lng;});
+  var foraneos=balPedidos.filter(function(p){return p.tipo==='FORANEO';});
+  var paqs=balPedidos.filter(function(p){return p.tipo==='PAQUETERIA';});
+  var aff=parseInt(document.getElementById('bal-aff').value,10)/100;
+  var bal=parseInt(document.getElementById('bal-bal').value,10)/100;
+
+  var part={};choferes.forEach(function(c){part[c]=1;});
+  var pedLoc=locales.map(function(p){var eff=(p.vend&&part[p.vend])?p.vend:((p.def&&part[p.def])?p.def:null);return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal,dir:p.dir,lat:p.lat,lng:p.lng,aff:eff,permit:p.permit};});
+  var res=pedLoc.length?window.VetBalanceo.asignarV2(pedLoc,choferes,ALMACEN_POS,{affinity:aff,balance:bal,seed:7,locks:balLocks})
+                        :{rutas:{},totalKm:0,balanceIdx:0,assigned:{},affRate:1};
+  // foraneo: chofer sugerido = aff o primer permitido; estado previo o 'paq'
+  var foraneo=foraneos.map(function(p){
+    var ch=p.vend||p.def||(p.permit&&p.permit.length?p.permit[0]:null);
+    var est=balForEstado[p.id]||'paq';
+    return {p:p, chofer:ch, estado:est};
+  });
+  balPlan={choferes:choferes, localPedidos:locales, res:res, foraneo:foraneo, paq:paqs};
+  balRenderResultado(); balPintarMapa();
+  document.getElementById('bal-resultados').style.display='block';
+}
+
+function balRebuildLocal(){
+  var choferes=balPlan.choferes, locales=balPlan.localPedidos, assigned=balPlan.res.assigned;
+  var rutas={}; choferes.forEach(function(c){ rutas[c]={stops:[],km:0,count:0}; });
+  locales.forEach(function(p){ var c=assigned[p.id]; if(rutas[c]) rutas[c].stops.push(p); });
+  var total=0,cnts=[];
+  choferes.forEach(function(c){
+    rutas[c].stops=window.VetBalanceo.optimizarRuta(rutas[c].stops,ALMACEN_POS);
+    rutas[c].km=window.VetBalanceo.rutaKm(rutas[c].stops,ALMACEN_POS);
+    rutas[c].count=rutas[c].stops.length; total+=rutas[c].km; cnts.push(rutas[c].count);
+  });
+  balPlan.res.rutas=rutas; balPlan.res.totalKm=total;
+  balPlan.res.balanceIdx=(cnts.length?Math.max.apply(null,cnts)-Math.min.apply(null,cnts):0);
+}
+function balReasignar(id,to){
+  balPlan.res.assigned[id]=to; balLocks[id]=to;
+  balRebuildLocal(); balRenderResultado(); balPintarMapa();
+}
+function balForaneoToggle(id,est){
+  balForEstado[id]=est;
+  balPlan.foraneo.forEach(function(f){ if(f.p.id===id) f.estado=est; });
+  balRenderResultado(); balPintarMapa();
+}
+
+function balRenderResultado(){
+  var res=balPlan.res, choferes=balPlan.choferes;
+  document.getElementById('bal-res-tot').innerHTML='Km total (local): <b style="color:#0d3d73">'+res.totalKm.toFixed(1)+' km</b> &nbsp;|&nbsp; brecha de carga: <b>'+res.balanceIdx+'</b> &nbsp;|&nbsp; afinidad: <b>'+Math.round(res.affRate*100)+'%</b>';
+  // opciones de reasignacion
+  var opts=choferes.map(function(c){return c;});
+  var h='';
+  choferes.forEach(function(cid){
+    var r=res.rutas[cid]; if(!r) return;
+    var color=balColor(cid);
+    h+='<div class="bal-drv"><div class="bal-drv-h" style="background:'+color+'">'+balNombre(cid)+' &middot; '+r.count+' pedidos &middot; '+r.km.toFixed(1)+' km</div>';
+    r.stops.forEach(function(p,i){
+      var sel='<select onchange="balReasignar(\''+p.id+'\',this.value)">'+opts.map(function(c){return '<option value="'+c+'"'+(c===cid?' selected':'')+'>'+balNombre(c)+'</option>';}).join('')+'</select>';
+      h+='<div class="bal-drv-row"><span class="n">'+(i+1)+'</span><span class="nm" title="'+esc(p.vendedor)+'">'+esc(p.nombreFiscal||p.nombre)+(p.aff&&p.aff!==cid?' <span style="color:#c0392b">&#9888;</span>':'')+'</span>'+sel+'</div>';
+    });
+    if(!r.count) h+='<div class="bal-drv-row" style="color:#bbb">sin pedidos</div>';
+    h+='</div>';
+  });
+  document.getElementById('bal-res-local').innerHTML=h;
+  // foraneo
+  var hf='';
+  if(balPlan.foraneo.length){
+    hf='<div class="bal-h" style="margin-top:6px">Foraneo</div>';
+    balPlan.foraneo.forEach(function(f){
+      var chtxt=f.chofer?balNombre(f.chofer):'-';
+      hf+='<div class="bal-for-row"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.p.nombreFiscal||f.p.nombre)+' <span style="color:#b45309">('+esc(f.p.vendedor)+')</span></span>'
+        +'<span class="bal-toggle"><button class="'+(f.estado==='ruta'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'ruta\')">Ruta '+chtxt+'</button><button class="'+(f.estado==='paq'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'paq\')">Paqueteria</button></span></div>';
+    });
+  }
+  document.getElementById('bal-res-for').innerHTML=hf;
+  // paqueteria (solo informativo)
+  var hp='';
+  if(balPlan.paq.length){
+    hp='<div class="bal-h" style="margin-top:6px">Paqueteria ('+balPlan.paq.length+') &mdash; se van por paqueteria</div><div style="font-size:11px;color:#888;max-height:120px;overflow-y:auto">';
+    balPlan.paq.forEach(function(p){ hp+='<div style="padding:2px 0;border-bottom:1px solid #f4f3ef">'+esc(p.nombreFiscal||p.nombre)+'</div>'; });
+    hp+='</div>';
+  }
+  document.getElementById('bal-res-paq').innerHTML=hp;
+}
+
+function balClearMapa(){ balMarkers.forEach(function(m){m.map=null;}); balMarkers=[]; balPolys.forEach(function(p){p.setMap(null);}); balPolys=[]; }
+function balPintarMapa(){
+  if(!mapBReady||!mapB||!balPlan) return;
+  balClearMapa();
+  var bounds=new google.maps.LatLngBounds(); bounds.extend(ALMACEN_POS);
+  balPlan.choferes.forEach(function(cid){
+    var r=balPlan.res.rutas[cid]; if(!r||!r.stops.length) return;
+    var color=balColor(cid); var path=[ALMACEN_POS];
+    r.stops.forEach(function(p,i){
+      var pos={lat:p.lat,lng:p.lng}; path.push(pos); bounds.extend(pos);
+      var pin=document.createElement('div');
+      pin.style.cssText='width:22px;height:22px;border-radius:50%;background:'+color+';border:2px solid #fff;box-sizing:border-box;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3);font-family:Arial';
+      pin.textContent=(i+1);
+      balMarkers.push(new google.maps.marker.AdvancedMarkerElement({position:pos,map:mapB,content:pin,title:(i+1)+'. '+(p.nombreFiscal||p.nombre)+' — '+balNombre(cid),zIndex:100+i}));
+    });
+    path.push(ALMACEN_POS);
+    balPolys.push(new google.maps.Polyline({path:path,strokeColor:color,strokeOpacity:0.85,strokeWeight:3,map:mapB}));
+  });
+  // foraneo estado ruta con coordenadas: marcador diamante (no ajusta el encuadre)
+  balPlan.foraneo.forEach(function(f){
+    if(f.estado!=='ruta'||!(f.p.lat&&f.p.lng)) return;
+    var color=f.chofer?balColor(f.chofer):'#b45309';
+    var el=document.createElement('div');
+    el.style.cssText='width:16px;height:16px;background:'+color+';border:2px solid #fff;transform:rotate(45deg);box-shadow:0 1px 4px rgba(0,0,0,.3)';
+    balMarkers.push(new google.maps.marker.AdvancedMarkerElement({position:{lat:f.p.lat,lng:f.p.lng},map:mapB,content:el,title:'Foraneo: '+(f.p.nombreFiscal||f.p.nombre),zIndex:50}));
+  });
+  if(!bounds.isEmpty()) mapB.fitBounds(bounds,60);
+  var leg=document.getElementById('bal-legend'); var lh='<div style="font-weight:800;margin-bottom:4px">Asignacion</div>';
+  balPlan.choferes.forEach(function(cid){ var r=balPlan.res.rutas[cid]; if(r&&r.count) lh+='<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span class="bal-sw" style="background:'+balColor(cid)+'"></span>'+balNombre(cid)+' ('+r.count+')</div>'; });
+  var nRuta=balPlan.foraneo.filter(function(f){return f.estado==='ruta';}).length;
+  if(nRuta) lh+='<div style="margin-top:4px;color:#b45309">&#9670; Foraneo ruta: '+nRuta+'</div>';
+  leg.innerHTML=lh; leg.style.display='block';
+}
+
+function balToggleMap(){
+  var sec=document.getElementById('section-balanceo'), btn=document.getElementById('balMapToggle');
+  var on=sec.classList.toggle('map-on'); btn.textContent=on?'Ver lista':'Ver mapa'; if(on) balResizeMap();
+}
+
+function balCrearRutas(){
+  if(!balPlan){ toast('Primero planifica'); return; }
+  // stops finales por chofer = local + foraneo(ruta)
+  var finales={};
+  balPlan.choferes.forEach(function(cid){ var r=balPlan.res.rutas[cid]; if(r&&r.stops.length) finales[cid]=r.stops.slice(); });
+  balPlan.foraneo.forEach(function(f){ if(f.estado==='ruta'&&f.chofer){ if(!finales[f.chofer])finales[f.chofer]=[]; finales[f.chofer].push(f.p); } });
+  var cids=Object.keys(finales);
+  if(!cids.length){ toast('No hay rutas que crear'); return; }
+  var ocupados=cids.filter(function(c){ return datos[c]&&datos[c].paradas&&(Array.isArray(datos[c].paradas)?datos[c].paradas.length:Object.keys(datos[c].paradas).length); });
+  var msg='Se crearan rutas de HOY para: '+cids.map(balNombre).join(', ')+'.';
+  if(ocupados.length) msg+='\n\nATENCION: '+ocupados.map(balNombre).join(', ')+' ya tienen ruta hoy y se SOBREESCRIBIRAN.';
+  msg+='\n\nContinuar?';
+  if(!confirm(msg)) return;
+  var proms=cids.map(function(cid){
+    var paradas=finales[cid].map(function(p){
+      return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal||'',dir:p.dir||'',lat:p.lat,lng:p.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null};
+    });
+    return db.ref('rutas/'+cid+'/'+fechaHoy).set({choferNombre:balNombre(cid),paradas:paradas,km:'-',tiempo:'-',ultimaActualizacion:Date.now()});
+  });
+  Promise.all(proms).then(function(){
+    toast('✓ '+cids.length+' rutas creadas. Revisa "Rutas en vivo".');
+    balPedidos=[]; balPlan=null; balLocks={}; balForEstado={}; balRenderPedidos();
+    document.getElementById('bal-resultados').style.display='none';
+    balClearMapa(); document.getElementById('bal-legend').style.display='none';
+  }).catch(function(e){ toast('Error: '+e.message); });
+}
+// ─── FIN BALANCEO v2 ──────────────────────────────────────────────────────────
 
 window.initMap=initMap;
 </script>
