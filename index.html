@@ -152,6 +152,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 .toast.show{transform:translateX(-50%) translateY(0)}
 .map-toggle{display:none;position:fixed;bottom:14px;right:14px;z-index:200;background:#1a6b4a;color:#fff;border:none;border-radius:50px;padding:12px 18px;font-size:12px;font-weight:700;font-family:Arial;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
 @media(max-width:768px){.panel{width:100%;position:absolute;top:0;left:0;bottom:0;right:0}.panel.map-view{transform:translateX(-100%)}.mapwrap{width:100%}.map-toggle{display:block}.toast{bottom:70px}}
+.gobtn{display:inline-flex;align-items:center;justify-content:center;gap:3px;background:#1a6b4a;color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;text-decoration:none;margin-right:6px;font-family:Arial;min-height:38px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -602,6 +603,7 @@ function ui(){
     var todasEntregadas=entregas.every(function(e){return e.entregado;});
     var esLibre=p.esLibre||false;var esPaq=p.esPaqueteria||false;
     h+='<div class="pitem"><div class="pitem-top"><div class="pnum'+(todasEntregadas?' done':esPaq?' libre':esLibre?' libre':'')+'">'+(todasEntregadas?'&#10003;':(i+1))+'</div><div style="flex:1;min-width:0;overflow:hidden"><div class="pnm">'+esc(p.nombreFiscal||p.nombre)+'</div>'+(p.nombreFiscal?'<div style="font-size:10px;color:#7a7870;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombre)+' &bull; '+p.id+'</div>':'')+'</div>';
+    if(p.lat&&p.lng)h+='<a class="gobtn" href="https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng+'&travelmode=driving" target="_blank" rel="noopener">&#x1F9ED; Ir</a>';
     if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
     h+='</div>';
     if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
