@@ -1285,145 +1285,171 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
 
   function haversine(a, b) {
     var R = 6371;
-    var dLat = (b.lat - a.lat) * Math.PI / 180;
-    var dLng = (b.lng - a.lng) * Math.PI / 180;
+    var dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
     var la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
-    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
   }
-
+  function centroid(pts) {
+    if (!pts.length) return null;
+    var la = 0, ln = 0; for (var i = 0; i < pts.length; i++) { la += pts[i].lat; ln += pts[i].lng; }
+    return { lat: la / pts.length, lng: ln / pts.length };
+  }
   function optimizarRuta(stops, almacen) {
     if (stops.length <= 1) return stops.slice();
-    var remaining = stops.slice(), route = [], current = almacen;
-    while (remaining.length) {
+    var rem = stops.slice(), route = [], cur = almacen;
+    while (rem.length) {
       var bi = 0, bd = Infinity;
-      for (var i = 0; i < remaining.length; i++) {
-        var d = haversine(current, remaining[i]);
-        if (d < bd) { bd = d; bi = i; }
-      }
-      current = remaining[bi];
-      route.push(remaining.splice(bi, 1)[0]);
+      for (var i = 0; i < rem.length; i++) { var d = haversine(cur, rem[i]); if (d < bd) { bd = d; bi = i; } }
+      cur = rem[bi]; route.push(rem.splice(bi, 1)[0]);
     }
-    function legDist(rt) {
-      var total = haversine(almacen, rt[0]);
-      for (var i = 0; i < rt.length - 1; i++) total += haversine(rt[i], rt[i + 1]);
-      total += haversine(rt[rt.length - 1], almacen);
-      return total;
-    }
-    var improved = true, pass = 0;
-    while (improved && pass++ < 60) {
-      improved = false;
-      for (var i = 0; i < route.length - 1; i++) {
-        for (var k = i + 1; k < route.length; k++) {
-          var nr = route.slice(0, i).concat(route.slice(i, k + 1).reverse(), route.slice(k + 1));
-          if (legDist(nr) + 1e-9 < legDist(route)) { route = nr; improved = true; }
-        }
+    function leg(rt) { var t = haversine(almacen, rt[0]); for (var i = 0; i < rt.length - 1; i++) t += haversine(rt[i], rt[i + 1]); return t + haversine(rt[rt.length - 1], almacen); }
+    var imp = true, pass = 0;
+    while (imp && pass++ < 60) {
+      imp = false;
+      for (var i = 0; i < route.length - 1; i++) for (var k = i + 1; k < route.length; k++) {
+        var nr = route.slice(0, i).concat(route.slice(i, k + 1).reverse(), route.slice(k + 1));
+        if (leg(nr) + 1e-9 < leg(route)) { route = nr; imp = true; }
       }
     }
     return route;
   }
-
   function rutaKm(stops, almacen) {
     if (!stops.length) return 0;
-    var total = haversine(almacen, stops[0]);
-    for (var i = 0; i < stops.length - 1; i++) total += haversine(stops[i], stops[i + 1]);
-    total += haversine(stops[stops.length - 1], almacen);
-    return total;
+    var t = haversine(almacen, stops[0]);
+    for (var i = 0; i < stops.length - 1; i++) t += haversine(stops[i], stops[i + 1]);
+    return t + haversine(stops[stops.length - 1], almacen);
+  }
+
+  function kppInit(pts, K, rng) {
+    var C = [{ lat: pts[Math.floor(rng() * pts.length)].lat, lng: pts[Math.floor(rng() * pts.length)].lng }];
+    while (C.length < K) {
+      var d2 = pts.map(function (p) { var b = Infinity; for (var c = 0; c < C.length; c++) { var d = haversine(p, C[c]); if (d < b) b = d; } return b * b; });
+      var sum = d2.reduce(function (a, b) { return a + b; }, 0);
+      if (sum === 0) { C.push({ lat: pts[Math.floor(rng() * pts.length)].lat, lng: pts[Math.floor(rng() * pts.length)].lng }); continue; }
+      var r = rng() * sum, acc = 0, idx = 0;
+      for (var i = 0; i < pts.length; i++) { acc += d2[i]; if (acc >= r) { idx = i; break; } }
+      C.push({ lat: pts[idx].lat, lng: pts[idx].lng });
+    }
+    return C;
+  }
+  function kmeans(pts, K, rng) {
+    var C = kppInit(pts, K, rng), asg = new Array(pts.length).fill(0);
+    for (var it = 0; it < 50; it++) {
+      var ch = false;
+      for (var i = 0; i < pts.length; i++) {
+        var b = 0, bd = Infinity;
+        for (var c = 0; c < K; c++) { var d = haversine(pts[i], C[c]); if (d < bd) { bd = d; b = c; } }
+        if (asg[i] !== b) { asg[i] = b; ch = true; }
+      }
+      for (var c2 = 0; c2 < K; c2++) { var m = []; for (var j = 0; j < pts.length; j++) if (asg[j] === c2) m.push(pts[j]); var ct = centroid(m); if (ct) C[c2] = ct; }
+      if (!ch && it > 0) break;
+    }
+    return { asg: asg, C: C };
+  }
+
+  // k-means con CAPACIDAD: cada punto va a su centroide mas cercano que aun
+  // tenga cupo. Mantiene zonas compactas (cercania) y parejas (cupo) sin encimar.
+  // cap = ceil(N/K * (1 + (1-balance)*(K-1)))  -> balance=1 estricto, balance=0 libre.
+  function balancedKmeans(pts, K, rng, balance) {
+    var N = pts.length;
+    var C = kppInit(pts, K, rng);
+    var cap = Math.ceil((N / K) * (2 - balance));
+    if (cap * K < N) cap = Math.ceil(N / K);
+    var asg = new Array(N).fill(0);
+    for (var it = 0; it < 40; it++) {
+      // distancias a cada centroide + orden por "regret"
+      var rows = [];
+      for (var i = 0; i < N; i++) {
+        var ds = [];
+        for (var c = 0; c < K; c++) ds.push([c, haversine(pts[i], C[c])]);
+        ds.sort(function (a, b) { return a[1] - b[1]; });
+        rows.push({ i: i, ds: ds, regret: (ds[1] ? ds[1][1] - ds[0][1] : 0) });
+      }
+      rows.sort(function (a, b) { return b.regret - a.regret; });
+      var counts = new Array(K).fill(0);
+      var newAsg = new Array(N).fill(-1);
+      for (var r = 0; r < rows.length; r++) {
+        var row = rows[r], placed = false;
+        for (var t = 0; t < K; t++) { var c2 = row.ds[t][0]; if (counts[c2] < cap) { newAsg[row.i] = c2; counts[c2]++; placed = true; break; } }
+        if (!placed) { newAsg[row.i] = row.ds[0][0]; counts[row.ds[0][0]]++; }
+      }
+      var changed = false;
+      for (var j = 0; j < N; j++) { if (newAsg[j] !== asg[j]) changed = true; asg[j] = newAsg[j]; }
+      for (var c3 = 0; c3 < K; c3++) { var m = []; for (var k = 0; k < N; k++) if (asg[k] === c3) m.push(pts[k]); var ct = centroid(m); if (ct) C[c3] = ct; }
+      if (!changed && it > 0) break;
+    }
+    // pase de intercambios: descruza sin cambiar las cargas (swap 1 a 1 si
+    // acerca ambos puntos a sus centroides).
+    for (var sp = 0; sp < 6; sp++) {
+      var imp = false;
+      for (var a = 0; a < N; a++) {
+        for (var b2 = a + 1; b2 < N; b2++) {
+          var ca = asg[a], cb = asg[b2]; if (ca === cb) continue;
+          var cur = haversine(pts[a], C[ca]) + haversine(pts[b2], C[cb]);
+          var sw = haversine(pts[a], C[cb]) + haversine(pts[b2], C[ca]);
+          if (sw + 1e-9 < cur) { asg[a] = cb; asg[b2] = ca; imp = true; }
+        }
+      }
+      for (var c5 = 0; c5 < K; c5++) { var mm = []; for (var q = 0; q < N; q++) if (asg[q] === c5) mm.push(pts[q]); var cc = centroid(mm); if (cc) C[c5] = cc; }
+      if (!imp) break;
+    }
+    return { asg: asg, C: C };
+  }
+
+  function permutations(arr) {
+    if (arr.length <= 1) return [arr.slice()];
+    var out = [];
+    for (var i = 0; i < arr.length; i++) {
+      var rest = arr.slice(0, i).concat(arr.slice(i + 1));
+      permutations(rest).forEach(function (p) { out.push([arr[i]].concat(p)); });
+    }
+    return out;
   }
 
   /* asignarV2(pedidos, choferes, almacen, opts)
-     pedidos: [{id,nombre,nombreFiscal,dir,lat,lng, aff, permit}]
-       aff    = chofer afin (persona del vendedor) o null
-       permit = null (Todos) | array de choferes permitidos | [] (ninguno)
-     choferes: keys de los choferes que salen hoy
-     opts: { affinity:0..1, balance:0..1, seed, locks:{id:chofer} }
-       affinity 1 = respeta al maximo la zona del vendedor
-       balance  1 = cargas lo mas parejas posible
-     Retorna: { rutas:{chofer:{stops,km,count}}, totalKm, balanceIdx, assigned, affRate } */
+     pedidos: [{id,lat,lng, aff(chofer o null), permit}]
+     opts: { affinity:0..1, balance:0..1, seed } */
   function asignarV2(pedidos, choferes, almacen, opts) {
     opts = opts || {};
-    var affinity = opts.affinity == null ? 0.6 : opts.affinity;
-    var balance  = opts.balance  == null ? 0.6 : opts.balance;
-    var locks = opts.locks || {};
+    var affinity = opts.affinity == null ? 0.5 : opts.affinity;
+    var balance = opts.balance == null ? 0.6 : opts.balance;
     var K = choferes.length, N = pedidos.length;
     var rutas = {}; choferes.forEach(function (c) { rutas[c] = { stops: [], km: 0, count: 0 }; });
     if (!N || !K) return { rutas: rutas, totalKm: 0, balanceIdx: 0, assigned: {}, affRate: 1 };
 
-    var setP = {}; choferes.forEach(function (c) { setP[c] = true; });
-    var AFF_KM = affinity * 60; // km-equivalente por romper afinidad
+    var seed = (opts.seed == null ? 12345 : opts.seed) >>> 0;
+    function rng() { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
 
-    function penal(p, c) {
-      var pen = 0;
-      if (p.aff && p.aff !== c && setP[p.aff]) pen += AFF_KM;            // su vendedor esta hoy y no es c
-      if (p.permit && p.permit.length && p.permit.indexOf(c) < 0) pen += AFF_KM * 0.7; // c no permitido
-      return pen;
+    if (K >= N) {
+      pedidos.forEach(function (p, i) { rutas[choferes[i % K]].stops.push(p); });
+    } else {
+      // 1) zonas compactas Y parejas (k-means con capacidad)
+      var km = balancedKmeans(pedidos, K, rng, balance), asg = km.asg;
+      // 2) etiquetar cada cluster con un chofer (maximiza coincidencia de afinidad
+      //    del vendedor; solo cambia el NOMBRE de la zona, no su geometria)
+      var best = null, bestScore = -Infinity;
+      permutations(choferes).forEach(function (perm) {
+        var score = 0;
+        for (var i = 0; i < N; i++) { if (pedidos[i].aff && pedidos[i].aff === perm[asg[i]]) score++; }
+        if (score > bestScore) { bestScore = score; best = perm; }
+      });
+      var label = best; // label[cluster] = chofer
+      for (var i3 = 0; i3 < N; i3++) rutas[label[asg[i3]]].stops.push(pedidos[i3]);
     }
 
-    var assigned = {};
-    // 1) locks manuales
-    pedidos.forEach(function (p) { if (locks[p.id] && setP[locks[p.id]]) assigned[p.id] = locks[p.id]; });
-    // 2) siembra por afinidad (vendedor participa)
-    pedidos.forEach(function (p) { if (!assigned[p.id] && p.aff && setP[p.aff]) assigned[p.id] = p.aff; });
-
-    function centroids() {
-      var acc = {}; choferes.forEach(function (c) { acc[c] = { la: 0, ln: 0, n: 0 }; });
-      pedidos.forEach(function (p) { var c = assigned[p.id]; if (c) { acc[c].la += p.lat; acc[c].ln += p.lng; acc[c].n++; } });
-      var cen = {}; choferes.forEach(function (c) {
-        cen[c] = acc[c].n ? { lat: acc[c].la / acc[c].n, lng: acc[c].ln / acc[c].n } : { lat: almacen.lat, lng: almacen.lng };
-      });
-      return cen;
-    }
-    var cen = centroids();
-    // 3) colocar los sin dueño disponible al chofer de menor costo (distancia + penal)
-    pedidos.forEach(function (p) {
-      if (assigned[p.id]) return;
-      var best = choferes[0], bc = Infinity;
-      choferes.forEach(function (c) {
-        var cost = haversine(p, cen[c]) + penal(p, c);
-        if (cost < bc) { bc = cost; best = c; }
-      });
-      assigned[p.id] = best;
-    });
-    cen = centroids();
-
-    // 4) rebalanceo por cantidad: mueve el pedido mas barato del sobrecargado
-    //    al sub-poblado. Los sin-afinidad (Todos) salen primero por costo 0.
-    function counts() { var s = {}; choferes.forEach(function (c) { s[c] = 0; }); pedidos.forEach(function (p) { s[assigned[p.id]]++; }); return s; }
-    var tol = Math.max(0, Math.round((1 - balance) * (N / K)));
-    var guard = 0, maxIter = N * K + 300;
-    while (guard++ < maxIter) {
-      var s = counts();
-      var over = choferes[0], mx = -1, mn = 1e9;
-      choferes.forEach(function (c) { if (s[c] > mx) { mx = s[c]; over = c; } if (s[c] < mn) { mn = s[c]; } });
-      if (mx - mn <= tol) break;
-      var bestP = null, bestc = Infinity, bestTo = null;
-      pedidos.forEach(function (p) {
-        if (assigned[p.id] !== over || locks[p.id]) return;
-        choferes.forEach(function (to) {
-          if (to === over || s[to] >= s[over] - 1) return;
-          var cost = (haversine(p, cen[to]) + penal(p, to)) - (haversine(p, cen[over]) + penal(p, over));
-          if (cost < bestc) { bestc = cost; bestP = p; bestTo = to; }
-        });
-      });
-      if (!bestP) break;
-      assigned[bestP.id] = bestTo;
-      cen = centroids();
-    }
-
-    // 5) armar rutas + optimizar orden
-    pedidos.forEach(function (p) { rutas[assigned[p.id]].stops.push(p); });
-    var totalKm = 0, cnts = [];
+    var totalKm = 0, cnts = [], assigned = {};
     choferes.forEach(function (c) {
-      rutas[c].stops = optimizarRuta(rutas[c].stops, almacen);
-      rutas[c].km = rutaKm(rutas[c].stops, almacen);
-      rutas[c].count = rutas[c].stops.length;
-      totalKm += rutas[c].km; cnts.push(rutas[c].count);
+      var r = rutas[c];
+      r.stops = optimizarRuta(r.stops, almacen);
+      r.km = rutaKm(r.stops, almacen); r.count = r.stops.length;
+      r.stops.forEach(function (p) { assigned[p.id] = c; });
+      totalKm += r.km; cnts.push(r.count);
     });
-    var mx2 = Math.max.apply(null, cnts), mn2 = Math.min.apply(null, cnts);
+    var mx = Math.max.apply(null, cnts), mn = Math.min.apply(null, cnts);
     var affTot = 0, affOk = 0;
-    pedidos.forEach(function (p) { if (p.aff && setP[p.aff]) { affTot++; if (assigned[p.id] === p.aff) affOk++; } });
-    return { rutas: rutas, totalKm: totalKm, balanceIdx: mx2 - mn2, assigned: assigned, affRate: affTot ? affOk / affTot : 1 };
+    pedidos.forEach(function (p) { if (p.aff && rutas[p.aff]) { affTot++; if (assigned[p.id] === p.aff) affOk++; } });
+    return { rutas: rutas, totalKm: totalKm, balanceIdx: mx - mn, assigned: assigned, affRate: affTot ? affOk / affTot : 1 };
   }
 
   var api = { haversine: haversine, optimizarRuta: optimizarRuta, rutaKm: rutaKm, asignarV2: asignarV2 };
