@@ -164,6 +164,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
           <div class="panel-title">Rutas del dia en tiempo real</div>
           <div class="panel-sub" id="fecha-hoy"></div>
           <button onclick="abrirNuevaRuta()" style="margin-top:8px;width:100%;padding:7px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">+ Nueva ruta para vendedor</button>
+          <button onclick="abrirSugerir()" style="margin-top:6px;width:100%;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">&#128161; Sugerir chofer (pedido nuevo)</button>
         </div>
         <div id="choferes-container"></div>
         <div class="sync-row" style="margin-top:0">
@@ -364,6 +365,22 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 </div>
 
 <!-- Modal agregar parada -->
+<div class="modal-overlay" id="modal-sugerir">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Sugerir chofer &mdash; pedido nuevo</div>
+      <button class="modal-close" onclick="cerrarSugerir()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Cliente del pedido nuevo</label>
+        <input type="text" id="sg-search" placeholder="Nombre o ID SAP..." oninput="sg_buscar(this.value)" autocomplete="off">
+      </div>
+      <div id="sg-results" style="max-height:170px;overflow-y:auto;border:1px solid #e4e2da;border-radius:8px;margin-top:6px"></div>
+      <div id="sg-suggest" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-parada">
   <div class="modal">
     <div class="modal-header">
@@ -610,6 +627,59 @@ function quitarParadaDeChofer(cid,idx){
   db.ref('rutas/'+cid+'/'+fechaHoy).update({paradas:paradas,ultimaActualizacion:Date.now()}).then(function(){
     toast('Parada quitada de '+nombreC);
   }).catch(function(e){ toast('Error: '+e.message); });
+}
+var sgCliente=null;
+function abrirSugerir(){ sgCliente=null; document.getElementById('sg-search').value=''; document.getElementById('sg-results').innerHTML=''; document.getElementById('sg-suggest').innerHTML=''; document.getElementById('modal-sugerir').classList.add('open'); setTimeout(function(){document.getElementById('sg-search').focus();},100); }
+function cerrarSugerir(){ document.getElementById('modal-sugerir').classList.remove('open'); sgCliente=null; }
+function sg_buscar(v){
+  var box=document.getElementById('sg-results');
+  if(!v||v.length<2){ box.innerHTML=''; return; }
+  var q=v.toLowerCase();
+  var r=todosClientes.filter(function(c){return (c.nombre||'').toLowerCase().indexOf(q)>=0||(c.nombreFiscal||'').toLowerCase().indexOf(q)>=0||(c.id||'').toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;}).slice(0,20);
+  if(!r.length){ box.innerHTML='<div style="padding:10px;text-align:center;color:#7a7870;font-size:12px">Sin resultados</div>'; return; }
+  var h=''; r.forEach(function(c){ h+='<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f0efe9;cursor:pointer" onclick="sg_evaluar(\''+c._key+'\')"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="font-size:11px;color:#7a7870">'+(c.id||'')+'</div></div><div style="font-size:11px;color:#1a6b4a;font-weight:700">Evaluar</div></div>'; });
+  box.innerHTML=h;
+}
+function sg_evaluar(key){
+  var c=todosClientes.find(function(x){return x._key===key;}); if(!c) return;
+  sgCliente=c;
+  document.getElementById('sg-results').innerHTML='';
+  document.getElementById('sg-search').value=(c.nombreFiscal||c.nombre||'');
+  var box=document.getElementById('sg-suggest');
+  var choferes=Object.keys(datos).filter(function(cid){ var d=datos[cid]; if(!d) return false; var p=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{}); return p.length>0; });
+  if(!choferes.length){ box.innerHTML='<div style="padding:12px;text-align:center;color:#7a7870;font-size:12px">No hay rutas activas hoy. Usa "+ Nueva ruta".</div>'; return; }
+  if(!(c.lat&&c.lng)){ box.innerHTML='<div style="padding:12px;color:#c0392b;font-size:12px">Ese cliente no tiene coordenadas; no puedo calcular cercania.</div>'; return; }
+  var m=(balMapa()[c.id])||{}; var defCh=c.choferDef||m.def||m.vend||null;
+  function H(a,b){return window.VetBalanceo.haversine({lat:+a.lat,lng:+a.lng},{lat:+b.lat,lng:+b.lng});}
+  var rank=choferes.map(function(cid){
+    var d=datos[cid]; var par=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+    var pend=par.filter(function(p){ var e=p.entregas||[]; var ok=e.length?e.every(function(x){return x.entregado;}):p.entregado; return !ok && !p.noEntregado; });
+    var ref=pend.length?pend:par;
+    var dmin=Infinity; ref.forEach(function(p){ if(p.lat&&p.lng){ var dd=H(c,p); if(dd<dmin)dmin=dd; } });
+    if(dmin===Infinity) dmin=999;
+    var cerca=pend.filter(function(p){ return p.lat&&p.lng&&H(c,p)<=5; }).length;
+    var score=dmin-(defCh===cid?1.5:0)-(cerca>0?0.5:0);
+    return {cid:cid, nombre:(d.choferNombre||cid), dmin:dmin, pend:pend.length, cerca:cerca, score:score, aff:defCh===cid};
+  });
+  rank.sort(function(a,b){return a.score-b.score;});
+  var h='<div style="font-size:11px;color:#7a7870;margin-bottom:6px">Ordenado por conveniencia. Elige a quien agregarlo:</div>';
+  rank.forEach(function(r,i){ var sug=i===0;
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid '+(sug?'#1a6b4a':'#eee')+';border-radius:8px;margin-bottom:5px;background:'+(sug?'#f0faf5':'#fff')+'">';
+    h+='<div style="flex:1"><div style="font-size:13px;font-weight:700">'+esc(r.nombre)+(sug?' <span style="font-size:10px;color:#1a6b4a">SUGERIDO</span>':'')+(r.aff?' <span style="font-size:10px;color:#0f4a8a">&#9733; su zona</span>':'')+'</div><div style="font-size:11px;color:#7a7870">a '+r.dmin.toFixed(1)+' km de su ruta &middot; '+r.pend+' pendientes'+(r.cerca?' ('+r.cerca+' cerca)':'')+'</div></div>';
+    h+='<button onclick="sg_agregar(\''+r.cid+'\')" style="padding:7px 12px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Agregar aqui</button></div>';
+  });
+  box.innerHTML=h;
+}
+function sg_agregar(cid){
+  if(!sgCliente){toast('Elige un cliente');return;}
+  var c=sgCliente; var d=datos[cid];
+  var paradas=(d&&d.paradas)?(Array.isArray(d.paradas)?d.paradas.slice():Object.values(d.paradas)):[];
+  if(paradas.some(function(p){return p.id===c.id;})){toast('Ya esta en la ruta de '+((d&&d.choferNombre)||cid));return;}
+  paradas.push({id:c.id,nombre:c.nombre,nombreFiscal:c.nombreFiscal||'',dir:c.dir||'',lat:c.lat,lng:c.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+  var update={paradas:paradas,ultimaActualizacion:Date.now()};
+  if(d&&d.choferNombre) update.choferNombre=d.choferNombre;
+  if(d&&d.km) update.km=d.km; if(d&&d.tiempo) update.tiempo=d.tiempo;
+  db.ref('rutas/'+cid+'/'+fechaHoy).set(update).then(function(){ toast('Agregado a '+((d&&d.choferNombre)||cid)); cerrarSugerir(); }).catch(function(e){toast('Error: '+e.message);});
 }
 function abrirAgregarParada(cid){
   paradaTargetChofer=cid;
