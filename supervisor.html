@@ -17,8 +17,8 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100vh}
 .topbar{height:52px;background:#0f4a8a;display:flex;align-items:center;padding:0 16px;gap:12px;color:#fff;flex-shrink:0}
 .topbar h1{font-size:15px;font-weight:700;flex:1}
-.nav-tabs{display:flex;background:#0d3d73;flex-shrink:0}
-.nav-tab{padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;border:none;background:none;font-family:Arial;color:rgba(255,255,255,0.6)}
+.nav-tabs{display:flex;background:#0d3d73;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.nav-tab{padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;border:none;background:none;font-family:Arial;color:rgba(255,255,255,0.6);flex-shrink:0;white-space:nowrap}
 .nav-tab.active{color:#fff;border-bottom:3px solid #fff}
 .body{display:flex;flex:1;min-height:0;position:relative}
 .rutas-panel{width:320px;flex-shrink:0;background:#fff;border-right:1px solid #e4e2da;display:flex;flex-direction:column;overflow-y:auto;z-index:10;transition:transform 0.3s ease}
@@ -96,6 +96,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
   .map-toggle{display:block}
   .topbar h1{font-size:12px}
   .topbar button{font-size:10px;padding:4px 8px}
+  .nav-tab{padding:9px 13px;font-size:12px}
 }
 /* ─── Pestaña Balanceo v2 ─── */
 #section-balanceo{flex-direction:row}
