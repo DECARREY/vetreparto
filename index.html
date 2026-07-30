@@ -97,6 +97,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 .ebtn.done{background:#e8f5ef;color:#1a6b4a;cursor:default;border:1px solid #b2ddc9}
 .ebtn.noent{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
 .ebtn.noent-done{background:#fee2e2;color:#dc2626;cursor:default;border:1px solid #fca5a5;flex:2}
+.ebtn.undo{background:#fff4e6;color:#b45309;border:1px solid #f0c987;flex:0.7;min-height:40px}
 .motivo-row{margin-top:5px;display:none}
 .motivo-row.show{display:block}
 .motivo-sel{width:100%;padding:5px 8px;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-family:Arial;outline:none;background:#fff;color:#dc2626}
@@ -510,6 +511,17 @@ function eliminarEntrega(pid,idx){
   if(p&&p.entregas&&p.entregas.length>1){p.entregas.splice(idx,1);ui();guardarEnFirebase();}
 }
 
+function desmarcarEntrega(pid,idx){
+  var p=par.find(function(x){return x.id===pid;});
+  if(!p||!p.entregas||!p.entregas[idx]||!p.entregas[idx].entregado)return;
+  if(!confirm('Deshacer la entrega de esta parada? Volvera a quedar pendiente.'))return;
+  p.entregas[idx].entregado=false;
+  p.entregas[idx].horaEntrega=null;
+  delete p.entregas[idx].gpsLat; delete p.entregas[idx].gpsLng; delete p.entregas[idx].gpsAcc;
+  if(p.noEntregado){ p.noEntregado=false; p.motivoNoEntrega=null; p.horaNoEntrega=null; }
+  ui();if(rutaActiva)pines();actualizarResumen();guardarEnFirebase();
+  toast('Entrega deshecha');
+}
 function marcarEntregaItem(pid,idx){
   var p=par.find(function(x){return x.id===pid;});
   if(!p||!p.entregas||p.entregas[idx].entregado)return;
@@ -615,7 +627,7 @@ function ui(){
       h+='<div class="pfield"><label>No. Factura</label><input type="text" placeholder="ej:GI1520" value="'+esc(e.factura||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="factura" class="pfin'+(e.factura?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';
       if(p.esPaqueteria){h+='<div class="pfields"><div class="pfield" style="grid-column:1/-1"><label>No. Guia</label><input type="text" placeholder="ej:1Z999AA10123456784" value="'+esc(e.guia||'')+'" data-pid="'+p.id+'" data-idx="'+ei+'" data-field="guia" class="pfin'+(e.guia?' filled':'')+'"'+(e.entregado?' disabled':'')+' ></div></div>';}
       h+='<div class="entrega-row">';
-      if(e.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+e.horaEntrega+'</span>';}
+      if(e.entregado){h+='<button class="ebtn done">&#10003; Entregado</button><span class="hora-entrega">'+e.horaEntrega+'</span><button class="ebtn undo" data-upid="'+p.id+'" data-uidx="'+ei+'">&#8634; Deshacer</button>';}
       else if(p.noEntregado){h+='<button class="ebtn noent-done">&#x2716; No entregado</button><span class="hora-noent">'+(p.horaNoEntrega||'')+'</span>';}
       else{h+='<button class="ebtn pending" data-pid="'+p.id+'" data-idx="'+ei+'">Marcar entregado</button><button class="ebtn noent" data-ne-id="'+p.id+'" style="flex:0.8">No entregado</button>';}
       if(entregas.length>1&&!e.entregado&&!p.noEntregado)h+='<button class="del-entrega-btn" data-pid="'+p.id+'" data-idx="'+ei+'">&#x2715;</button>';
@@ -656,6 +668,7 @@ function ui(){
   pl.querySelectorAll('.pfin').forEach(function(inp){inp.addEventListener('input',function(){setEntregaField(inp.dataset.pid,parseInt(inp.dataset.idx),inp.dataset.field,inp.value);inp.classList.toggle('filled',inp.value.length>0);actualizarResumen();});});
   pl.querySelectorAll('.ebtn.pending').forEach(function(b){tap(b,function(){marcarEntregaItem(b.dataset.pid,parseInt(b.dataset.idx));});});
   pl.querySelectorAll('.ebtn.noent').forEach(function(b){tap(b,function(){marcarNoEntregado(b.dataset.neId);});});
+  pl.querySelectorAll('.ebtn.undo').forEach(function(b){tap(b,function(){desmarcarEntrega(b.dataset.upid,parseInt(b.dataset.uidx));});});
   pl.querySelectorAll('.motivo-confirmar').forEach(function(b){tap(b,function(){confirmarMotivo(b.dataset.confId);});});
   pl.querySelectorAll('.add-entrega-btn').forEach(function(b){tap(b,function(){agregarEntrega(b.dataset.pid);});});
   pl.querySelectorAll('.del-entrega-btn').forEach(function(b){tap(b,function(){eliminarEntrega(b.dataset.pid,parseInt(b.dataset.idx));});});
