@@ -1620,7 +1620,7 @@ function balPlanificar(){
                         :{rutas:{},totalKm:0,balanceIdx:0,assigned:{},affRate:1};
   // foraneo: chofer sugerido = aff o primer permitido; estado previo o 'paq'
   var foraneo=foraneos.map(function(p){
-    var ch=p.vend||p.def||(p.permit&&p.permit.length?p.permit[0]:null);
+    var ch=p.def||(p.permit&&p.permit.length?p.permit[0]:null);
     var est=balForEstado[p.id]||'paq';
     return {p:p, chofer:ch, estado:est};
   });
@@ -1675,9 +1675,14 @@ function balRenderResultado(){
   if(balPlan.foraneo.length){
     hf='<div class="bal-h" style="margin-top:6px">Foraneo</div>';
     balPlan.foraneo.forEach(function(f){
-      var chtxt=f.chofer?balNombre(f.chofer):'-';
-      hf+='<div class="bal-for-row"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.p.nombreFiscal||f.p.nombre)+' <span style="color:#b45309">('+esc(f.p.vendedor)+')</span></span>'
-        +'<span class="bal-toggle"><button class="'+(f.estado==='ruta'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'ruta\')">Ruta '+chtxt+'</button><button class="'+(f.estado==='paq'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'paq\')">Paqueteria</button></span></div>';
+      var right;
+      if(f.chofer){
+        var chtxt=balNombre(f.chofer);
+        right='<span class="bal-toggle"><button class="'+(f.estado==='ruta'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'ruta\')">Ruta '+chtxt+'</button><button class="'+(f.estado==='paq'?'on':'')+'" onclick="balForaneoToggle(\''+f.p.id+'\',\'paq\')">Paqueteria</button></span>';
+      } else {
+        right='<span class="bal-tag tag-PAQUETERIA" style="align-self:center">Paqueteria</span>';
+      }
+      hf+='<div class="bal-for-row"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.p.nombreFiscal||f.p.nombre)+' <span style="color:#b45309">('+esc(f.p.vendedor)+')</span></span>'+right+'</div>';
     });
   }
   document.getElementById('bal-res-for').innerHTML=hf;
