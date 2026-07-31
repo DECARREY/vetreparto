@@ -909,7 +909,7 @@ function cargarEquipo(){
       var ent = paradas.filter(function(p){var e=p.entregas||[];return e.length?e.every(function(x){return x.entregado;}):p.entregado;}).length;
       var color = COLORES[idx % COLORES.length];
       h += '<div style="margin-bottom:14px;border:1px solid #e4e2da;border-radius:10px;overflow:hidden">';
-      h += '<div style="padding:8px 12px;background:'+color+'18;border-bottom:1px solid #e4e2da;display:flex;align-items:center;gap:8px">';
+      h += '<div style="padding:8px 12px;background:'+color+'18;border-bottom:1px solid #e4e2da;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:2">';
       h += '<div style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></div>';
       h += '<div style="font-size:13px;font-weight:700;flex:1">'+esc(nombre)+'</div>';
       h += '<div style="font-size:11px;color:'+color+';font-weight:700">'+ent+'/'+paradas.length+' entregas</div>';
