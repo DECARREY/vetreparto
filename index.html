@@ -928,6 +928,7 @@ function cargarEquipo(){
         h += '<div style="display:flex;align-items:center;gap:7px">';
         h += '<div style="width:20px;height:20px;border-radius:50%;background:'+numBg+';color:'+numColor+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">'+numTxt+'</div>';
         h += '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.nombreFiscal||p.nombre)+'</div>';
+        if(p.esPaqueteria&&p.clienteDestinatario) h += '<div style="font-size:10px;color:#0f4a8a;font-weight:600">&#x1F4E6; Destinatario: '+esc(p.clienteDestinatario)+'</div>';
         if(noEnt&&(p.motivoNoEntrega||p.motivo)) h += '<div style="font-size:10px;color:#dc2626">'+esc(p.motivoNoEntrega||p.motivo)+'</div>';
         h += '</div>';
         if(todasOk&&entregas[0]&&entregas[0].horaEntrega) h += '<div style="font-size:10px;color:#1a6b4a;font-weight:700;flex-shrink:0">'+entregas[0].horaEntrega+'</div>';
