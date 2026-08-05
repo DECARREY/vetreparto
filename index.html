@@ -325,28 +325,54 @@ window.addEventListener('load',function(){
   var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   firebase.auth().onAuthStateChanged(function(user){
     if(!user) return;
-    db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).once('value').then(function(s){
-      var d=s.val();
-      if(d&&d.paradas&&d.paradas.length>0&&par.length===0){
-        par=d.paradas;
-        var cn=document.getElementById('chofer-nombre');
-        var sel2=document.getElementById('chofer-select');
-        if(d.choferNombre&&cn){
-          cn.value=d.choferNombre;
-          var opt=Array.from(sel2.options).find(function(o){return o.value===d.choferNombre;});
-          if(opt){sel2.value=d.choferNombre;}
-          else{sel2.value='otros';cn.style.display='block';}
-        }
-        // Restaurar km y tiempo guardados, no solo las paradas
-        if(d.km) document.getElementById('sv-d').textContent = d.km;
-        if(d.tiempo) document.getElementById('sv-t').textContent = d.tiempo;
-        // Si ya se habia calculado ruta (tiene datos de distancia por parada), marcar como activa
-        if(par.some(function(p){return p.kmDesde;})) rutaActiva = true;
-        ui();
-        if(rutaActiva && typeof pines === 'function') pines();
-        toast('Ruta restaurada: '+d.paradas.length+' paradas');
+    var ultimaVersionAplicada=null;
+    function hayProgresoLocal(){
+      return par.some(function(p){
+        var e=p.entregas||[];
+        var ok=e.length?e.some(function(x){return x.entregado;}):p.entregado;
+        return ok||p.noEntregado;
+      });
+    }
+    function aplicarRutaRemota(d){
+      par=d.paradas;
+      var cn=document.getElementById('chofer-nombre');
+      var sel2=document.getElementById('chofer-select');
+      if(d.choferNombre&&cn){
+        cn.value=d.choferNombre;
+        var opt=Array.from(sel2.options).find(function(o){return o.value===d.choferNombre;});
+        if(opt){sel2.value=d.choferNombre;}
+        else{sel2.value='otros';cn.style.display='block';}
       }
-    }).catch(function(e){console.log('No saved route:',e);});
+      // Restaurar km y tiempo guardados, no solo las paradas
+      if(d.km) document.getElementById('sv-d').textContent = d.km;
+      if(d.tiempo) document.getElementById('sv-t').textContent = d.tiempo;
+      // Si ya se habia calculado ruta (tiene datos de distancia por parada), marcar como activa
+      if(par.some(function(p){return p.kmDesde;})) rutaActiva = true;
+      ui();
+      if(rutaActiva && typeof pines === 'function') pines();
+    }
+    db.ref('rutas/'+CHOFER_ID+'/'+fechaHoy).on('value', function(s){
+      var d=s.val();
+      if(!d||!d.paradas||!d.paradas.length) return;
+      if(d.ultimaActualizacion===ultimaVersionAplicada) return;
+      if(par.length===0){
+        // Sin ruta local todavia (app recien abierta, o el chofer aun no tenia nada): aplicar directo
+        ultimaVersionAplicada=d.ultimaActualizacion;
+        aplicarRutaRemota(d);
+        toast('Ruta restaurada: '+d.paradas.length+' paradas');
+        return;
+      }
+      if(!hayProgresoLocal()){
+        // Ya habia paradas cargadas pero ninguna entrega marcada todavia: es seguro refrescar sola
+        ultimaVersionAplicada=d.ultimaActualizacion;
+        aplicarRutaRemota(d);
+        toast('Ruta actualizada por el supervisor: '+d.paradas.length+' paradas');
+        return;
+      }
+      // Ya hay entregas marcadas: no sobreescribir el progreso en curso, solo avisar
+      ultimaVersionAplicada=d.ultimaActualizacion;
+      toast('Hay cambios de ruta del supervisor. Guarda tu avance y reinicia la app para verlos.');
+    }, function(e){ console.log('Error escuchando ruta:',e); });
   });
 });
 
