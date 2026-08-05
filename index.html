@@ -165,6 +165,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
     <span id="sync-label" style="font-size:10px;opacity:0.8">Conectando...</span>
     <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-left:4px"><span id="total-c">...</span> clientes</span>
   </div>
+  <div id="clientes-aviso" style="display:none;background:#fef3e2;color:#8a5a00;padding:6px 12px;font-size:11px;font-weight:700;text-align:center;flex-shrink:0">&#9888; No se pudo cargar la lista de clientes. Revisa tu conexion y reinicia la app.</div>
   <div class="body">
     <div class="panel" id="panel">
       <div class="ptabs">
@@ -285,6 +286,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 <button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">Ver mapa</button>
 <script>
 var C=[];
+var clientesCargados=false;
 var geocoder;
 
 firebase.auth().onAuthStateChanged(function(user){
@@ -293,6 +295,9 @@ firebase.auth().onAuthStateChanged(function(user){
   db.ref('clientes').on('value',function(snap){
     var data=snap.val();
     if(data){
+      clientesCargados=true;
+      var aviso=document.getElementById('clientes-aviso');
+      if(aviso) aviso.style.display='none';
       C=Object.values(data);
       C.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
       var el=document.getElementById('total-c');
@@ -304,6 +309,11 @@ firebase.auth().onAuthStateChanged(function(user){
     }
   });
 });
+setTimeout(function(){
+  if(clientesCargados) return;
+  var aviso=document.getElementById('clientes-aviso');
+  if(aviso) aviso.style.display='block';
+},8000);
 
 var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
@@ -417,6 +427,7 @@ function libreSetTab(tab){
 
 function libreClienteBuscar(v){
   var box=document.getElementById('libre-cliente-results');
+  if(!clientesCargados){box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Cargando clientes... espera un momento</div>';box.style.display='block';return;}
   if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
   var q=v.toLowerCase();
   var r=C.filter(function(c){
@@ -503,6 +514,7 @@ function dibujar(){
 
 function buscar(v){
   var box=document.getElementById('sr');
+  if(!clientesCargados){box.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Cargando clientes... espera un momento</div>';return;}
   if(!v||v.length<2){box.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Escribe para buscar</div>';return;}
   var q=v.toLowerCase(),r=C.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();return n.indexOf(q)>=0||f.indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0||(c.dir||'').toLowerCase().indexOf(q)>=0;}).slice(0,40);
   if(!r.length){box.innerHTML='<div style="padding:14px;text-align:center;color:#7a7870;font-size:13px">Sin resultados</div>';return;}
@@ -856,6 +868,7 @@ function togglePaqueteria(){
 
 function paqBuscarCliente(v){
   var box=document.getElementById('paq-cliente-results');
+  if(!clientesCargados){box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Cargando clientes... espera un momento</div>';box.style.display='block';return;}
   if(!v||v.length<2){box.style.display='none';box.innerHTML='';return;}
   var q=v.toLowerCase();
   var r=C.filter(function(c){var n=(c.nombre||'').toLowerCase();var f=(c.nombreFiscal||'').toLowerCase();var id=(c.id||'').toLowerCase();return n.indexOf(q)>=0||f.indexOf(q)>=0||id.indexOf(q)>=0;}).slice(0,10);
