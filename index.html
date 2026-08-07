@@ -365,6 +365,11 @@ window.addEventListener('load',function(){
       var d=s.val();
       if(!d||!d.paradas||!d.paradas.length) return;
       if(d.ultimaActualizacion===ultimaVersionAplicada) return;
+      if(par.length>0 && JSON.stringify(par)===JSON.stringify(d.paradas)){
+        // Es nuestro propio guardado (typing, marcar entregado, etc.) rebotando desde Firebase: no hacer nada
+        ultimaVersionAplicada=d.ultimaActualizacion;
+        return;
+      }
       if(par.length===0){
         // Sin ruta local todavia (app recien abierta, o el chofer aun no tenia nada): aplicar directo
         ultimaVersionAplicada=d.ultimaActualizacion;
