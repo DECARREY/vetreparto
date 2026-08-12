@@ -15,10 +15,27 @@
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db=firebase.database();
 var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
+var authResuelto=false;
+function intentarLogin(){
+  var pantallaError=document.getElementById('pantalla-error-conexion');
+  if(pantallaError) pantallaError.style.display='none';
+  firebase.auth().signInAnonymously().catch(function(e){
+    console.error('Auth error:',e);
+  });
+}
 // Autenticacion anonima — requerida para Firebase Security Rules
-firebase.auth().signInAnonymously().catch(function(e){console.error('Auth error:',e);});
+intentarLogin();
+setTimeout(function(){
+  if(!authResuelto){
+    var pantallaError=document.getElementById('pantalla-error-conexion');
+    if(pantallaError) pantallaError.style.display='flex';
+  }
+},5000);
 firebase.auth().onAuthStateChanged(function(user){
   if(!user) return;
+  authResuelto=true;
+  var pantallaError=document.getElementById('pantalla-error-conexion');
+  if(pantallaError) pantallaError.style.display='none';
   db.ref('.info/connected').on('value',function(s){
     var ok=s.val();
     var dot=document.getElementById('sync-dot');
@@ -157,6 +174,12 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 </style>
 </head>
 <body>
+<div id="pantalla-error-conexion" style="display:none;position:fixed;inset:0;background:#1a6b4a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;font-family:Arial,sans-serif">
+  <div style="font-size:40px;margin-bottom:12px">&#128246;</div>
+  <div style="font-size:16px;font-weight:700;margin-bottom:8px">No se pudo conectar</div>
+  <div style="font-size:13px;opacity:0.9;margin-bottom:20px;max-width:280px">Revisa tu conexion a internet (datos moviles o WiFi) e intenta de nuevo.</div>
+  <button onclick="intentarLogin()" style="background:#fff;color:#1a6b4a;font-weight:700;font-size:14px;padding:12px 28px;border:none;border-radius:8px;min-height:44px">Reintentar</button>
+</div>
 <div id="app">
   <div class="topbar">
     <span style="font-size:16px">&#128062;</span>
