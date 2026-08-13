@@ -196,6 +196,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
         <button class="tab" id="tab-ruta" onclick="switchTab('ruta')">Ruta (<span id="rc">0</span>)</button>
         <button class="tab" id="tab-resumen" onclick="switchTab('resumen');actualizarResumen()">Resumen</button>
         <button class="tab" id="tab-equipo" onclick="switchTab('equipo');cargarEquipo()">Equipo</button>
+        <button class="tab" id="tab-historial" onclick="switchTab('historial')">Historial</button>
       </div>
       <div class="tc active" id="content-buscar">
         <div class="sbox"><input type="text" id="si" placeholder="Nombre o ID SAP..." oninput="buscar(this.value)" autocomplete="off"></div>
@@ -296,6 +297,28 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
         </div>
         <div id="equipo-body" style="flex:1;overflow-y:auto;padding:10px 12px">
           <div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>
+        </div>
+      </div>
+      <div class="tc" id="content-historial" style="flex-direction:column;overflow:hidden">
+        <div style="padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#f7f6f2">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">Historial de entregas</div>
+          <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Chofer</label>
+          <select id="vh-chofer" onchange="cargarHistorialVendedor()" style="width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;background:#fff;box-sizing:border-box;margin-bottom:6px">
+            <option value="">-- Selecciona chofer --</option>
+            <option value="angel">Angel</option>
+            <option value="arturo">Arturo</option>
+            <option value="silvia">Silvia</option>
+            <option value="mercedes">Mercedes</option>
+            <option value="luis">Luis</option>
+            <option value="marco">Marco</option>
+            <option value="eunice">Eunice</option>
+          </select>
+          <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha</label>
+          <input type="date" id="vh-fecha" onchange="cargarHistorialVendedor()" style="width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box">
+          <button onclick="descargarHistorialVendedorExcel()" style="width:100%;margin-top:8px;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar Excel</button>
+        </div>
+        <div id="vh-body" style="flex:1;overflow-y:auto;padding:10px 12px">
+          <div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Selecciona un chofer y una fecha</div>
         </div>
       </div>
     </div>
@@ -1023,6 +1046,88 @@ function cargarEquipo(){
   });
 }
 // ── Fin Vista Equipo ──────────────────────────────────────────────────────────
+
+// ── Vista Historial (vendedores) ────────────────────────────────────────────
+var historialVendedorData=null;
+function limpiarRowsVendedor(rows){return rows.map(function(row){return row.map(function(cell){if(cell===null||cell===undefined)return '';if(typeof cell==='object')return '';return String(cell);});});}
+
+function cargarHistorialVendedor(){
+  var cid=document.getElementById('vh-chofer').value;
+  var fecha=document.getElementById('vh-fecha').value;
+  var body=document.getElementById('vh-body');
+  if(!cid||!fecha){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Selecciona un chofer y una fecha</div>';return;}
+  body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>';
+  db.ref('historial/'+cid+'/'+fecha).once('value').then(function(snap){
+    var d=snap.val(); historialVendedorData=d;
+    if(!d||!d.paradas||!d.paradas.length){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin datos para esta fecha</div>';return;}
+    var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
+    var ent=paradas.filter(function(p){var e=p.entregas||[];return e.length?e.every(function(x){return x.entregado;}):p.entregado;}).length;
+    var noEnt=paradas.filter(function(p){return p.noEntregado;}).length;
+    var h='<div style="background:#f7f6f2;border-radius:8px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">';
+    h+='<div style="text-align:center"><div style="font-size:16px;font-weight:800;color:#1a6b4a">'+paradas.length+'</div><div style="font-size:10px;color:#7a7870">Paradas</div></div>';
+    h+='<div style="text-align:center"><div style="font-size:16px;font-weight:800;color:#1a6b4a">'+ent+'</div><div style="font-size:10px;color:#7a7870">Entregados</div></div>';
+    h+='<div style="text-align:center"><div style="font-size:16px;font-weight:800;color:#dc2626">'+noEnt+'</div><div style="font-size:10px;color:#7a7870">No entreg.</div></div>';
+    h+='<div style="text-align:center"><div style="font-size:16px;font-weight:800;color:#0f4a8a">'+(d.km||'-')+'</div><div style="font-size:10px;color:#7a7870">Km</div></div></div>';
+    paradas.forEach(function(p,i){
+      var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+      if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+      var ok=entregas.every(function(e){return e.entregado;}); var noE=p.noEntregado||false;
+      var bg=ok?'#f0faf5':noE?'#fff5f5':'#fff';
+      var estadoColor=ok?'#1a6b4a':noE?'#dc2626':'#7a7870';
+      var estado=ok?'✓ Entregado':noE?'✖ No entregado':'Pendiente';
+      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
+      var tipoColor=p.esPaqueteria?'#0f4a8a':(p.esLibre?'#ff8800':'#1a6b4a');
+      var tipoBg=p.esPaqueteria?'#e6f1fb':(p.esLibre?'#fff8ee':'#e8f5ef');
+      var nombreCliente=p.esPaqueteria?(p.clienteDestinatario||p.nombreFiscal||p.nombre||''):(p.nombreFiscal||p.nombre||'');
+      var empresaPaqueteria=p.esPaqueteria?(p.nombreFiscal||p.nombre||''):'';
+      h+='<div style="border:1px solid #e4e2da;border-radius:8px;padding:8px 10px;margin-bottom:8px;background:'+bg+'">';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">';
+      h+='<span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span>';
+      h+='<span style="font-size:11px;font-weight:700;color:'+estadoColor+';margin-left:auto">'+estado+'</span></div>';
+      h+='<div style="font-size:13px;font-weight:700">'+(i+1)+'. '+esc(nombreCliente)+'</div>';
+      if(empresaPaqueteria) h+='<div style="font-size:11px;color:#0f4a8a">Paqueteria: '+esc(empresaPaqueteria)+'</div>';
+      entregas.forEach(function(e,ei){
+        h+='<div style="font-size:11px;color:#555;margin-top:3px;padding-top:3px;border-top:1px dashed #e4e2da">';
+        if(entregas.length>1) h+='Entrega '+(ei+1)+': ';
+        h+='<b>Pedido:</b> '+(e.pedido||'-')+' &middot; <b>Factura:</b> '+(e.factura||'-')+' &middot; <b>Guia:</b> '+(e.guia||'-')+(e.horaEntrega?(' &middot; Hora: '+e.horaEntrega):'')+'</div>';
+      });
+      if(noE&&(p.motivoNoEntrega||p.motivo)) h+='<div style="font-size:11px;color:#dc2626;margin-top:3px">Motivo: '+esc(p.motivoNoEntrega||p.motivo)+'</div>';
+      h+='</div>';
+    });
+    body.innerHTML=h;
+  }).catch(function(e){ body.innerHTML='<div style="text-align:center;color:#dc2626;font-size:13px;padding:24px">Error: '+e.message+'</div>'; });
+}
+
+function descargarHistorialVendedorExcel(){
+  var cid=document.getElementById('vh-chofer').value;
+  var fecha=document.getElementById('vh-fecha').value;
+  if(!cid||!fecha){toast('Selecciona un chofer y una fecha');return;}
+  if(!historialVendedorData||!historialVendedorData.paradas){toast('Primero carga el historial');return;}
+  var d=historialVendedorData;
+  var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+  var rows=[['VetReparto - Historial'],['Chofer:',d.choferNombre||cid,'Fecha:',fecha,'Km:',(d.km||'-'),'Tiempo:',(d.tiempo||'-')],[],
+    ['No.','ID SAP','Cliente','Tipo','Destinatario','Pedido','Factura','No. Guia','Estado','Hora','Motivo']];
+  paradas.forEach(function(p,i){
+    var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+    if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+    entregas.forEach(function(e){
+      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
+      var estado=e.entregado?'Entregado':(p.noEntregado?'No entregado':'Pendiente');
+      var motivo=p.noEntregado?String(p.motivoNoEntrega||p.motivo||''):'';
+      var idSap=p.esLibre?'LIBRE':(p.esPaqueteria?'PAQ':(p.id||''));
+      var destinatario=p.esPaqueteria?String(p.clienteDestinatario||''):'';
+      rows.push([i+1,idSap,p.nombreFiscal||p.nombre||'',tipo,destinatario,e.pedido||'',e.factura||'',e.guia||'',estado,e.horaEntrega||'',motivo]);
+    });
+  });
+  rows=limpiarRowsVendedor(rows);
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:14},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Historial');
+  XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
+  toast('Descargado');
+}
+// ── Fin Vista Historial ─────────────────────────────────────────────────────
 
 window.initMap=initMap;
 </script>
