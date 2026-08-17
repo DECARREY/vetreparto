@@ -1478,6 +1478,45 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
     return out;
   }
 
+  // Garantiza un minimo de pedidos por chofer moviendo SOLO puntos "libres"
+  // (sin afinidad, o con afinidad que de cualquier forma no se respeto) desde
+  // los choferes con mas carga hacia los que quedaron casi vacios. Nunca mueve
+  // un punto bloqueado manualmente (locks) ni uno cuya afinidad real coincide
+  // con su chofer actual, para no romper ni las reasignaciones manuales ni el
+  // reparto por afinidad de quienes si tienen vendedor asociado.
+  function rebalancearMinimo(rutas, choferes, locks, almacen, minRatio) {
+    var K = choferes.length;
+    var N = 0; choferes.forEach(function (c) { N += rutas[c].stops.length; });
+    if (!K || !N) return;
+    var target = Math.floor((N / K) * minRatio);
+    if (target < 1) return;
+    var guard = 0;
+    while (guard++ < 1000) {
+      var necesitados = choferes.filter(function (c) { return rutas[c].stops.length < target; });
+      if (!necesitados.length) break;
+      necesitados.sort(function (a, b) { return rutas[a].stops.length - rutas[b].stops.length; });
+      var pobre = necesitados[0];
+      var donantes = choferes.filter(function (c) { return c !== pobre && rutas[c].stops.length > target; });
+      if (!donantes.length) break;
+      donantes.sort(function (a, b) { return rutas[b].stops.length - rutas[a].stops.length; });
+      var cPobre = centroid(rutas[pobre].stops) || almacen;
+      var movido = false;
+      for (var d = 0; d < donantes.length && !movido; d++) {
+        var donor = donantes[d], stops = rutas[donor].stops;
+        var idxMovible = -1, mejorDist = Infinity;
+        for (var i = 0; i < stops.length; i++) {
+          var p = stops[i];
+          var esFijo = (locks[p.id] === donor) || (p.aff && p.aff === donor);
+          if (esFijo) continue;
+          var dist = haversine(p, cPobre);
+          if (dist < mejorDist) { mejorDist = dist; idxMovible = i; }
+        }
+        if (idxMovible >= 0) { rutas[pobre].stops.push(stops.splice(idxMovible, 1)[0]); movido = true; }
+      }
+      if (!movido) break; // no quedan puntos libres para mover
+    }
+  }
+
   /* asignarV2(pedidos, choferes, almacen, opts)
      pedidos: [{id,lat,lng, aff(chofer o null), permit}]
      opts: { affinity:0..1, balance:0..1, seed } */
@@ -1514,6 +1553,9 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
         var choferFinal = (forzado && rutas[forzado]) ? forzado : label[asg[i3]];
         rutas[choferFinal].stops.push(pedidos[i3]);
       }
+      // 3) garantizar minimo por chofer (evita que alguien sin afinidad se quede
+      //    con 1 solo pedido); el minimo escala con el slider de Balance.
+      rebalancearMinimo(rutas, choferes, locks, almacen, 0.3 + balance * 0.5);
     }
 
     var totalKm = 0, cnts = [], assigned = {};
