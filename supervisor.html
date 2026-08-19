@@ -1635,14 +1635,17 @@ function balEnrich(c){
 function initBalanceo(){
   if(balInit){ balResizeMap(); return; }
   balInit=true;
-  balRenderChoferes(); balRenderPedidos(); balCrearMapa();
+  balRenderChoferes(); balRenderPedidos();
+  try{ balCrearMapa(); }catch(e){ console.error('balCrearMapa fallo, se reintentara:',e); setTimeout(balCrearMapa,300); }
 }
 function balCrearMapa(){
-  if(typeof google==='undefined'||!google.maps||!google.maps.Map){ setTimeout(balCrearMapa,300); return; }
-  mapB=new google.maps.Map(document.getElementById('mapB'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
-  var almEl=document.createElement('div'); almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#ff8800;border:2px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px rgba(0,0,0,.15)';
-  balAlmMarker=new google.maps.marker.AdvancedMarkerElement({position:ALMACEN_POS,map:mapB,title:'Almacen',content:almEl,zIndex:3000});
-  mapBReady=true;
+  if(typeof google==='undefined'||!google.maps||!google.maps.Map||!google.maps.marker||!google.maps.marker.AdvancedMarkerElement){ setTimeout(balCrearMapa,300); return; }
+  try{
+    mapB=new google.maps.Map(document.getElementById('mapB'),{center:{lat:25.6866,lng:-100.3161},zoom:11,mapId:'b30c811ecba5c1918f8d39d9',mapTypeControl:false,streetViewControl:false});
+    var almEl=document.createElement('div'); almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#ff8800;border:2px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px rgba(0,0,0,.15)';
+    balAlmMarker=new google.maps.marker.AdvancedMarkerElement({position:ALMACEN_POS,map:mapB,title:'Almacen',content:almEl,zIndex:3000});
+    mapBReady=true;
+  }catch(e){ console.error('balCrearMapa fallo, se reintentara:',e); mapBReady=false; setTimeout(balCrearMapa,300); }
 }
 function balResizeMap(){ if(mapBReady&&mapB) setTimeout(function(){google.maps.event.trigger(mapB,'resize');},150); }
 
@@ -1855,15 +1858,16 @@ function balToggleMap(){
 }
 
 function balCrearRutas(){
-  if(!balPlan){ toast('Primero planifica'); return; }
+  if(!balPlan){ alert('No se creo ninguna ruta.\n\nPrimero da clic en "PLANIFICAR" (con los choferes marcados y los pedidos agregados) antes de "Crear rutas en el sistema".'); return; }
   // stops finales por chofer = local + foraneo(ruta)
   var finales={};
   balPlan.choferes.forEach(function(cid){ var r=balPlan.res.rutas[cid]; if(r&&r.stops.length) finales[cid]=r.stops.slice(); });
   balPlan.foraneo.forEach(function(f){ if(f.estado==='ruta'&&f.chofer){ if(!finales[f.chofer])finales[f.chofer]=[]; finales[f.chofer].push(f.p); } });
   var cids=Object.keys(finales);
-  if(!cids.length){ toast('No hay rutas que crear'); return; }
+  if(!cids.length){ alert('No se creo ninguna ruta: no hay pedidos asignados a ningun chofer en la planeacion actual.\n\nRevisa que hayas agregado pedidos y que el reparto en pantalla no este vacio.'); return; }
+  var resumenTxt=cids.map(function(c){ return '- '+balNombre(c)+': '+finales[c].length+' paradas'; }).join('\n');
   var ocupados=cids.filter(function(c){ return datos[c]&&datos[c].paradas&&(Array.isArray(datos[c].paradas)?datos[c].paradas.length:Object.keys(datos[c].paradas).length); });
-  var msg='Se crearan rutas de HOY para: '+cids.map(balNombre).join(', ')+'.';
+  var msg='Se crearan rutas de HOY para:\n\n'+resumenTxt;
   if(ocupados.length) msg+='\n\nATENCION: '+ocupados.map(balNombre).join(', ')+' ya tienen ruta hoy y se SOBREESCRIBIRAN.';
   msg+='\n\nContinuar?';
   if(!confirm(msg)) return;
@@ -1874,11 +1878,13 @@ function balCrearRutas(){
     return db.ref('rutas/'+cid+'/'+fechaHoy).set({choferNombre:balNombre(cid),paradas:paradas,km:'-',tiempo:'-',ultimaActualizacion:Date.now()});
   });
   Promise.all(proms).then(function(){
-    toast('✓ '+cids.length+' rutas creadas. Revisa "Rutas en vivo".');
+    alert('LISTO ✓ Se guardaron rutas para '+cids.length+' chofer(es):\n\n'+resumenTxt+'\n\nYa las puedes ver en "Rutas en vivo" y en la app de cada chofer.');
     balPedidos=[]; balPlan=null; balLocks={}; balForEstado={}; balRenderPedidos();
     document.getElementById('bal-resultados').style.display='none';
     balClearMapa(); document.getElementById('bal-legend').style.display='none';
-  }).catch(function(e){ toast('Error: '+e.message); });
+  }).catch(function(e){
+    alert('ERROR: NO se guardo ninguna ruta.\n\n'+e.message+'\n\nIntenta de nuevo. Si se repite, avisale a soporte con este mensaje.');
+  });
 }
 // ─── FIN BALANCEO v2 ──────────────────────────────────────────────────────────
 
