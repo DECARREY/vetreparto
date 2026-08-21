@@ -13,20 +13,51 @@ firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDom
 var db = firebase.database();
 var authResuelto = false;
 function intentarLogin(){
-  var pantallaError = document.getElementById('pantalla-error-conexion');
-  if(pantallaError) pantallaError.style.display = 'none';
-  firebase.auth().signInAnonymously().catch(function(e){
-    console.error('Auth error:', e);
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+  var btnEl = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  if(!email || !pass){
+    errEl.textContent = 'Escribe tu correo y tu contrasena.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btnEl.disabled = true;
+  btnEl.textContent = 'Entrando...';
+  firebase.auth().signInWithEmailAndPassword(email, pass).catch(function(e){
+    var msg = 'No se pudo iniciar sesion. Intenta de nuevo.';
+    if(e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-email'){
+      msg = 'Correo o contrasena incorrectos.';
+    } else if(e.code === 'auth/too-many-requests'){
+      msg = 'Demasiados intentos. Espera un momento e intenta de nuevo.';
+    } else if(e.code === 'auth/network-request-failed'){
+      msg = 'Sin conexion a internet.';
+    } else if(e.code === 'auth/operation-not-allowed'){
+      msg = 'El inicio de sesion con correo aun no esta activado en Firebase.';
+    }
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+  }).finally(function(){
+    btnEl.disabled = false;
+    btnEl.textContent = 'Iniciar sesion';
   });
 }
-// Autenticacion anonima — requerida para Firebase Security Rules
-intentarLogin();
-setTimeout(function(){
-  if(!authResuelto){
-    var pantallaError = document.getElementById('pantalla-error-conexion');
-    if(pantallaError) pantallaError.style.display = 'flex';
+function cerrarSesion(){
+  firebase.auth().signOut();
+}
+firebase.auth().onAuthStateChanged(function(user){
+  var pantallaLogin = document.getElementById('pantalla-login');
+  if(!user){
+    authResuelto = false;
+    if(pantallaLogin) pantallaLogin.style.display = 'flex';
+    return;
   }
-}, 5000);
+  authResuelto = true;
+  if(pantallaLogin) pantallaLogin.style.display = 'none';
+  var labelEl = document.getElementById('login-user-label');
+  if(labelEl) labelEl.textContent = user.email || '';
+});
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -157,11 +188,13 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 </style>
 </head>
 <body>
-<div id="pantalla-error-conexion" style="display:none;position:fixed;inset:0;background:#0f4a8a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;font-family:Arial,sans-serif">
-  <div style="font-size:40px;margin-bottom:12px">&#128246;</div>
-  <div style="font-size:16px;font-weight:700;margin-bottom:8px">No se pudo conectar</div>
-  <div style="font-size:13px;opacity:0.9;margin-bottom:20px;max-width:280px">Revisa tu conexion a internet (datos moviles o WiFi) e intenta de nuevo.</div>
-  <button onclick="intentarLogin()" style="background:#fff;color:#0f4a8a;font-weight:700;font-size:14px;padding:12px 28px;border:none;border-radius:8px;min-height:44px">Reintentar</button>
+<div id="pantalla-login" style="display:flex;position:fixed;inset:0;background:#0f4a8a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;font-family:Arial,sans-serif">
+  <div style="font-size:40px;margin-bottom:12px">&#128274;</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:18px">VetReparto &mdash; Supervisor</div>
+  <input type="email" id="login-email" placeholder="Correo" autocomplete="username" onkeydown="if(event.key==='Enter'){document.getElementById('login-password').focus()}" style="width:100%;max-width:280px;padding:12px;border-radius:8px;border:none;margin-bottom:10px;font-size:14px">
+  <input type="password" id="login-password" placeholder="Contrasena" autocomplete="current-password" onkeydown="if(event.key==='Enter'){intentarLogin()}" style="width:100%;max-width:280px;padding:12px;border-radius:8px;border:none;margin-bottom:10px;font-size:14px">
+  <div id="login-error" style="display:none;color:#fecaca;font-size:12px;margin-bottom:10px;max-width:280px"></div>
+  <button id="login-btn" onclick="intentarLogin()" style="background:#fff;color:#0f4a8a;font-weight:700;font-size:14px;padding:12px 28px;border:none;border-radius:8px;min-height:44px;width:100%;max-width:280px">Iniciar sesion</button>
 </div>
 <div id="app">
   <div class="topbar">
@@ -172,6 +205,8 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
     <button onclick="descargarDia()" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">&#11015; Descargar dia</button>
     <button onclick="limpiarDia()" style="background:rgba(239,68,68,0.3);color:#fff;border:1px solid rgba(239,68,68,0.5);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">&#x1F5D1; Limpiar dia</button>
     <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700" id="hora-actual"></span>
+    <span id="login-user-label" style="font-size:10px;opacity:0.8;white-space:nowrap"></span>
+    <button onclick="cerrarSesion()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;white-space:nowrap">Salir</button>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSection('rutas',event)">Rutas en vivo</button>
@@ -490,8 +525,6 @@ var fechaHoy = '';
 firebase.auth().onAuthStateChanged(function(user){
   if(!user) return;
   authResuelto = true;
-  var pantallaError = document.getElementById('pantalla-error-conexion');
-  if(pantallaError) pantallaError.style.display = 'none';
 
   db.ref('.info/connected').on('value', function(snap){
     var ok = snap.val();
