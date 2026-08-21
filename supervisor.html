@@ -6,10 +6,27 @@
 <title>VetReparto - Supervisor</title>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db = firebase.database();
+var authResuelto = false;
+function intentarLogin(){
+  var pantallaError = document.getElementById('pantalla-error-conexion');
+  if(pantallaError) pantallaError.style.display = 'none';
+  firebase.auth().signInAnonymously().catch(function(e){
+    console.error('Auth error:', e);
+  });
+}
+// Autenticacion anonima — requerida para Firebase Security Rules
+intentarLogin();
+setTimeout(function(){
+  if(!authResuelto){
+    var pantallaError = document.getElementById('pantalla-error-conexion');
+    if(pantallaError) pantallaError.style.display = 'flex';
+  }
+}, 5000);
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -140,6 +157,12 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 </style>
 </head>
 <body>
+<div id="pantalla-error-conexion" style="display:none;position:fixed;inset:0;background:#0f4a8a;z-index:99999;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px;font-family:Arial,sans-serif">
+  <div style="font-size:40px;margin-bottom:12px">&#128246;</div>
+  <div style="font-size:16px;font-weight:700;margin-bottom:8px">No se pudo conectar</div>
+  <div style="font-size:13px;opacity:0.9;margin-bottom:20px;max-width:280px">Revisa tu conexion a internet (datos moviles o WiFi) e intenta de nuevo.</div>
+  <button onclick="intentarLogin()" style="background:#fff;color:#0f4a8a;font-weight:700;font-size:14px;padding:12px 28px;border:none;border-radius:8px;min-height:44px">Reintentar</button>
+</div>
 <div id="app">
   <div class="topbar">
     <span style="font-size:18px">&#128062;</span>
@@ -464,41 +487,48 @@ var fechaHoy = '';
   setTimeout(function(){ var el=document.getElementById('dash-mes'); if(el) el.value=mes; }, 0);
 })();
 
-db.ref('.info/connected').on('value', function(snap){
-  var ok = snap.val();
-  ['sync-dot','sync-dot2'].forEach(function(id){
-    var d=document.getElementById(id); if(d)d.classList.toggle('on',ok);
-  });
-  ['sync-label','sync-label2'].forEach(function(id){
-    var l=document.getElementById(id); if(l)l.textContent=ok?'Conectado - tiempo real':'Sin conexion';
-  });
-});
+firebase.auth().onAuthStateChanged(function(user){
+  if(!user) return;
+  authResuelto = true;
+  var pantallaError = document.getElementById('pantalla-error-conexion');
+  if(pantallaError) pantallaError.style.display = 'none';
 
-db.ref('rutas').on('value', function(snap){
-  var val = snap.val();
-  datos = {};
-  if(val){
-    Object.keys(val).forEach(function(cid){
-      var rutaChofer = val[cid];
-      if(!rutaChofer) return;
-      if(rutaChofer[fechaHoy]) datos[cid] = rutaChofer[fechaHoy];
+  db.ref('.info/connected').on('value', function(snap){
+    var ok = snap.val();
+    ['sync-dot','sync-dot2'].forEach(function(id){
+      var d=document.getElementById(id); if(d)d.classList.toggle('on',ok);
     });
-  }
-  renderChoferes();
-  if(map) actualizarMapa();
-});
+    ['sync-label','sync-label2'].forEach(function(id){
+      var l=document.getElementById(id); if(l)l.textContent=ok?'Conectado - tiempo real':'Sin conexion';
+    });
+  });
 
-db.ref('clientes').on('value', function(snap){
-  var data = snap.val();
-  todosClientes = [];
-  if(data){
-    Object.keys(data).forEach(function(key){
-      todosClientes.push(Object.assign({_key:key}, data[key]));
-    });
-    todosClientes.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
-  }
-  document.getElementById('total-clientes').textContent = todosClientes.length;
-  filtrarClientes(document.getElementById('cp-search').value);
+  db.ref('rutas').on('value', function(snap){
+    var val = snap.val();
+    datos = {};
+    if(val){
+      Object.keys(val).forEach(function(cid){
+        var rutaChofer = val[cid];
+        if(!rutaChofer) return;
+        if(rutaChofer[fechaHoy]) datos[cid] = rutaChofer[fechaHoy];
+      });
+    }
+    renderChoferes();
+    if(map) actualizarMapa();
+  });
+
+  db.ref('clientes').on('value', function(snap){
+    var data = snap.val();
+    todosClientes = [];
+    if(data){
+      Object.keys(data).forEach(function(key){
+        todosClientes.push(Object.assign({_key:key}, data[key]));
+      });
+      todosClientes.sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'');});
+    }
+    document.getElementById('total-clientes').textContent = todosClientes.length;
+    filtrarClientes(document.getElementById('cp-search').value);
+  });
 });
 
 function getColor(cid){
