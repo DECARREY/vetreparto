@@ -48,6 +48,11 @@ function cerrarSesion(){
 }
 firebase.auth().onAuthStateChanged(function(user){
   var pantallaLogin = document.getElementById('pantalla-login');
+  if(user && user.isAnonymous){
+    // Sesion anonima vieja (de antes de este login real, o de otra app) — no cuenta como login valido aqui.
+    firebase.auth().signOut();
+    return;
+  }
   if(!user){
     authResuelto = false;
     if(pantallaLogin) pantallaLogin.style.display = 'flex';
@@ -523,7 +528,7 @@ var fechaHoy = '';
 })();
 
 firebase.auth().onAuthStateChanged(function(user){
-  if(!user) return;
+  if(!user || user.isAnonymous) return;
   authResuelto = true;
 
   db.ref('.info/connected').on('value', function(snap){
