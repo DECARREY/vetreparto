@@ -1888,6 +1888,7 @@ function balToggleMap(){
 }
 
 function balCrearRutas(){
+  if(!firebase.auth().currentUser){ alert('Aun no termina de conectarse de forma segura.\n\nEspera un segundo (revisa el punto de "Conectado" arriba) e intenta de nuevo con "Crear rutas en el sistema".'); return; }
   if(!balPlan){ alert('No se creo ninguna ruta.\n\nPrimero da clic en "PLANIFICAR" (con los choferes marcados y los pedidos agregados) antes de "Crear rutas en el sistema".'); return; }
   // stops finales por chofer = local + foraneo(ruta)
   var finales={};
