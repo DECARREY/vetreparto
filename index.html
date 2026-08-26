@@ -333,7 +333,6 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 <script>
 var C=[];
 var clientesCargados=false;
-var geocoder;
 
 firebase.auth().onAuthStateChanged(function(user){
   if(!user) return;
@@ -362,6 +361,19 @@ setTimeout(function(){
 },8000);
 
 var ALMACEN={lat:25.681553680100162,lng:-100.32371502760287};
+// Llave separada SOLO para Geocoding/Directions (peticion directa, sin pasar por
+// el objeto google.maps.* que usa la llave del mapa con restriccion de sitio web
+// -esa restriccion no es compatible con Geocoding/Directions segun Google).
+var GOOGLE_SERVER_KEY='AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA';
+function geocodeDireccion(texto, cb){
+  fetch('https://maps.googleapis.com/maps/api/geocode/json?address='+encodeURIComponent(texto)+'&key='+GOOGLE_SERVER_KEY)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.status==='OK'&&data.results&&data.results[0]) cb(null,data.results[0]);
+      else cb(new Error(data.status==='ZERO_RESULTS'?'No se encontro la direccion':('Error de Google: '+data.status+(data.error_message?' - '+data.error_message:''))));
+    })
+    .catch(function(e){ cb(e); });
+}
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
 window.addEventListener('load',function(){
@@ -443,7 +455,6 @@ function initMap(){
   dr=new google.maps.DirectionsRenderer({suppressMarkers:true,polylineOptions:{strokeColor:'#1a6b4a',strokeWeight:5,strokeOpacity:0.8}});
   dr.setMap(map);
   var almEl=document.createElement('div');almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#1a6b4a;border:2.5px solid #fff;box-sizing:border-box;';new google.maps.marker.AdvancedMarkerElement({position:ALMACEN,map:map,title:'Almacen',content:almEl,zIndex:2000});
-  geocoder=new google.maps.Geocoder();
   dibujar();
 }
 
@@ -528,18 +539,17 @@ function agregarLibre(){
   } else {
     var dir2=document.getElementById('libre-dir').value.trim();
     if(!dir2){toast('Escribe una direccion');return;}
-    if(!geocoder){toast('Mapa no listo');return;}
     toast('Buscando direccion...');
-    geocoder.geocode({address:dir2+', Monterrey, Mexico'},function(results,status){
-      if(status==='OK'&&results[0]){
-        var loc=results[0].geometry.location;
+    geocodeDireccion(dir2+', Monterrey, Mexico',function(err,resultado){
+      if(!err){
+        var loc=resultado.geometry.location;
         var id='LIBRE_'+Date.now();
-        par.push({id:id,nombre:motivo||dir2,dir:results[0].formatted_address,lat:loc.lat(),lng:loc.lng(),esLibre:true,motivo:motivo,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
-        ui();if(map)map.panTo({lat:loc.lat(),lng:loc.lng()});
+        par.push({id:id,nombre:motivo||dir2,dir:resultado.formatted_address,lat:loc.lat,lng:loc.lng,esLibre:true,motivo:motivo,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null});
+        ui();if(map)map.panTo({lat:loc.lat,lng:loc.lng});
         document.getElementById('libre-dir').value='';document.getElementById('libre-motivo').value='';
         document.getElementById('libre-form').style.display='none';
         toast('+ '+(motivo||dir2));guardarEnFirebase();
-      } else {toast('No se encontro la direccion');}
+      } else {toast(err.message);}
     });
   }
 }
@@ -707,7 +717,7 @@ function ui(){
     if(p.lat&&p.lng)h+='<a class="gobtn" href="https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng+'&travelmode=driving" target="_blank" rel="noopener">&#x1F9ED; Ir</a>';
     if(!todasEntregadas)h+='<button class="rbtn" data-id="'+p.id+'">&#x2715;</button>';
     h+='</div>';
-    if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+'</div>';}
+    if(esLibre&&p.motivo){h+='<div style="font-size:10px;color:#ff8800;margin-bottom:6px;font-weight:600">&#x1F4CC; '+esc(p.motivo)+(p.horaDesde?' &mdash; &#x1F550; Pidio hora: '+esc(p.horaDesde)+(p.horaHasta?' a '+esc(p.horaHasta):''):'')+'</div>';}
     h+='<div class="entregas-list" id="el_'+p.id+'">';
     if(p.esPaqueteria&&p.clienteDestinatario){h+='<div style="font-size:10px;color:#0f4a8a;margin-bottom:5px;font-weight:600">&#x1F4E6; Destinatario: '+esc(p.clienteDestinatario)+'</div>';}
     entregas.forEach(function(e,ei){
@@ -1131,6 +1141,6 @@ function descargarHistorialVendedorExcel(){
 
 window.initMap=initMap;
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
 </body>
 </html>
