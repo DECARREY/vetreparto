@@ -168,6 +168,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
 .tag-LOCAL{background:#e8f5ef;color:#1a6b4a}
 .tag-FORANEO{background:#fef3e2;color:#b45309}
 .tag-PAQUETERIA{background:#eee;color:#666}
+.tag-LIBRE{background:#fff8ee;color:#ff8800}
 .bal-chip{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid #f4f3ef;font-size:11px}
 .bal-chip .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bal-chip .x{cursor:pointer;color:#c00;font-weight:700}
@@ -335,10 +336,34 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
             <button class="bal-btn" style="background:#eef3fb;color:#0f4a8a;flex:1" onclick="balAgregarTodos()">Agregar todos</button>
             <button class="bal-btn" style="background:#fbeeee;color:#be123c;flex:1" onclick="balLimpiarPedidos()">Vaciar</button>
           </div>
+          <button class="bal-btn" style="background:#fff8ee;color:#ff8800;border:1px dashed #ffcc88;margin-top:6px" onclick="balToggleLibre()">&#x1F4CC; + Parada libre / Cobranza</button>
+          <div id="bal-libre-form" style="display:none;margin-top:6px;padding:8px;background:#fff8ee;border:1px solid #ffe0b8;border-radius:8px">
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <button id="bal-libre-tab-cliente" onclick="balLibreSetTab('cliente')" style="flex:1;padding:6px;background:#ff8800;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">Cliente registrado</button>
+              <button id="bal-libre-tab-dir" onclick="balLibreSetTab('dir')" style="flex:1;padding:6px;background:#fff;color:#ff8800;border:1px solid #ffcc88;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial">Direccion libre</button>
+            </div>
+            <div id="bal-libre-panel-cliente">
+              <input type="text" id="bal-libre-cliente-search" placeholder="Buscar cliente para cobranza..." oninput="balLibreClienteBuscar(this.value)" autocomplete="off" style="width:100%;padding:7px 10px;border:1px solid #ffcc88;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-bottom:4px">
+              <div id="bal-libre-cliente-results" style="max-height:120px;overflow-y:auto;border:1px solid #ffcc88;border-radius:6px;margin-bottom:6px;display:none;background:#fff"></div>
+              <div id="bal-libre-cliente-selected" style="display:none;padding:5px 8px;background:#fff;border:1px solid #ffcc88;border-radius:6px;font-size:11px;margin-bottom:6px;color:#b45309;font-weight:600"></div>
+              <input type="hidden" id="bal-libre-cliente-key">
+            </div>
+            <div id="bal-libre-panel-dir" style="display:none">
+              <input type="text" id="bal-libre-dir" placeholder="Direccion o lugar..." autocomplete="off" style="width:100%;padding:7px 10px;border:1px solid #ffcc88;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-bottom:6px">
+            </div>
+            <input type="text" id="bal-libre-motivo" placeholder="Motivo (ej: Cobranza, Deposito banco...)" style="width:100%;padding:7px 10px;border:1px solid #ffcc88;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box;margin-bottom:6px">
+            <label style="font-size:10px;color:#b45309;display:block;margin-bottom:3px">&#x1F550; El cliente pidio hora? (opcional)</label>
+            <div style="display:flex;gap:6px;margin-bottom:6px">
+              <input type="time" id="bal-libre-desde" style="flex:1;padding:7px 10px;border:1px solid #ffcc88;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box" title="Desde">
+              <input type="time" id="bal-libre-hasta" style="flex:1;padding:7px 10px;border:1px solid #ffcc88;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box" title="Hasta">
+            </div>
+            <button class="bal-btn" style="background:#ff8800;color:#fff" onclick="balAgregarLibre()">Agregar parada</button>
+          </div>
           <div style="font-size:11px;color:#555;margin:10px 0 4px;display:flex;gap:10px;flex-wrap:wrap">
             <span><span class="bal-tag tag-LOCAL">LOCAL</span> <b id="bal-n-local">0</b></span>
             <span><span class="bal-tag tag-FORANEO">FORANEO</span> <b id="bal-n-for">0</b></span>
             <span><span class="bal-tag tag-PAQUETERIA">PAQ</span> <b id="bal-n-paq">0</b></span>
+            <span><span class="bal-tag tag-LIBRE">LIBRE</span> <b id="bal-n-libre">0</b></span>
           </div>
           <div id="bal-chips" style="max-height:150px;overflow-y:auto;border:1px solid #f0efe9;border-radius:6px"></div>
         </div>
@@ -350,6 +375,8 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
           <div style="font-size:10px;color:#7a7870;display:flex;justify-content:space-between"><span>Libre</span><span>Cargas parejas</span></div>
           <input type="range" id="bal-bal" min="0" max="100" value="70" style="width:100%" oninput="document.getElementById('bal-bal-v').textContent=this.value+'%'">
           <div style="text-align:center;font-size:11px;color:#0d3d73;font-weight:700">Balance: <span id="bal-bal-v">70%</span></div>
+          <label style="font-size:11px;color:#7a7870;display:block;margin:8px 0 3px">Hora de salida del almacen (para calcular horarios de citas)</label>
+          <input type="time" id="bal-hora-salida" value="08:00" style="width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none;box-sizing:border-box">
           <button class="bal-btn" style="background:#0f4a8a;color:#fff;margin-top:10px;font-size:14px" onclick="balPlanificar()">&#128506; PLANIFICAR</button>
         </div>
         <div class="bal-sec" id="bal-resultados" style="display:none">
@@ -1460,6 +1487,89 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
     return t + haversine(stops[stops.length - 1], almacen);
   }
 
+  // Velocidad promedio urbana estimada (incluye trafico) y tiempo estimado por
+  // parada (cobranza/entrega), usados SOLO para calcular horas de llegada
+  // aproximadas cuando hay paradas con ventana de horario. Son estimaciones en
+  // linea recta, no sustituyen el calculo real de Google Maps.
+  var VELOCIDAD_PROMEDIO_KMH = 22;
+  var TIEMPO_POR_PARADA_MIN = 5;
+  function minutosViaje(a, b) { return (haversine(a, b) / VELOCIDAD_PROMEDIO_KMH) * 60; }
+  function horaAMin(hhmm) { if (!hhmm) return null; var p = String(hhmm).split(':'); return (+p[0]) * 60 + (+p[1]); }
+  function minAHora(min) { min = Math.round(min); var h = Math.floor(min / 60) % 24, m = min % 60; return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
+
+  /* optimizarRutaConHorarios(stops, almacen, horaSalidaMin)
+     stops: igual que optimizarRuta, pero algunos pueden traer horaDesde/horaHasta ('HH:MM').
+     Las paradas CON horaDesde se tratan como "anclas": su orden relativo queda
+     fijo (ordenadas por horaDesde). Las paradas SIN horario se insertan donde
+     agreguen menos distancia, respetando ese orden de anclas. Devuelve tambien
+     'avisos' con las anclas cuya llegada estimada se pasa de su horaHasta. */
+  function optimizarRutaConHorarios(stops, almacen, horaSalidaMin) {
+    if (stops.length <= 1 || horaSalidaMin == null) {
+      var ruta = optimizarRuta(stops, almacen);
+      return { stops: ruta, avisos: [] };
+    }
+    var anclados = stops.filter(function (s) { return s.horaDesde; }).slice();
+    var libres = stops.filter(function (s) { return !s.horaDesde; }).slice();
+    anclados.sort(function (a, b) { return horaAMin(a.horaDesde) - horaAMin(b.horaDesde); });
+
+    var secuencia = anclados.slice();
+    libres.forEach(function (libre) {
+      var mejorPos = 0, mejorCosto = Infinity;
+      for (var i = 0; i <= secuencia.length; i++) {
+        var prev = i === 0 ? almacen : secuencia[i - 1];
+        var next = i === secuencia.length ? almacen : secuencia[i];
+        var costo = haversine(prev, libre) + haversine(libre, next) - haversine(prev, next);
+        if (costo < mejorCosto) { mejorCosto = costo; mejorPos = i; }
+      }
+      secuencia.splice(mejorPos, 0, libre);
+    });
+
+    // Mejora local (2-opt) dentro de cada tramo de paradas libres entre anclas,
+    // sin cruzar ninguna ancla, para no romper el orden de horarios.
+    var esAncla = {}; anclados.forEach(function (a) { esAncla[a.id] = true; });
+    var mejorado = [], tramo = [];
+    function flushTramo() {
+      if (tramo.length > 2) {
+        var antes = tramo[0], despues = tramo[tramo.length - 1];
+        var medio = tramo.slice(1, -1);
+        var imp = true, pass = 0;
+        while (imp && pass++ < 40) {
+          imp = false;
+          for (var i = 0; i < medio.length - 1; i++) for (var k = i + 1; k < medio.length; k++) {
+            var nr = medio.slice(0, i).concat(medio.slice(i, k + 1).reverse(), medio.slice(k + 1));
+            function legTramo(m) { var t = haversine(antes, m[0] || despues); for (var j = 0; j < m.length - 1; j++) t += haversine(m[j], m[j + 1]); t += haversine(m.length ? m[m.length - 1] : antes, despues); return t; }
+            if (legTramo(nr) + 1e-9 < legTramo(medio)) { medio = nr; imp = true; }
+          }
+        }
+        tramo = [antes].concat(medio, [despues]);
+      }
+      mejorado = mejorado.concat(tramo);
+      tramo = [];
+    }
+    secuencia.forEach(function (s) {
+      if (esAncla[s.id]) { flushTramo(); mejorado.push(s); }
+      else tramo.push(s);
+    });
+    flushTramo();
+    secuencia = mejorado;
+
+    // Horas estimadas de llegada + deteccion de citas que no se alcanzan
+    var horaActual = horaSalidaMin, cursor = almacen, avisos = [];
+    secuencia.forEach(function (s) {
+      horaActual += minutosViaje(cursor, s);
+      if (s.horaDesde) {
+        var desde = horaAMin(s.horaDesde), hasta = s.horaHasta ? horaAMin(s.horaHasta) : null;
+        if (horaActual < desde) horaActual = desde;
+        if (hasta && horaActual > hasta) avisos.push({ id: s.id, nombre: s.nombreFiscal || s.nombre, llegaEstimado: minAHora(horaActual), hasta: s.horaHasta });
+      }
+      s._etaMin = horaActual;
+      s._eta = minAHora(horaActual);
+      horaActual += TIEMPO_POR_PARADA_MIN;
+      cursor = s;
+    });
+    return { stops: secuencia, avisos: avisos };
+  }
+
   function kppInit(pts, K, rng) {
     var C = [{ lat: pts[Math.floor(rng() * pts.length)].lat, lng: pts[Math.floor(rng() * pts.length)].lng }];
     while (C.length < K) {
@@ -1629,7 +1739,13 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
     var totalKm = 0, cnts = [], assigned = {};
     choferes.forEach(function (c) {
       var r = rutas[c];
-      r.stops = optimizarRuta(r.stops, almacen);
+      var tieneHorarios = r.stops.some(function (s) { return s.horaDesde; });
+      if (tieneHorarios && opts.horaSalidaMin != null) {
+        var conH = optimizarRutaConHorarios(r.stops, almacen, opts.horaSalidaMin);
+        r.stops = conH.stops; r.avisosHorario = conH.avisos;
+      } else {
+        r.stops = optimizarRuta(r.stops, almacen);
+      }
       r.km = rutaKm(r.stops, almacen); r.count = r.stops.length;
       r.stops.forEach(function (p) { assigned[p.id] = c; });
       totalKm += r.km; cnts.push(r.count);
@@ -1640,7 +1756,7 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
     return { rutas: rutas, totalKm: totalKm, balanceIdx: mx - mn, assigned: assigned, affRate: affTot ? affOk / affTot : 1 };
   }
 
-  var api = { haversine: haversine, optimizarRuta: optimizarRuta, rutaKm: rutaKm, asignarV2: asignarV2 };
+  var api = { haversine: haversine, optimizarRuta: optimizarRuta, rutaKm: rutaKm, asignarV2: asignarV2, optimizarRutaConHorarios: optimizarRutaConHorarios };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VetBalanceo = api;
 })(typeof self !== 'undefined' ? self : this);
@@ -1649,6 +1765,19 @@ window.ASIGNACION = {"MTY0331": {"vendedor": "Telemarketing", "vend": null, "def
 // ─── PESTAÑA BALANCEO v2 (afinidad por vendedor + tipos) ──────────────────────
 var BAL_CHOFERES=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
 var ALMACEN_POS={lat:25.681553680100162,lng:-100.32371502760287};
+// Llave separada SOLO para Geocoding/Directions (peticion directa, sin pasar por
+// el objeto google.maps.* que usa la llave del mapa con restriccion de sitio web
+// -esa restriccion no es compatible con Geocoding/Directions segun Google).
+var GOOGLE_SERVER_KEY='AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA';
+function geocodeDireccion(texto, cb){
+  fetch('https://maps.googleapis.com/maps/api/geocode/json?address='+encodeURIComponent(texto)+'&key='+GOOGLE_SERVER_KEY)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.status==='OK'&&data.results&&data.results[0]) cb(null,data.results[0]);
+      else cb(new Error(data.status==='ZERO_RESULTS'?'No se encontro la direccion':('Error de Google: '+data.status+(data.error_message?' - '+data.error_message:''))));
+    })
+    .catch(function(e){ cb(e); });
+}
 var mapB=null, mapBReady=false, balInit=false;
 var balPedidos=[], balPlan=null, balLocks={}, balForEstado={};
 var balMarkers=[], balPolys=[], balAlmMarker=null;
@@ -1766,6 +1895,99 @@ function balAgregarTodos(){
   balRenderPedidos();
   toast('Agregados '+add+(skip?' ('+skip+' locales sin coordenadas omitidos)':''));
 }
+function balToggleLibre(){
+  var f=document.getElementById('bal-libre-form');
+  var show=f.style.display==='none';
+  f.style.display=show?'block':'none';
+  if(show){
+    balLibreSetTab('cliente');
+    document.getElementById('bal-libre-cliente-search').value='';
+    document.getElementById('bal-libre-cliente-results').style.display='none';
+    document.getElementById('bal-libre-cliente-selected').style.display='none';
+    document.getElementById('bal-libre-cliente-key').value='';
+    document.getElementById('bal-libre-dir').value='';
+    document.getElementById('bal-libre-motivo').value='';
+    document.getElementById('bal-libre-desde').value='';
+    document.getElementById('bal-libre-hasta').value='';
+  }
+}
+function balLibreSetTab(tab){
+  var isCliente=tab==='cliente';
+  document.getElementById('bal-libre-panel-cliente').style.display=isCliente?'block':'none';
+  document.getElementById('bal-libre-panel-dir').style.display=isCliente?'none':'block';
+  document.getElementById('bal-libre-tab-cliente').style.background=isCliente?'#ff8800':'#fff';
+  document.getElementById('bal-libre-tab-cliente').style.color=isCliente?'#fff':'#ff8800';
+  document.getElementById('bal-libre-tab-dir').style.background=isCliente?'#fff':'#ff8800';
+  document.getElementById('bal-libre-tab-dir').style.color=isCliente?'#ff8800':'#fff';
+}
+function balLibreClienteBuscar(v){
+  var box=document.getElementById('bal-libre-cliente-results');
+  if(!v||v.length<2){ box.style.display='none'; box.innerHTML=''; return; }
+  var q=v.toLowerCase();
+  var r=todosClientes.filter(function(c){
+    return (c.nombre||'').toLowerCase().indexOf(q)>=0||(c.nombreFiscal||'').toLowerCase().indexOf(q)>=0||(c.id||'').toLowerCase().indexOf(q)>=0;
+  }).slice(0,10);
+  box.innerHTML='';
+  if(!r.length){ box.innerHTML='<div style="padding:8px;font-size:11px;color:#7a7870">Sin resultados</div>'; box.style.display='block'; return; }
+  r.forEach(function(c){
+    var div=document.createElement('div');
+    div.style.cssText='padding:7px 10px;border-bottom:1px solid #f4ead9;cursor:pointer;font-size:11px';
+    div.innerHTML='<div style="font-weight:600">'+esc(c.nombreFiscal||c.nombre)+'</div><div style="color:#7a7870">'+esc(c.id||'')+'</div>';
+    div.onmouseover=function(){this.style.background='#fff8ee';};
+    div.onmouseout=function(){this.style.background='';};
+    (function(key,cl){ div.onclick=function(){
+      document.getElementById('bal-libre-cliente-key').value=key;
+      document.getElementById('bal-libre-cliente-search').value='';
+      box.style.display='none';
+      var sel=document.getElementById('bal-libre-cliente-selected');
+      sel.textContent=(cl.nombreFiscal||cl.nombre)+' ('+cl.id+')';
+      sel.style.display='block';
+    };})(c._key,c);
+    box.appendChild(div);
+  });
+  box.style.display='block';
+}
+function balLeerVentanaHoraria(){
+  var desde=document.getElementById('bal-libre-desde').value;
+  var hasta=document.getElementById('bal-libre-hasta').value;
+  if(!desde&&!hasta) return {ok:true,horaDesde:null,horaHasta:null};
+  if(!desde){ toast('Falta la hora "Desde"'); return {ok:false}; }
+  if(hasta&&hasta<=desde){ toast('La hora "Hasta" debe ser despues de "Desde"'); return {ok:false}; }
+  return {ok:true,horaDesde:desde,horaHasta:hasta||null};
+}
+function balAgregarLibre(){
+  var motivo=document.getElementById('bal-libre-motivo').value.trim();
+  var ventana=balLeerVentanaHoraria();
+  if(!ventana.ok) return;
+  var isCliente=document.getElementById('bal-libre-panel-cliente').style.display!=='none';
+  if(isCliente){
+    var key=document.getElementById('bal-libre-cliente-key').value;
+    if(!key){ toast('Selecciona un cliente'); return; }
+    var c=todosClientes.find(function(x){return x._key===key;}); if(!c) return;
+    if(!(c.lat&&c.lng)){ toast('Ese cliente no tiene coordenadas'); return; }
+    var e=balEnrich(c);
+    e.id='LIBRE_'+Date.now(); e.tipo='LOCAL'; e.esLibre=true; e.motivo=motivo||'Cobranza';
+    e.horaDesde=ventana.horaDesde; e.horaHasta=ventana.horaHasta;
+    balPedidos.push(e); balRenderPedidos();
+    document.getElementById('bal-libre-form').style.display='none';
+    toast('+ '+(motivo||e.nombreFiscal||e.nombre)+(ventana.horaDesde?' ('+ventana.horaDesde+(ventana.horaHasta?'-'+ventana.horaHasta:'')+')':''));
+  } else {
+    var dir=document.getElementById('bal-libre-dir').value.trim();
+    if(!dir){ toast('Escribe una direccion'); return; }
+    toast('Buscando direccion...');
+    geocodeDireccion(dir+', Monterrey, Mexico',function(err,resultado){
+      if(!err){
+        var loc=resultado.geometry.location;
+        balPedidos.push({id:'LIBRE_'+Date.now(),nombre:motivo||dir,nombreFiscal:'',dir:resultado.formatted_address,lat:loc.lat,lng:loc.lng,vend:null,def:null,permit:null,tipo:'LOCAL',vendedor:'',esLibre:true,motivo:motivo||'Cobranza',horaDesde:ventana.horaDesde,horaHasta:ventana.horaHasta});
+        balRenderPedidos();
+        document.getElementById('bal-libre-dir').value=''; document.getElementById('bal-libre-motivo').value='';
+        document.getElementById('bal-libre-desde').value=''; document.getElementById('bal-libre-hasta').value='';
+        document.getElementById('bal-libre-form').style.display='none';
+        toast('+ '+(motivo||dir)+(ventana.horaDesde?' ('+ventana.horaDesde+(ventana.horaHasta?'-'+ventana.horaHasta:'')+')':''));
+      } else { toast(err.message); }
+    });
+  }
+}
 function balQuitar(id){ balPedidos=balPedidos.filter(function(p){return p.id!==id;}); balRenderPedidos(); }
 function balLimpiarPedidos(){
   balPedidos=[]; balPlan=null; balLocks={}; balForEstado={};
@@ -1774,19 +1996,22 @@ function balLimpiarPedidos(){
   balClearMapa(); var lg=document.getElementById('bal-legend'); if(lg) lg.style.display='none';
 }
 function balRenderPedidos(){
-  var grupos={LOCAL:[],FORANEO:[],PAQUETERIA:[]};
-  balPedidos.forEach(function(p){ (grupos[p.tipo]||grupos.LOCAL).push(p); });
+  var grupos={LOCAL:[],FORANEO:[],PAQUETERIA:[],LIBRE:[]};
+  balPedidos.forEach(function(p){ (p.esLibre?grupos.LIBRE:(grupos[p.tipo]||grupos.LOCAL)).push(p); });
   document.getElementById('bal-n-local').textContent=grupos.LOCAL.length;
   document.getElementById('bal-n-for').textContent=grupos.FORANEO.length;
   document.getElementById('bal-n-paq').textContent=grupos.PAQUETERIA.length;
+  document.getElementById('bal-n-libre').textContent=grupos.LIBRE.length;
   var box=document.getElementById('bal-chips'); var h='';
-  var labels={LOCAL:'Local',FORANEO:'Foraneo',PAQUETERIA:'Paqueteria'};
-  ['LOCAL','FORANEO','PAQUETERIA'].forEach(function(t){
+  var labels={LOCAL:'Local',FORANEO:'Foraneo',PAQUETERIA:'Paqueteria',LIBRE:'Libre / Cobranza'};
+  ['LOCAL','FORANEO','PAQUETERIA','LIBRE'].forEach(function(t){
     var arr=grupos[t]; if(!arr.length) return;
     arr.sort(function(a,b){ return (a.nombreFiscal||a.nombre||'').localeCompare(b.nombreFiscal||b.nombre||'','es',{sensitivity:'base'}); });
     h+='<div style="font-size:10px;font-weight:800;color:#0d3d73;background:#eef0f4;padding:3px 6px;border-top:1px solid #e4e2da;position:sticky;top:0">'+labels[t]+' ('+arr.length+')</div>';
     arr.forEach(function(p){
-      h+='<div class="bal-chip"><span class="bal-tag tag-'+p.tipo+'">'+p.tipo.charAt(0)+'</span><span class="nm">'+esc(p.nombreFiscal||p.nombre)+'</span><span class="x" onclick="balQuitar(\''+String(p.id).replace(/'/g,"")+'\')">&#x2715;</span></div>';
+      var tagTipo=t==='LIBRE'?'LIBRE':p.tipo;
+      var horaTxt=p.horaDesde?(' &#x1F550;'+p.horaDesde+(p.horaHasta?'-'+p.horaHasta:'')):'';
+      h+='<div class="bal-chip"><span class="bal-tag tag-'+tagTipo+'">'+tagTipo.charAt(0)+'</span><span class="nm">'+esc((p.motivo?p.motivo+' - ':'')+(p.nombreFiscal||p.nombre))+horaTxt+'</span><span class="x" onclick="balQuitar(\''+String(p.id).replace(/'/g,"")+'\')">&#x2715;</span></div>';
     });
   });
   box.innerHTML=h||'<div style="padding:10px;text-align:center;color:#bbb;font-size:11px">Sin pedidos</div>';
@@ -1803,10 +2028,12 @@ function balPlanificar(){
   var paqs=balPedidos.filter(function(p){return p.tipo==='PAQUETERIA';});
   var aff=parseInt(document.getElementById('bal-aff').value,10)/100;
   var bal=parseInt(document.getElementById('bal-bal').value,10)/100;
+  var horaSalidaEl=document.getElementById('bal-hora-salida');
+  var horaSalidaMin=horaSalidaEl&&horaSalidaEl.value?(function(){var p=horaSalidaEl.value.split(':');return (+p[0])*60+(+p[1]);})():null;
 
   var part={};choferes.forEach(function(c){part[c]=1;});
-  var pedLoc=locales.map(function(p){var eff=(p.vend&&part[p.vend])?p.vend:((p.def&&part[p.def])?p.def:null);return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal,dir:p.dir,lat:p.lat,lng:p.lng,aff:eff,permit:p.permit};});
-  var res=pedLoc.length?window.VetBalanceo.asignarV2(pedLoc,choferes,ALMACEN_POS,{affinity:aff,balance:bal,seed:7,locks:balLocks})
+  var pedLoc=locales.map(function(p){var eff=(p.vend&&part[p.vend])?p.vend:((p.def&&part[p.def])?p.def:null);return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal,dir:p.dir,lat:p.lat,lng:p.lng,aff:eff,permit:p.permit,esLibre:p.esLibre||false,motivo:p.motivo,horaDesde:p.horaDesde||null,horaHasta:p.horaHasta||null};});
+  var res=pedLoc.length?window.VetBalanceo.asignarV2(pedLoc,choferes,ALMACEN_POS,{affinity:aff,balance:bal,seed:7,locks:balLocks,horaSalidaMin:horaSalidaMin})
                         :{rutas:{},totalKm:0,balanceIdx:0,assigned:{},affRate:1};
   // foraneo: chofer sugerido = aff o primer permitido; estado previo o 'paq'
   var foraneo=foraneos.map(function(p){
@@ -1814,7 +2041,7 @@ function balPlanificar(){
     var est=balForEstado[p.id]||'paq';
     return {p:p, chofer:ch, estado:est};
   });
-  balPlan={choferes:choferes, localPedidos:locales, res:res, foraneo:foraneo, paq:paqs};
+  balPlan={choferes:choferes, localPedidos:locales, res:res, foraneo:foraneo, paq:paqs, horaSalidaMin:horaSalidaMin};
   balRenderResultado(); balPintarMapa();
   document.getElementById('bal-resultados').style.display='block';
 }
@@ -1825,7 +2052,13 @@ function balRebuildLocal(){
   locales.forEach(function(p){ var c=assigned[p.id]; if(rutas[c]) rutas[c].stops.push(p); });
   var total=0,cnts=[];
   choferes.forEach(function(c){
-    rutas[c].stops=window.VetBalanceo.optimizarRuta(rutas[c].stops,ALMACEN_POS);
+    var tieneHorarios=rutas[c].stops.some(function(s){return s.horaDesde;});
+    if(tieneHorarios&&balPlan.horaSalidaMin!=null){
+      var conH=window.VetBalanceo.optimizarRutaConHorarios(rutas[c].stops,ALMACEN_POS,balPlan.horaSalidaMin);
+      rutas[c].stops=conH.stops; rutas[c].avisosHorario=conH.avisos;
+    } else {
+      rutas[c].stops=window.VetBalanceo.optimizarRuta(rutas[c].stops,ALMACEN_POS);
+    }
     rutas[c].km=window.VetBalanceo.rutaKm(rutas[c].stops,ALMACEN_POS);
     rutas[c].count=rutas[c].stops.length; total+=rutas[c].km; cnts.push(rutas[c].count);
   });
@@ -1852,9 +2085,13 @@ function balRenderResultado(){
     var r=res.rutas[cid]; if(!r) return;
     var color=balColor(cid);
     h+='<div class="bal-drv"><div class="bal-drv-h" style="background:'+color+'">'+balNombre(cid)+' &middot; '+r.count+' pedidos &middot; '+r.km.toFixed(1)+' km</div>';
+    if(r.avisosHorario&&r.avisosHorario.length){
+      h+='<div style="padding:6px 9px;background:#fde8e8;color:#c0392b;font-size:11px;font-weight:700">&#9888; No alcanza la cita de: '+r.avisosHorario.map(function(a){return esc(a.nombre)+' (llega ~'+a.llegaEstimado+', pidio antes de '+a.hasta+')';}).join('; ')+'</div>';
+    }
     r.stops.forEach(function(p,i){
       var sel='<select onchange="balReasignar(\''+p.id+'\',this.value)">'+opts.map(function(c){return '<option value="'+c+'"'+(c===cid?' selected':'')+'>'+balNombre(c)+'</option>';}).join('')+'</select>';
-      h+='<div class="bal-drv-row"><span class="n">'+(i+1)+'</span><span class="nm" title="'+esc(p.vendedor)+'">'+esc(p.nombreFiscal||p.nombre)+(p.aff&&p.aff!==cid?' <span style="color:#c0392b">&#9888;</span>':'')+'</span>'+sel+'</div>';
+      var etaTxt=p._eta?(' <span style="color:#0d3d73;font-weight:700">~'+p._eta+'</span>'):'';
+      h+='<div class="bal-drv-row"><span class="n">'+(i+1)+'</span><span class="nm" title="'+esc(p.vendedor)+'">'+(p.esLibre?'<span class="bal-tag tag-LIBRE">LIBRE</span> ':'')+esc((p.esLibre&&p.motivo?p.motivo+' - ':'')+(p.nombreFiscal||p.nombre))+(p.horaDesde?' &#x1F550;'+p.horaDesde+(p.horaHasta?'-'+p.horaHasta:''):'')+etaTxt+(p.aff&&p.aff!==cid?' <span style="color:#c0392b">&#9888;</span>':'')+'</span>'+sel+'</div>';
     });
     if(!r.count) h+='<div class="bal-drv-row" style="color:#bbb">sin pedidos</div>';
     h+='</div>';
@@ -1942,7 +2179,7 @@ function balCrearRutas(){
   if(!confirm(msg)) return;
   var proms=cids.map(function(cid){
     var paradas=finales[cid].map(function(p){
-      return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal||'',dir:p.dir||'',lat:p.lat,lng:p.lng,esLibre:false,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null};
+      return {id:p.id,nombre:p.nombre,nombreFiscal:p.nombreFiscal||'',dir:p.dir||'',lat:p.lat,lng:p.lng,esLibre:p.esLibre||false,motivo:p.motivo||'',horaDesde:p.horaDesde||null,horaHasta:p.horaHasta||null,entregas:[{pedido:'',factura:'',entregado:false,horaEntrega:null}],kmDesde:null,minDesde:null,origenDesde:null};
     });
     return db.ref('rutas/'+cid+'/'+fechaHoy).set({choferNombre:balNombre(cid),paradas:paradas,km:'-',tiempo:'-',ultimaActualizacion:Date.now()});
   });
@@ -1959,6 +2196,6 @@ function balCrearRutas(){
 
 window.initMap=initMap;
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDmYNwv0WRqVW3KN3jmnZ9p2dk7ELtr5J0&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
 </body>
 </html>
