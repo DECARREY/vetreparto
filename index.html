@@ -265,7 +265,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
             <option value="Eunice">Eunice</option>
             <option value="otros">Otros...</option>
           </select>
-          <input type="text" id="chofer-nombre" placeholder="Escribe tu nombre..." oninput="guardarEnFirebase()" style="display:none;margin-top:6px">
+          <input type="text" id="chofer-nombre" placeholder="Escribe tu nombre..." onblur="confirmarNombreOtros()" onkeydown="if(event.key==='Enter'){this.blur();}" style="display:none;margin-top:6px">
         </div>
         <div class="pfooter">
           <button class="cbtn" id="cb" onclick="calcular()" disabled>Calcular ruta optima</button>
@@ -977,6 +977,20 @@ function cambiarChofer(val){
   if(val==='otros'){inp.style.display='block';inp.value='';inp.focus();}
   else if(val===''){inp.style.display='none';inp.value='';}
   else{window.location.href=window.location.pathname+'?chofer='+val.toLowerCase();}
+}
+function confirmarNombreOtros(){
+  var inp=document.getElementById('chofer-nombre');
+  var val=inp.value.trim();
+  if(!val) return;
+  var slug=val.toLowerCase().replace(/\s+/g,'-');
+  if(slug&&slug!==CHOFER_ID){
+    // El nombre escrito no coincide con el id de la URL actual: nos vamos a
+    // la URL correcta para que la app escuche/guarde en el nodo correcto de
+    // Firebase (rutas/<slug>/...), igual que hace un chofer con nombre fijo.
+    window.location.href=window.location.pathname+'?chofer='+slug;
+  } else {
+    guardarEnFirebase();
+  }
 }
 
 function switchTab(t){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.tc').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');document.getElementById('content-'+t).classList.add('active');}
