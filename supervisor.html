@@ -259,6 +259,7 @@ html,body{height:100%;font-family:Arial,sans-serif;overflow:hidden}
           <div>
             <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Chofer</label>
             <select id="hist-chofer" onchange="cargarHistorial()" style="padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:13px;font-family:Arial;outline:none;background:#fff">
+              <option value="todos">Todos</option>
               <option value="angel">Angel</option>
               <option value="arturo">Arturo</option>
               <option value="silvia">Silvia</option>
@@ -942,51 +943,76 @@ function descargarDia(){
 
 var historialData=null;
 
+var CHOFERES_HIST=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+
+function renderHistorialChofer(d){
+  var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas||{});
+  if(!paradas.length) return '';
+  var ent=paradas.filter(function(p){var e=p.entregas||[];return e.length?e.every(function(x){return x.entregado;}):p.entregado;}).length;
+  var noEnt=paradas.filter(function(p){return p.noEntregado;}).length;
+  var html='<div style="background:#f7f6f2;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">';
+  html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#1a6b4a">'+paradas.length+'</div><div style="font-size:11px;color:#7a7870">Paradas</div></div>';
+  html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#1a6b4a">'+ent+'</div><div style="font-size:11px;color:#7a7870">Entregados</div></div>';
+  html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#dc2626">'+noEnt+'</div><div style="font-size:11px;color:#7a7870">No entregados</div></div>';
+  html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#0f4a8a">'+(d.km||'-')+'</div><div style="font-size:11px;color:#7a7870">Km</div></div></div>';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html+='<thead><tr style="background:#f0efe9"><th style="padding:7px 8px;text-align:left">#</th><th style="padding:7px 8px;text-align:left">Tipo</th><th style="padding:7px 8px;text-align:left">Cliente / Empresa</th><th style="padding:7px 8px;text-align:left">Destinatario</th><th style="padding:7px 8px;text-align:left">Pedido</th><th style="padding:7px 8px;text-align:left">Factura</th><th style="padding:7px 8px;text-align:left">No. Guia</th><th style="padding:7px 8px;text-align:left">Estado</th><th style="padding:7px 8px;text-align:left">Hora</th><th style="padding:7px 8px;text-align:left">Motivo</th></tr></thead><tbody>';
+  paradas.forEach(function(p,i){
+    var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
+    var ok=entregas.every(function(e){return e.entregado;}); var noE=p.noEntregado||false;
+    var bg=ok?'#f0faf5':noE?'#fff5f5':'#fff';
+    var estadoColor=ok?'#1a6b4a':noE?'#dc2626':'#7a7870';
+    var estado=ok?'&#10003; Entregado':noE?'&#x2716; No entregado':'Pendiente';
+    var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
+    var tipoColor=p.esPaqueteria?'#0f4a8a':(p.esLibre?'#ff8800':'#1a6b4a');
+    var tipoBg=p.esPaqueteria?'#e6f1fb':(p.esLibre?'#fff8ee':'#e8f5ef');
+    var destinatario=p.esPaqueteria?(p.clienteDestinatario||'-'):'-';
+    entregas.forEach(function(e,ei){
+      html+='<tr style="border-bottom:1px solid #f0efe9;background:'+bg+'">';
+      html+='<td style="padding:6px 8px">'+(i+1)+(entregas.length>1?'-'+(ei+1):'')+'</td>';
+      html+='<td style="padding:6px 8px"><span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span></td>';
+      html+='<td style="padding:6px 8px;font-weight:600">'+esc(p.nombreFiscal||p.nombre)+'</td>';
+      html+='<td style="padding:6px 8px;color:#0f4a8a">'+esc(destinatario)+'</td>';
+      html+='<td style="padding:6px 8px">'+(e.pedido||'-')+'</td>';
+      html+='<td style="padding:6px 8px">'+(e.factura||'-')+'</td>';
+      html+='<td style="padding:6px 8px">'+(e.guia||'-')+'</td>';
+      html+='<td style="padding:6px 8px;font-weight:700;color:'+estadoColor+'">'+estado+'</td>';
+      html+='<td style="padding:6px 8px">'+(e.horaEntrega||'-')+'</td>';
+      html+='<td style="padding:6px 8px;color:#dc2626">'+(noE?(p.motivoNoEntrega||p.motivo||''):'')+'</td>';
+      html+='</tr>';
+    });
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
 function cargarHistorial(){
   var cid=document.getElementById('hist-chofer').value;
   var fecha=document.getElementById('hist-fecha').value;
   var body=document.getElementById('hist-body');
   if(!cid||!fecha){body.innerHTML='<div style="color:#7a7870;font-size:13px;text-align:center;padding:24px">Selecciona un chofer y una fecha</div>';return;}
   body.innerHTML='<div style="color:#7a7870;font-size:13px;text-align:center;padding:24px">Cargando...</div>';
+  if(cid==='todos'){
+    historialData=null;
+    Promise.all(CHOFERES_HIST.map(function(c){
+      return db.ref('historial/'+c+'/'+fecha).once('value').then(function(s){ return {cid:c, d:s.val()}; });
+    })).then(function(res){
+      var html='';
+      res.forEach(function(r){
+        if(!r.d||!r.d.paradas) return;
+        var sec=renderHistorialChofer(r.d);
+        if(!sec) return;
+        var nombre=r.d.choferNombre||(r.cid.charAt(0).toUpperCase()+r.cid.slice(1));
+        html+='<div style="font-size:15px;font-weight:800;color:#0d3d73;margin:10px 0 8px;padding-bottom:4px;border-bottom:2px solid #0d3d73">'+esc(nombre)+'</div>'+sec;
+      });
+      body.innerHTML=html||'<div style="color:#7a7870;font-size:13px;text-align:center;padding:24px">Sin datos para esta fecha</div>';
+    }).catch(function(e){ body.innerHTML='<div style="color:#dc2626;font-size:13px;padding:16px">Error: '+e.message+'</div>'; });
+    return;
+  }
   db.ref('historial/'+cid+'/'+fecha).once('value').then(function(snap){
     var d=snap.val(); historialData=d;
     if(!d||!d.paradas||!d.paradas.length){body.innerHTML='<div style="color:#7a7870;font-size:13px;text-align:center;padding:24px">Sin datos para esta fecha</div>';return;}
-    var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
-    var ent=paradas.filter(function(p){var e=p.entregas||[];return e.length?e.every(function(x){return x.entregado;}):p.entregado;}).length;
-    var noEnt=paradas.filter(function(p){return p.noEntregado;}).length;
-    var html='<div style="background:#f7f6f2;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">';
-    html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#1a6b4a">'+paradas.length+'</div><div style="font-size:11px;color:#7a7870">Paradas</div></div>';
-    html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#1a6b4a">'+ent+'</div><div style="font-size:11px;color:#7a7870">Entregados</div></div>';
-    html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#dc2626">'+noEnt+'</div><div style="font-size:11px;color:#7a7870">No entregados</div></div>';
-    html+='<div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#0f4a8a">'+(d.km||'-')+'</div><div style="font-size:11px;color:#7a7870">Km</div></div></div>';
-    html+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html+='<thead><tr style="background:#f0efe9"><th style="padding:7px 8px;text-align:left">#</th><th style="padding:7px 8px;text-align:left">Tipo</th><th style="padding:7px 8px;text-align:left">Cliente / Empresa</th><th style="padding:7px 8px;text-align:left">Destinatario</th><th style="padding:7px 8px;text-align:left">Pedido</th><th style="padding:7px 8px;text-align:left">Factura</th><th style="padding:7px 8px;text-align:left">No. Guia</th><th style="padding:7px 8px;text-align:left">Estado</th><th style="padding:7px 8px;text-align:left">Hora</th><th style="padding:7px 8px;text-align:left">Motivo</th></tr></thead><tbody>';
-    paradas.forEach(function(p,i){
-      var entregas=p.entregas||[{pedido:p.pedido||'',factura:p.factura||'',entregado:p.entregado||false,horaEntrega:p.horaEntrega||''}];
-      var ok=entregas.every(function(e){return e.entregado;}); var noE=p.noEntregado||false;
-      var bg=ok?'#f0faf5':noE?'#fff5f5':'#fff';
-      var estadoColor=ok?'#1a6b4a':noE?'#dc2626':'#7a7870';
-      var estado=ok?'&#10003; Entregado':noE?'&#x2716; No entregado':'Pendiente';
-      var tipo=p.esPaqueteria?'Paqueteria':(p.esLibre?'Parada Libre/Cobranza':'Entrega local');
-      var tipoColor=p.esPaqueteria?'#0f4a8a':(p.esLibre?'#ff8800':'#1a6b4a');
-      var tipoBg=p.esPaqueteria?'#e6f1fb':(p.esLibre?'#fff8ee':'#e8f5ef');
-      var destinatario=p.esPaqueteria?(p.clienteDestinatario||'-'):'-';
-      entregas.forEach(function(e,ei){
-        html+='<tr style="border-bottom:1px solid #f0efe9;background:'+bg+'">';
-        html+='<td style="padding:6px 8px">'+(i+1)+(entregas.length>1?'-'+(ei+1):'')+'</td>';
-        html+='<td style="padding:6px 8px"><span style="font-size:10px;font-weight:700;color:'+tipoColor+';background:'+tipoBg+';padding:2px 6px;border-radius:4px">'+tipo+'</span></td>';
-        html+='<td style="padding:6px 8px;font-weight:600">'+esc(p.nombreFiscal||p.nombre)+'</td>';
-        html+='<td style="padding:6px 8px;color:#0f4a8a">'+esc(destinatario)+'</td>';
-        html+='<td style="padding:6px 8px">'+(e.pedido||'-')+'</td>';
-        html+='<td style="padding:6px 8px">'+(e.factura||'-')+'</td>';
-        html+='<td style="padding:6px 8px">'+(e.guia||'-')+'</td>';
-        html+='<td style="padding:6px 8px;font-weight:700;color:'+estadoColor+'">'+estado+'</td>';
-        html+='<td style="padding:6px 8px">'+(e.horaEntrega||'-')+'</td>';
-        html+='<td style="padding:6px 8px;color:#dc2626">'+(noE?(p.motivoNoEntrega||p.motivo||''):'')+'</td>';
-        html+='</tr>';
-      });
-    });
-    html+='</tbody></table>'; body.innerHTML=html;
+    body.innerHTML=renderHistorialChofer(d);
   }).catch(function(e){ body.innerHTML='<div style="color:#dc2626;font-size:13px;padding:16px">Error: '+e.message+'</div>'; });
 }
 
