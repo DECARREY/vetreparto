@@ -7,13 +7,21 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1a6b4a">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
 var db=firebase.database();
+// xlsx pesa ~880 KB y solo se usa al exportar: se carga bajo demanda para no retrasar el arranque
+function cargarXLSX(cb){
+  if(window.XLSX){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s.onload=cb;
+  s.onerror=function(){toast('No se pudo cargar el exportador. Revisa tu conexion',3000);};
+  document.head.appendChild(s);
+}
 var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
 var authResuelto=false;
 function intentarLogin(){
@@ -908,12 +916,14 @@ function descargarResumen(){
       ]);
     });
   });
-  var ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:5},{wch:22},{wch:35},{wch:25},{wch:10},{wch:10},{wch:15},{wch:12},{wch:8},{wch:25},{wch:12},{wch:8},{wch:10}];
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Ruta');
-  XLSX.writeFile(wb,'ruta_'+chofer.replace(/\s+/g,'_')+'_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'.xlsx');
-  toast('Descargado');
+  cargarXLSX(function(){
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:5},{wch:22},{wch:35},{wch:25},{wch:10},{wch:10},{wch:15},{wch:12},{wch:8},{wch:25},{wch:12},{wch:8},{wch:10}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Ruta');
+    XLSX.writeFile(wb,'ruta_'+chofer.replace(/\s+/g,'_')+'_'+hoy.getDate()+'_'+(hoy.getMonth()+1)+'.xlsx');
+    toast('Descargado');
+  });
 }
 
 function togglePaqueteria(){
@@ -1144,12 +1154,14 @@ function descargarHistorialVendedorExcel(){
     });
   });
   rows=limpiarRowsVendedor(rows);
-  var ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:14},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25}];
-  var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Historial');
-  XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
-  toast('Descargado');
+  cargarXLSX(function(){
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:5},{wch:12},{wch:35},{wch:14},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:25}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Historial');
+    XLSX.writeFile(wb,'historial_'+cid+'_'+fecha+'.xlsx');
+    toast('Descargado');
+  });
 }
 // ── Fin Vista Historial ─────────────────────────────────────────────────────
 
