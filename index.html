@@ -7,12 +7,51 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1a6b4a">
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
 <script>
-firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
-var db=firebase.database();
+// El SDK de Firebase se carga de forma asincrona: con <script src> sincronos en el <head>,
+// si la CDN se queda colgada (senal debil) la pagina nunca se pinta y la app se queda
+// en la pantalla de inicio (splash) sin mostrar ningun error.
+var db=null,firebaseListo=false,colaFirebase=[];
+function conFirebase(cb){ if(firebaseListo) cb(); else colaFirebase.push(cb); }
+var FB_FUENTES=[
+  ['https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js','https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js','https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js'],
+  ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js','https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js','https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js']
+];
+function cargarScript(src,ok,fallo){
+  var s=document.createElement('script');
+  var t=setTimeout(function(){s.onload=s.onerror=null;fallo();},15000);
+  s.src=src;
+  s.onload=function(){clearTimeout(t);ok();};
+  s.onerror=function(){clearTimeout(t);fallo();};
+  document.head.appendChild(s);
+}
+function cargarFirebase(fuente){
+  var urls=FB_FUENTES[fuente];
+  if(!urls){ mostrarErrorConexion(); return; }
+  var siguiente=function(){ cargarFirebase(fuente+1); };
+  cargarScript(urls[0],function(){
+    var pendientes=2,fallo=false;
+    var listo=function(){ if(!fallo&&--pendientes===0) iniciarFirebase(); };
+    var error=function(){ if(!fallo){ fallo=true; siguiente(); } };
+    cargarScript(urls[1],listo,error);
+    cargarScript(urls[2],listo,error);
+  },siguiente);
+}
+function iniciarFirebase(){
+  if(!firebase.apps.length) firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
+  db=firebase.database();
+  // Evita que un script de la CDN que llegue tarde (tras usar el respaldo) reemplace la instancia ya iniciada
+  try{ Object.defineProperty(window,'firebase',{value:firebase,writable:false,configurable:false}); }catch(e){}
+  firebaseListo=true;
+  var cola=colaFirebase; colaFirebase=[];
+  cola.forEach(function(cb){ cb(); });
+}
+function mostrarErrorConexion(){
+  var pantallaError=document.getElementById('pantalla-error-conexion');
+  if(pantallaError) pantallaError.style.display='flex';
+  else document.addEventListener('DOMContentLoaded',mostrarErrorConexion);
+}
+cargarFirebase(0);
 // xlsx pesa ~880 KB y solo se usa al exportar: se carga bajo demanda para no retrasar el arranque
 function cargarXLSX(cb){
   if(window.XLSX){cb();return;}
@@ -25,6 +64,8 @@ function cargarXLSX(cb){
 var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
 var authResuelto=false;
 function intentarLogin(){
+  // Si el SDK nunca cargo, reintentar = recargar la pagina para volver a descargarlo
+  if(!firebaseListo){ location.reload(); return; }
   var pantallaError=document.getElementById('pantalla-error-conexion');
   if(pantallaError) pantallaError.style.display='none';
   firebase.auth().signInAnonymously().catch(function(e){
@@ -32,14 +73,11 @@ function intentarLogin(){
   });
 }
 // Autenticacion anonima — requerida para Firebase Security Rules
-intentarLogin();
+conFirebase(intentarLogin);
 setTimeout(function(){
-  if(!authResuelto){
-    var pantallaError=document.getElementById('pantalla-error-conexion');
-    if(pantallaError) pantallaError.style.display='flex';
-  }
-},5000);
-firebase.auth().onAuthStateChanged(function(user){
+  if(!authResuelto) mostrarErrorConexion();
+},10000);
+conFirebase(function(){ firebase.auth().onAuthStateChanged(function(user){
   if(!user) return;
   authResuelto=true;
   var pantallaError=document.getElementById('pantalla-error-conexion');
@@ -51,9 +89,9 @@ firebase.auth().onAuthStateChanged(function(user){
     if(dot)dot.style.background=ok?'#4ade80':'#f87171';
     if(lbl)lbl.textContent=ok?'En linea':'Sin conexion';
   });
-});
+}); });
 function guardarEnFirebase(){
-  if(!firebase.auth().currentUser) return;
+  if(!firebaseListo||!firebase.auth().currentUser) return;
   var hoy=new Date();
   var fecha=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
   var data={
@@ -342,7 +380,7 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
 var C=[];
 var clientesCargados=false;
 
-firebase.auth().onAuthStateChanged(function(user){
+conFirebase(function(){ firebase.auth().onAuthStateChanged(function(user){
   if(!user) return;
   // Carga inicial de clientes
   db.ref('clientes').on('value',function(snap){
@@ -361,7 +399,7 @@ firebase.auth().onAuthStateChanged(function(user){
       if(map&&!rutaActiva)dibujar();
     }
   });
-});
+}); });
 setTimeout(function(){
   if(clientesCargados) return;
   var aviso=document.getElementById('clientes-aviso');
@@ -399,7 +437,7 @@ window.addEventListener('load',function(){
   }
   var hoy=new Date();
   var fechaHoy=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
-  firebase.auth().onAuthStateChanged(function(user){
+  conFirebase(function(){ firebase.auth().onAuthStateChanged(function(user){
     if(!user) return;
     var ultimaVersionAplicada=null;
     function hayProgresoLocal(){
@@ -454,7 +492,7 @@ window.addEventListener('load',function(){
       ultimaVersionAplicada=d.ultimaActualizacion;
       toast('El supervisor actualizo tu ruta. Tu avance ya esta guardado — cierra y vuelve a abrir la app para verla.',6000);
     }, function(e){ console.log('Error escuchando ruta:',e); });
-  });
+  }); });
 });
 
 function initMap(){
@@ -1015,6 +1053,7 @@ function cargarEquipo(){
   body.innerHTML = '<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>';
   var hoy = new Date();
   var fechaHoy = hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0')+'-'+hoy.getDate().toString().padStart(2,'0');
+  if(!db){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin conexion con el servidor. Revisa tu conexion</div>';return;}
   db.ref('rutas').once('value').then(function(snap){
     var val = snap.val();
     if(!val){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin rutas activas hoy</div>';return;}
@@ -1091,6 +1130,7 @@ function cargarHistorialVendedor(){
   var body=document.getElementById('vh-body');
   if(!cid||!fecha){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Selecciona un chofer y una fecha</div>';return;}
   body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Cargando...</div>';
+  if(!db){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin conexion con el servidor. Revisa tu conexion</div>';return;}
   db.ref('historial/'+cid+'/'+fecha).once('value').then(function(snap){
     var d=snap.val(); historialVendedorData=d;
     if(!d||!d.paradas||!d.paradas.length){body.innerHTML='<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Sin datos para esta fecha</div>';return;}
