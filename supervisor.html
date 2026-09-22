@@ -4,19 +4,67 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VetReparto - Supervisor</title>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
-var db = firebase.database();
+// El SDK de Firebase se carga de forma asincrona: con <script src> sincronos en el <head>,
+// si la CDN se queda colgada (senal debil) la pagina nunca se pinta.
+var db=null,firebaseListo=false,firebaseFallo=false,colaFirebase=[];
+function conFirebase(cb){ if(firebaseListo) cb(); else colaFirebase.push(cb); }
+var FB_FUENTES=[
+  ['https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.min.js','https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-database-compat.min.js','https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-auth-compat.min.js'],
+  ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js','https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js','https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js']
+];
+function cargarScript(src,ok,fallo){
+  var s=document.createElement('script');
+  var t=setTimeout(function(){s.onload=s.onerror=null;fallo();},15000);
+  s.src=src;
+  s.onload=function(){clearTimeout(t);ok();};
+  s.onerror=function(){clearTimeout(t);fallo();};
+  document.head.appendChild(s);
+}
+function cargarFirebase(fuente){
+  var urls=FB_FUENTES[fuente];
+  if(!urls){ firebaseFallo=true; mostrarErrorConexion(); return; }
+  var siguiente=function(){ cargarFirebase(fuente+1); };
+  cargarScript(urls[0],function(){
+    var pendientes=2,fallo=false;
+    var listo=function(){ if(!fallo&&--pendientes===0) iniciarFirebase(); };
+    var error=function(){ if(!fallo){ fallo=true; siguiente(); } };
+    cargarScript(urls[1],listo,error);
+    cargarScript(urls[2],listo,error);
+  },siguiente);
+}
+function iniciarFirebase(){
+  if(!firebase.apps.length) firebase.initializeApp({apiKey:"AIzaSyBYe4JG5fHfKYsB7ROmI7sn_D4NRHPfXeA",authDomain:"vetreparto-f38fd.firebaseapp.com",databaseURL:"https://vetreparto-f38fd-default-rtdb.firebaseio.com",projectId:"vetreparto-f38fd",storageBucket:"vetreparto-f38fd.firebasestorage.app",messagingSenderId:"350164561706",appId:"1:350164561706:web:e05f2823ba6cd5a039b853"});
+  db=firebase.database();
+  // Evita que un script de la CDN que llegue tarde (tras usar el respaldo) reemplace la instancia ya iniciada
+  try{ Object.defineProperty(window,'firebase',{value:firebase,writable:false,configurable:false}); }catch(e){}
+  firebaseListo=true;
+  var cola=colaFirebase; colaFirebase=[];
+  cola.forEach(function(cb){ cb(); });
+}
+function mostrarErrorConexion(){
+  var errEl=document.getElementById('login-error');
+  var btnEl=document.getElementById('login-btn');
+  if(!errEl||!btnEl){ document.addEventListener('DOMContentLoaded',mostrarErrorConexion); return; }
+  errEl.textContent='No se pudo conectar con el servidor. Revisa tu conexion y toca Reintentar.';
+  errEl.style.display='block';
+  btnEl.textContent='Reintentar';
+}
+cargarFirebase(0);
 var authResuelto = false;
 function intentarLogin(){
   var email = document.getElementById('login-email').value.trim();
   var pass = document.getElementById('login-password').value;
   var errEl = document.getElementById('login-error');
   var btnEl = document.getElementById('login-btn');
+  // Si el SDK nunca cargo, reintentar = recargar la pagina para volver a descargarlo
+  if(firebaseFallo){ location.reload(); return; }
+  if(!firebaseListo){
+    errEl.textContent = 'Conectando con el servidor, espera un momento e intenta de nuevo.';
+    errEl.style.display = 'block';
+    return;
+  }
   errEl.style.display = 'none';
   if(!email || !pass){
     errEl.textContent = 'Escribe tu correo y tu contrasena.';
@@ -44,9 +92,9 @@ function intentarLogin(){
   });
 }
 function cerrarSesion(){
-  firebase.auth().signOut();
+  if(firebaseListo) firebase.auth().signOut();
 }
-firebase.auth().onAuthStateChanged(function(user){
+conFirebase(function(){ firebase.auth().onAuthStateChanged(function(user){
   var pantallaLogin = document.getElementById('pantalla-login');
   if(user && user.isAnonymous){
     // Sesion anonima vieja (de antes de este login real, o de otra app) — no cuenta como login valido aqui.
@@ -62,7 +110,7 @@ firebase.auth().onAuthStateChanged(function(user){
   if(pantallaLogin) pantallaLogin.style.display = 'none';
   var labelEl = document.getElementById('login-user-label');
   if(labelEl) labelEl.textContent = user.email || '';
-});
+}); });
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -555,7 +603,7 @@ var fechaHoy = '';
   setTimeout(function(){ var el=document.getElementById('dash-mes'); if(el) el.value=mes; }, 0);
 })();
 
-firebase.auth().onAuthStateChanged(function(user){
+conFirebase(function(){ firebase.auth().onAuthStateChanged(function(user){
   if(!user || user.isAnonymous) return;
   authResuelto = true;
 
@@ -595,7 +643,7 @@ firebase.auth().onAuthStateChanged(function(user){
     document.getElementById('total-clientes').textContent = todosClientes.length;
     filtrarClientes(document.getElementById('cp-search').value);
   });
-});
+}); });
 
 function getColor(cid){
   if(!colores[cid]){ var idx=Object.keys(colores).length%PALETA.length; colores[cid]=PALETA[idx]; }
@@ -2189,7 +2237,7 @@ function balToggleMap(){
 }
 
 function balCrearRutas(){
-  if(!firebase.auth().currentUser){ alert('Aun no termina de conectarse de forma segura.\n\nEspera un segundo (revisa el punto de "Conectado" arriba) e intenta de nuevo con "Crear rutas en el sistema".'); return; }
+  if(!firebaseListo||!firebase.auth().currentUser){ alert('Aun no termina de conectarse de forma segura.\n\nEspera un segundo (revisa el punto de "Conectado" arriba) e intenta de nuevo con "Crear rutas en el sistema".'); return; }
   if(!balPlan){ alert('No se creo ninguna ruta.\n\nPrimero da clic en "PLANIFICAR" (con los choferes marcados y los pedidos agregados) antes de "Crear rutas en el sistema".'); return; }
   // stops finales por chofer = local + foraneo(ruta)
   var finales={};
