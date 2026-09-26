@@ -61,7 +61,17 @@ function cargarXLSX(cb){
   s.onerror=function(){toast('No se pudo cargar el exportador. Revisa tu conexion',3000);};
   document.head.appendChild(s);
 }
-var CHOFER_ID=new URLSearchParams(window.location.search).get('chofer')||'angel';
+var CHOFER_ID=(function(){
+  var deUrl=new URLSearchParams(window.location.search).get('chofer');
+  if(deUrl){
+    deUrl=deUrl.toLowerCase();
+    try{localStorage.setItem('vetreparto_chofer_id',deUrl);}catch(e){}
+    return deUrl;
+  }
+  var guardado=null;
+  try{guardado=localStorage.getItem('vetreparto_chofer_id');}catch(e){}
+  return guardado||'angel';
+})();
 var authResuelto=false;
 function intentarLogin(){
   // Si el SDK nunca cargo, reintentar = recargar la pagina para volver a descargarlo
