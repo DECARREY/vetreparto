@@ -432,7 +432,10 @@ function geocodeDireccion(texto, cb){
 }
 var map,iw,dr,bm=[],rm=[],par=[],rutaActiva=false;
 
-window.addEventListener('load',function(){
+// Se usa DOMContentLoaded y no 'load': 'load' espera a Google Maps, y si Maps tarda o no
+// responde la ruta del chofer nunca se restaura (la app se queda con Ruta (0)).
+function alListoDom(fn){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn); else fn(); }
+alListoDom(function(){
   var sel=document.getElementById('chofer-select');
   var inp=document.getElementById('chofer-nombre');
   var nombres=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
@@ -512,6 +515,8 @@ function initMap(){
   dr.setMap(map);
   var almEl=document.createElement('div');almEl.style.cssText='width:20px;height:20px;border-radius:50%;background:#1a6b4a;border:2.5px solid #fff;box-sizing:border-box;';new google.maps.marker.AdvancedMarkerElement({position:ALMACEN,map:map,title:'Almacen',content:almEl,zIndex:2000});
   dibujar();
+  // Si la ruta se restauro antes de que cargara el mapa, pintar sus pines ahora
+  if(rutaActiva) pines();
 }
 
 function toggleLibre(){
@@ -1217,6 +1222,6 @@ function descargarHistorialVendedorExcel(){
 
 window.initMap=initMap;
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA&callback=initMap&language=es&region=MX&loading=async&libraries=marker&mapIds=b30c811ecba5c1918f8d39d9"></script>
 </body>
 </html>
