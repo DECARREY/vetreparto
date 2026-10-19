@@ -357,6 +357,15 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
       </div>
       <div class="tc" id="content-historial" style="flex-direction:column;overflow:hidden">
         <div style="padding:10px 12px;border-bottom:1px solid #e4e2da;flex-shrink:0;background:#f7f6f2">
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button id="vh-modo-btn-entregas" onclick="vhModo('entregas')" style="flex:1;padding:7px;border:1px solid #1a6b4a;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial;background:#1a6b4a;color:#fff">Entregas</button>
+            <button id="vh-modo-btn-paq" onclick="vhModo('paq')" style="flex:1;padding:7px;border:1px solid #0f4a8a;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial;background:#fff;color:#0f4a8a">&#x1F4E6; Paqueterias</button>
+          </div>
+          <div id="vh-modo-paq" style="display:none">
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px">Consulta de guias de paqueteria</div>
+            <input type="text" id="vp-q" oninput="vpBuscar()" placeholder="Nombre o numero de cliente (o No. de guia)" autocomplete="off" style="width:100%;padding:8px 10px;border:1px solid #c7d8f0;border-radius:6px;font-size:13px;font-family:Arial;outline:none;box-sizing:border-box">
+          </div>
+          <div id="vh-modo-entregas">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">Historial de entregas</div>
           <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Chofer</label>
           <select id="vh-chofer" onchange="cargarHistorialVendedor()" style="width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;background:#fff;box-sizing:border-box;margin-bottom:6px">
@@ -372,10 +381,12 @@ button,select,input,.abtn,.ebtn,.add-entrega-btn,.del-entrega-btn{touch-action:m
           <label style="font-size:11px;color:#7a7870;display:block;margin-bottom:3px">Fecha</label>
           <input type="date" id="vh-fecha" onchange="cargarHistorialVendedor()" style="width:100%;padding:7px 10px;border:1px solid #e4e2da;border-radius:6px;font-size:12px;font-family:Arial;outline:none;box-sizing:border-box">
           <button onclick="descargarHistorialVendedorExcel()" style="width:100%;margin-top:8px;padding:7px;background:#1a6b4a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial">Descargar Excel</button>
+          </div>
         </div>
         <div id="vh-body" style="flex:1;overflow-y:auto;padding:10px 12px">
           <div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">Selecciona un chofer y una fecha</div>
         </div>
+        <div id="vp-body" style="flex:1;overflow-y:auto;padding:10px 12px;display:none"></div>
       </div>
     </div>
     <div class="mapwrap">
@@ -1218,6 +1229,102 @@ function descargarHistorialVendedorExcel(){
     toast('Descargado');
   });
 }
+// ── Consulta de paqueterias (dentro de Historial) ───────────────────────────
+var VP_CHOFERES=['angel','arturo','silvia','mercedes','luis','marco','eunice'];
+var vpCache=null,vpCacheTs=0,vpCargando=null;
+function vpMsg(t){return '<div style="text-align:center;color:#7a7870;font-size:13px;padding:24px">'+t+'</div>';}
+function vpNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+
+function vhModo(m){
+  var paq=m==='paq';
+  document.getElementById('vh-modo-paq').style.display=paq?'block':'none';
+  document.getElementById('vh-modo-entregas').style.display=paq?'none':'block';
+  document.getElementById('vh-body').style.display=paq?'none':'block';
+  document.getElementById('vp-body').style.display=paq?'block':'none';
+  var be=document.getElementById('vh-modo-btn-entregas'),bp=document.getElementById('vh-modo-btn-paq');
+  be.style.background=paq?'#fff':'#1a6b4a';be.style.color=paq?'#1a6b4a':'#fff';
+  bp.style.background=paq?'#0f4a8a':'#fff';bp.style.color=paq?'#fff':'#0f4a8a';
+  if(paq){vpBuscar();document.getElementById('vp-q').focus();}
+}
+
+function vpCargar(){
+  if(vpCache&&Date.now()-vpCacheTs<120000) return Promise.resolve(vpCache);
+  if(vpCargando) return vpCargando;
+  if(!db||!firebaseListo||!firebase.auth().currentUser) return Promise.reject(new Error('sin-conexion'));
+  vpCargando=Promise.all(VP_CHOFERES.map(function(cid){
+    return db.ref('historial/'+cid).once('value').then(function(s){return {cid:cid,val:s.val()};});
+  })).then(function(res){
+    var items=[];
+    res.forEach(function(r){
+      if(!r.val) return;
+      Object.keys(r.val).forEach(function(fecha){
+        var d=r.val[fecha]; if(!d||!d.paradas) return;
+        var paradas=Array.isArray(d.paradas)?d.paradas:Object.values(d.paradas);
+        paradas.forEach(function(p){
+          if(!p||!p.esPaqueteria) return;
+          var entregas=p.entregas||[]; if(!Array.isArray(entregas)) entregas=Object.values(entregas);
+          var destId=p.clienteDestinatarioId||'';
+          var dest=String(p.clienteDestinatario||'');
+          if(destId&&dest.slice(-(destId.length+3))===' ('+destId+')') dest=dest.slice(0,-(destId.length+3));
+          entregas.forEach(function(e){
+            items.push({fecha:fecha,chofer:d.choferNombre||(r.cid.charAt(0).toUpperCase()+r.cid.slice(1)),empresa:(p.nombreFiscal||p.nombre||'').replace(/^Paqueteria\s+/,''),
+              dest:dest,destId:destId,guia:e.guia||'',pedido:e.pedido||'',factura:e.factura||'',
+              entregado:!!e.entregado,hora:e.horaEntrega||'',noEntregado:!!p.noEntregado,motivo:p.motivoNoEntrega||p.motivo||'',
+              hay:vpNorm(dest+' '+destId+' '+(e.guia||''))});
+          });
+        });
+      });
+    });
+    items.sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(a.hora<b.hora?1:a.hora>b.hora?-1:0);});
+    vpCache=items;vpCacheTs=Date.now();vpCargando=null;
+    return items;
+  }).catch(function(e){vpCargando=null;throw e;});
+  return vpCargando;
+}
+
+function vpBuscar(){
+  var body=document.getElementById('vp-body');
+  var q=vpNorm(document.getElementById('vp-q').value.trim());
+  if(q.length<2){body.innerHTML=vpMsg('Escribe el nombre o numero del cliente (o el numero de guia) para ver sus envios por paqueteria');return;}
+  body.innerHTML=vpMsg('Buscando...');
+  vpCargar().then(function(items){
+    if(vpNorm(document.getElementById('vp-q').value.trim())!==q) return;
+    var toks=q.split(/\s+/);
+    var r=items.filter(function(it){return toks.every(function(t){return it.hay.indexOf(t)>=0;});});
+    if(!r.length){body.innerHTML=vpMsg('Sin envios por paqueteria para esa busqueda');return;}
+    var MAX=50;
+    var h='<div style="font-size:11px;color:#7a7870;margin-bottom:8px">'+r.length+' envio'+(r.length===1?'':'s')+' encontrado'+(r.length===1?'':'s')+(r.length>MAX?' &middot; mostrando los '+MAX+' mas recientes, escribe mas para afinar':'')+'</div>';
+    r.slice(0,MAX).forEach(function(it){
+      var f=it.fecha.split('-'); var fechaTxt=f.length===3?f[2]+'/'+f[1]+'/'+f[0]:it.fecha;
+      var estado,estadoColor;
+      if(it.entregado){estado='&#10003; Entregado a paqueteria'+(it.hora?' '+esc(it.hora):'');estadoColor='#1a6b4a';}
+      else if(it.noEntregado){estado='&#10006; No entregado'+(it.motivo?': '+esc(it.motivo):'');estadoColor='#dc2626';}
+      else{estado='Pendiente';estadoColor='#7a7870';}
+      h+='<div style="border:1px solid #c7d8f0;border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fff">';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:12px;font-weight:700">'+esc(fechaTxt)+'</span>';
+      h+='<span style="font-size:10px;font-weight:700;color:#0f4a8a;background:#e6f1fb;padding:2px 6px;border-radius:4px">'+esc(it.empresa)+'</span>';
+      h+='<span style="font-size:11px;font-weight:700;color:'+estadoColor+';margin-left:auto;text-align:right">'+estado+'</span></div>';
+      h+='<div style="font-size:13px;font-weight:700">'+esc(it.dest)+'</div>';
+      if(it.destId) h+='<div style="font-size:10px;color:#7a7870">'+esc(it.destId)+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-top:5px;padding-top:5px;border-top:1px dashed #e4e2da"><div style="flex:1;min-width:0;font-size:12px;word-break:break-all"><b>Guia:</b> '+(it.guia?esc(it.guia):'-')+'</div>';
+      if(it.guia) h+='<button data-guia="'+esc(it.guia)+'" onclick="vpCopiar(this)" style="padding:5px 10px;background:#0f4a8a;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial;flex-shrink:0">Copiar</button>';
+      h+='</div>';
+      h+='<div style="font-size:11px;color:#555;margin-top:3px"><b>Pedido:</b> '+esc(it.pedido||'-')+' &middot; <b>Factura:</b> '+esc(it.factura||'-')+' &middot; Chofer: '+esc(it.chofer)+'</div>';
+      h+='</div>';
+    });
+    body.innerHTML=h;
+  }).catch(function(e){
+    body.innerHTML=vpMsg(e&&e.message==='sin-conexion'?'Sin conexion con el servidor. Espera unos segundos y vuelve a escribir':'No se pudo cargar el historial. Revisa tu conexion e intenta de nuevo');
+  });
+}
+
+function vpCopiar(btn){
+  var g=btn.getAttribute('data-guia');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(g).then(function(){toast('Guia copiada: '+esc(g));},function(){toast('No se pudo copiar');});
+  } else toast('No se pudo copiar');
+}
+// ── Fin consulta de paqueterias ─────────────────────────────────────────────
 // ── Fin Vista Historial ─────────────────────────────────────────────────────
 
 window.initMap=initMap;
