@@ -52,6 +52,8 @@ function mostrarErrorConexion(){
   else document.addEventListener('DOMContentLoaded',mostrarErrorConexion);
 }
 cargarFirebase(0);
+// Permite abrir la app desde copia local cuando la red movil no deja llegar a github.io
+if('serviceWorker' in navigator) window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW:',e);}); });
 // xlsx pesa ~880 KB y solo se usa al exportar: se carga bajo demanda para no retrasar el arranque
 function cargarXLSX(cb){
   if(window.XLSX){cb();return;}
