@@ -1842,15 +1842,15 @@ var ALMACEN_POS={lat:25.681553680100162,lng:-100.32371502760287};
 // Llave separada SOLO para Geocoding/Directions (peticion directa, sin pasar por
 // el objeto google.maps.* que usa la llave del mapa con restriccion de sitio web
 // -esa restriccion no es compatible con Geocoding/Directions segun Google).
-var GOOGLE_SERVER_KEY='AIzaSyAL7e5HSmrjT4PLa97B5rihST1MA7rxrdA';
 function geocodeDireccion(texto, cb){
-  fetch('https://maps.googleapis.com/maps/api/geocode/json?address='+encodeURIComponent(texto)+'&key='+GOOGLE_SERVER_KEY)
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(data.status==='OK'&&data.results&&data.results[0]) cb(null,data.results[0]);
-      else cb(new Error(data.status==='ZERO_RESULTS'?'No se encontro la direccion':('Error de Google: '+data.status+(data.error_message?' - '+data.error_message:''))));
-    })
-    .catch(function(e){ cb(e); });
+  // Usa el Geocoder de Maps JS: funciona con la llave restringida por sitio web.
+  if(!(window.google&&google.maps&&google.maps.Geocoder)){ cb(new Error('El mapa aun no carga. Intenta de nuevo en unos segundos')); return; }
+  new google.maps.Geocoder().geocode({address:texto},function(results,status){
+    if(status==='OK'&&results&&results[0]){
+      var r=results[0];
+      cb(null,{formatted_address:r.formatted_address,geometry:{location:{lat:r.geometry.location.lat(),lng:r.geometry.location.lng()}}});
+    } else cb(new Error(status==='ZERO_RESULTS'?'No se encontro la direccion':('Error de Google: '+status)));
+  });
 }
 var mapB=null, mapBReady=false, balInit=false;
 var balPedidos=[], balPlan=null, balLocks={}, balForEstado={};
